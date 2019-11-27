@@ -1,0 +1,86 @@
+
+source('c:/research/lineup/new-model-startup.r')
+source(paste0(USERPATH, 'team_funct.r'))
+source(paste0(USERPATH, 'player_funct.r'))
+
+# only care about players who've played at least 30 games for their club for now
+numGameForClub = gbgdf %>%
+  group_by(team, playerid) %>%
+  summarise(sumGame = n())
+
+gbgdf = left_join(gbgdf, numGameForClub, c('team', 'playerid'))
+
+gbgdf30 = gbgdf %>% filter(sumGame >= 30)
+gbgdf30$key = with(gbgdf30, paste(season, team, teamgamenumber, player))
+
+# right, let's see how long the loop takes to run then
+
+MakeWideHistory = function(x, k, idDF) {
+  myList = vector('list', length(x))
+  myList[[1]] = NULL
+  myList[[2]] = x[1]
+  for (i in 3:length(x)) {
+    myList[[i]] = c(myList[[i-1]], x[i-1])
+  }
+  myMatrix = sapply(myList,
+                    function(y, n) {
+                      c(rep(NA, n-length(y)), y)
+                    },
+                    length(x))
+  myTruncMatrix = t(apply(myMatrix, 1, tail, k))
+  
+  myDF = as.data.frame(myTruncMatrix)
+  # now put the id columns back on
+  myDF = cbind(idDF, myDF)
+  return(myDF)
+}
+
+keyHistory = gbgdf30 %>%
+  group_by(team, player) %>%
+  arrange(season, teamgamenumber) %>%
+  do(MakeWideHistory(.$key, 30, data.frame(.$season, .$teamgamenumber))) %>%
+  rename(teamgamenumber = "..teamgamenumber", season = "..season") %>%
+  ungroup()
+
+### then we make that verticle again, it'll be a big old df
+vertKeyHistory = gather(keyHistory, rgnum, rkey, -c(team, player, season, teamgamenumber))
+# awesome, now we join in the columns of interest
+lgbgdf = lazy_left_join(vertKeyHistory, gbgdf30, by = c('rkey' = 'key'), c('isStart', 'available', 'goal'))
+
+lgbgdf$key = with(lgbgdf, paste(season, team, teamgamenumber, player))
+lgbgdf$rgnum = as.integer(gsub('V', '', lgbgdf$rgnum))
+# might seem rash to get rid of rkey now, but should remake lgbgdf if more columns are needed
+lgbgdf = within(lgbgdf, rm(team, season, teamgamenumber, player, rkey))
+
+gbgdf30 = left_join(gbgdf30, startHistory, c('season', 'team', 'teamgamenumber', 'player'))
+# but we don't want the ones with any NAs so get rid
+GetGameCol = function(gbgdf30) grep('^V[0-9]+$', colnames(gbgdf30))
+gbgdf30$anyNA = apply(gbgdf30[,GetGameCol(gbgdf30)], 1, function(x) any(is.na(x)))
+gbgdf30$allUnavailable = apply(gbgdf30[,GetGameCol(gbgdf30)], 1, function(x) all(grepl('[^0-9]', x)))
+gbgdf30 = gbgdf30 %>% filter(!anyNA & !allUnavailable)
+
+
+# right, let's do some analysis then
+# so let's firstly set up our simple downweight model
+
+dwSpeed = 0.5
+overallMean = with(gbgdf30, mean(isStart[available]))
+doSmooth = function(x, dwSpeed, priorStr) {
+  availableIdx = which(!grepl('[^0-9]', x))
+  didStart = as.numeric(x[availableIdx] == '0')
+  wgtVec0 = exp(-dwSpeed * (tail(availableIdx, 1) - availableIdx))
+  smStart = weighted.mean(didStart, wgtVec0)
+  return(smStart)
+}
+
+gbgdf30$smStart = apply(as.matrix(gbgdf30[,GetGameCol(gbgdf30)]), 1, doSmooth)
+## woohoo, it works. now, let's optimise dwSpeed
+
+CalcLogLik = function(dwSpeed) {
+  gbgdf30$smStart = apply(as.matrix(gbgdf30[,GetGameCol(gbgdf30)]), 1, doSmooth)
+  gbgdf30$logLik = NA
+  gbgdf30$logLik[which(gbgdf30$available)] = with(gbgdf30[which(gbgdf30$available),], log(dbinom(isStart, 1, smStart)))
+  meanLogLik = with(gbgdf30, mean(logLik[available]))
+}
+
+# this is very silly setup. now we've got the past 30 games, we turn it BACK into a long DF, will make filtering out unavilable things much easier

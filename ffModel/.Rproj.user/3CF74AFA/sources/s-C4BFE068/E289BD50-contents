@@ -1,0 +1,75 @@
+#### if we want to investigate biases with current expected minutes model, you can load in the existing calcuations like this:
+gbgdf = CalculateHistoricExpectedMinute(gbgdf)
+
+# so i reckon it underestimates starting prob when a player didn't start previous match but did have high start proprtion while fit in previous 30 games
+#] let's try to test that
+
+# set up dummy tibble to cevelop the method
+
+myTB = tibble(player = c(rep('walker', 3), rep('kbd', 4)),
+              gnum = c(1:3, 1:4),
+              start = c(T, F, T, F, T, T, T))
+
+# ok, first job, how to do we mutate in such a way that we turn a scalar into a vector?
+# maybe do works
+
+GetPrev2TB = function(x) {
+  if (length(x) == 1) prev2TB = tibble(prev2 = rep(NA, 2))
+  if (length(x) > 1) prev2TB = tibble(prev2 = tail(lag(x), 2))
+  return(prev2TB)
+}
+myTB %>%
+  group_by(player) %>%
+  arrange(gnum) %>%
+  do(GetPrev2(.$start))
+# no that doesn't work, don't know why
+
+
+myTB = tibble(player = c(rep('walker', 3), rep('kbd', 4)),
+              gnum = c(1:3, 1:4),
+              start = c(T, F, T, F, T, T, T))
+
+GetPrev2List = function(x) {
+  if (length(x) == 1) prev2List = list(rep(NA, 2))
+  if (length(x) > 1) prev2List = list(tail(lag(x), 2))
+  return(prev2List)
+}
+myTB = myTB %>%
+  group_by(player) %>%
+  arrange(gnum) %>%
+  mutate(prev2 = GetPrev2List(start))
+# no that is wrong
+
+# now have to push that list into a wide data frame
+myTBLong = myTB %>%
+  unnest(prev2) %>%
+  group_by(player, gnum, start) %>%
+  mutate(pgnum = 1:n()) %>%
+  ungroup()
+myTBWide = myTBLong %>%
+  spread(value = prev2, key = pgnum)
+
+
+### let's start again, even simpler. the goal is just this:
+myDF = tibble(x = 1:5, y = paste0('y', 1:5))
+# all i want to do is, make a tibble that is this: row 1: 5 NAs, row2: four NAs then y1, ... row 5: NA y1 y2 y3 y4
+myDF %>% arrange(x) %>% rowwise() %>% mutate(z = paste(y[1:x], collapse = ','))
+# no that is wrong
+
+complicated.wizardry <- function(a,b){
+   a+b
+}
+
+cumlist <- function(sofar, remaining, myfn){
+ if(length(remaining)==1)return(c(sofar, myfn(sofar[length(sofar)],remaining[1])))
+ return (  cumlist( c(sofar, myfn(sofar[length(sofar)],remaining[1])),remaining[2:length(remaining)],myfn))
+}
+
+aacumsum = function(tosum) {
+  if (length(tosum) == 1) {
+    return(tosum)
+  }
+  if (length(tosum) > 1) {
+    return(aacumsum(c(tosum[1], tosum[2:length(tosum)])))
+  }
+}

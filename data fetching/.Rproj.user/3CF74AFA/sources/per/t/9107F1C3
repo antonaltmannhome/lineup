@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1571942662374.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2403663518",
+    "id" : "9107F1C3",
+    "lastKnownWriteTime" : 1567582220,
+    "last_content_update" : 1567582220,
+    "path" : "C:/research/lineup/data fetching/strip-soccerway.r",
+    "project_path" : "strip-soccerway.r",
+    "properties" : {
+        "cursorPosition" : "37,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

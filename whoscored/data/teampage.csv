@@ -1,0 +1,102 @@
+country,team,wsteam,active,pageno
+england,arsenal,arsenal,1,13
+england,astonvilla,aston villa,0,24
+england,bournemouth,bournemouth,1,183
+england,burnley,burnley,1,184
+england,chelsea,chelsea,1,15
+england,crystalpalace,crystal palace,1,162
+england,everton,everton,1,31
+england,hull,hull,1,214
+england,leicester,leicester,1,14
+england,liverpool,liverpool,1,26
+england,mancity,manchester city,1,167
+england,manutd,manchester united,1,32
+england,middlesbrough,middlesbrough,1,21
+england,newcastle,newcastle united,0,23
+england,norwich,norwich,0,168
+england,southampton,southampton,1,18
+england,stoke,stoke,1,96
+england,sunderland,sunderland,1,16
+england,swansea,swansea,1,259
+england,tottenham,tottenham,1,30
+england,watford,watford,1,27
+england,westbrom,west bromwich albion,1,175
+england,westham,west ham,1,29
+france,rennes,rennes,0,313
+france,caen,caen,0,347
+france,reims,reims,0,950
+france,nice,nice,0,613
+france,montpellier,montpellier,0,311
+france,guingamp,guingamp,0,426
+france,nantes,nantes,0,302
+france,toulouse,toulouse,0,246
+france,troyes,troyes,0,229
+france,sc bastia,sc bastia,0,310
+france,lille,lille,0,607
+france,lorient,lorient,0,146
+france,monaco,monaco,0,248
+france,saint etienne,saint etienne,0,145
+france,marseille,marseille,0,249
+france,gfc ajaccio,gfc ajaccio,0,940
+france,angers,angers,0,614
+france,bordeaux,bordeaux,0,315
+france,psg,psg,0,304
+france,lyon,lyon,0,228
+germany,bayern munich,bayern munich,0,37
+germany,borussia dortmund,borussia dortmund,0,44
+germany,borussia monchengladbach,borussia monchengladbach,0,134
+germany,hertha berlin,hertha berlin,0,47
+germany,wolfsburg,wolfsburg,0,33
+germany,schalke,schalke,0,39
+germany,mainz,mainz,0,219
+germany,bayer leverkusen,bayer leverkusen,0,36
+germany,hamburg,hamburg,0,38
+germany,cologne,cologne,0,282
+germany,ingolstadt,ingolstadt,0,3429
+germany,darmstadt,darmstadt,0,1147
+germany,eintracht frankfurt,eintracht frankfurt,0,45
+germany,hannover 96,hannover 96,0,110
+germany,werder bremen,werder bremen,0,42
+germany,augsburg,augsburg,0,1730
+germany,vfb stuttgart,vfb stuttgart,0,41
+germany,hoffenheim,hoffenheim,0,1211
+spain,barcelona,barcelona,0,65
+spain,atletico madrid,atletico madrid,0,63
+spain,real madrid,real madrid,0,52
+spain,celta vigo,celta vigo,0,62
+spain,villarreal,villarreal,0,839
+spain,deportivo la coruna,deportivo la coruna,0,59
+spain,athletic club,athletic club,0,53
+spain,valencia,valencia,0,55
+spain,eibar,eibar,0,824
+spain,sevilla,sevilla,0,67
+spain,real betis,real betis,0,54
+spain,espanyol,espanyol,0,70
+spain,real sociedad,real sociedad,0,68
+spain,sporting gijon,sporting gijon,0,830
+spain,rayo vallecano,rayo vallecano,0,64
+spain,getafe,getafe,0,819
+spain,granada,granada,0,925
+spain,malaga,malaga,0,69
+spain,levante,levante,0,832
+spain,las palmas,las palmas,0,838
+italy,inter,inter,0,75
+italy,fiorentina,fiorentina,0,73
+italy,napoli,napoli,0,276
+italy,roma,roma,0,84
+italy,juventus,juventus,0,87
+italy,sassuolo,sassuolo,0,2889
+italy,atalanta,atalanta,0,300
+italy,ac milan,ac milan,0,80
+italy,torino,torino,0,72
+italy,empoli,empoli,0,272
+italy,chievo,chievo,0,267
+italy,lazio,lazio,0,77
+italy,udinese,udinese,0,86
+italy,sampdoria,sampdoria,0,271
+italy,bologna,bologna,0,71
+italy,genoa,genoa,0,278
+italy,palermo,palermo,0,1285
+italy,frosinone,frosinone,0,2732
+italy,carpi,carpi,0,9363
+italy,verona,verona,0,76

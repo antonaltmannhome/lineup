@@ -1,0 +1,16 @@
+### what the project involves:
+
+# stripping the fixtures and results page, tying in team names with whoscored
+# getting team estimates based on dicol (started)
+# stripping spreadex (done) but adjusting dicol based on season totals and match spreads
+# producing csv of all players using stripped whoscored info
+# turning stripped whoscored pages into match by match totals
+# computing approximate number of goals for each match for each player
+# computing an expected number of goals for each player in future matches
+# adding up expected goals for each player
+# repeat process above for assists
+# calculate expected points for defenders
+# calculate expected point for goalkeepers
+# get hold of price info for each player (done), match up to player spreadsheet
+# add column guessing at number of minutes played by each player
+# do knapsack to calculate what best combination of players is

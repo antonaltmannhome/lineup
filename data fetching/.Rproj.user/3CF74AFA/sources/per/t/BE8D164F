@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1571942655410.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "874739286",
+    "id" : "BE8D164F",
+    "lastKnownWriteTime" : 1571946350,
+    "last_content_update" : 1571946350120,
+    "path" : "C:/research/lineup/data fetching/soccerway-funct.r",
+    "project_path" : "soccerway-funct.r",
+    "properties" : {
+        "cursorPosition" : "114,18",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

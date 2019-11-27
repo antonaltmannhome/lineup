@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1571942670159.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1135742769",
+    "id" : "133A7DD2",
+    "lastKnownWriteTime" : 1567587517,
+    "last_content_update" : 1567587517,
+    "path" : "C:/research/lineup/data fetching/data-fetch.r",
+    "project_path" : "data-fetch.r",
+    "properties" : {
+        "cursorPosition" : "8,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

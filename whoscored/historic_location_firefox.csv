@@ -1,0 +1,14 @@
+type,xloc,yloc
+teamtab,746,418
+offense,,
+defense,,
+detailed,788,662
+detailed-accum,1030,690
+detailed-accum-total,1030,775
+detailed-category,565,690
+detailed-category-goal,565,500
+detailed-category-keypass,565,640
+detailed-subcat,745,690
+detailed-subcat-situations,745,730
+detailed-subcat-accuracy,745,755
+deselect-all,884,480

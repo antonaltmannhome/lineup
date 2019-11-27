@@ -1,0 +1,7 @@
+### useful to put in advice about starting a new season
+
+### run data fetching / new-season-promoted-team-fetch.r
+
+### you need to copy activeplayer from the end of the previous season to its own folder, e.g. 20180801. But it won't contain any info about the promoted teams. but i haven't written code that lets playervalue access their previous year's data yet, so you wouldn't be able to select them anyway. so not sure what the point was in getting the summaries for the promoted teams actually. although get_player_estimate could probably be adapted to include their data. it should do really, it'll take a long time to burn in as things stand. UPDATE no that's not the case, it gets used from week 2 onwards in get_player_estimate, it is used to mix with the incoming games. so we're only really missing out on new teams in the first week, not a priority concern.
+### it's not possible as things stand to get expected points for players who've moved teams. would be a major hassle to get that, because whoscored has no record of who has moved where. but they're unlikely to be automatic starters in any case so not a priority concern
+### note that there is a special 'start of season squad selector' program to make it convenient to tweak the active palyers, and factor in probable early wildcard use

@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1571988268280.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3573241381",
+    "id" : "94B0B311",
+    "lastKnownWriteTime" : 1566993856,
+    "last_content_update" : 1566993856,
+    "path" : "C:/research/lineup/ffDataJoining/join-all-data.R",
+    "project_path" : "join-all-data.R",
+    "properties" : {
+        "cursorPosition" : "42,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

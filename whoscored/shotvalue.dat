@@ -1,0 +1,5 @@
+structure(list(zoneprop = 0.508051180185347, zoneshottheta = structure(c(0.033631620580227, 
+0.165903037366335), .Names = c("oosshotob", "oosshotib")), accshottheta = structure(c(0.434839933874895, 
+0.158154173116111, 0.0447747005530004, 0.0370908369496941), .Names = c("oosshotgoal", 
+"oosshottarget", "oosshotmiss", "oosshotblock"))), .Names = c("zoneprop", 
+"zoneshottheta", "accshottheta"))

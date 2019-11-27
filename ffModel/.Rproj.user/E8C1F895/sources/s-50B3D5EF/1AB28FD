@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1572092116647.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "1AB28FD",
+    "lastKnownWriteTime" : 1572096182,
+    "last_content_update" : 1572096182596,
+    "path" : "C:/research/lineup/project/appearance/set-up-30-wide-df.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "104,0",
+        "scrollLine" : "69"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

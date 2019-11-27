@@ -1,0 +1,127 @@
+#SingleInstance force
+^!b::
+send ^a
+sleep 500
+send ^c
+sleep 500
+SetTitleMatchMode, 2
+WinActivateBottom, - OpenOffice Calc
+sleep 1000
+send ^v
+sleep 12000
+send ^+s
+sleep 15000
+send ^a
+sleep 500
+send {Backspace}
+sleep 500
+send c:\research\lineup\whoscored\data\offense_1516_1_20151206.csv
+sleep 500
+click 372,405
+sleep 1000
+send {Down 13}
+sleep 500
+send {Return}
+sleep 2000
+send {Return}
+sleep 5000
+click 450,50
+sleep 2000
+send {Return}
+sleep 2000
+send ^a
+sleep 500
+send {Backspace}
+sleep 500
+send {Down}
+sleep 100
+send {Up}
+SetTitleMatchMode, 2
+WinActivateBottom, - Microsoft Edge
+sleep 1000
+click 812,605
+sleep 8000
+send ^a
+sleep 500
+send ^c
+sleep 500
+SetTitleMatchMode, 2
+WinActivateBottom, - OpenOffice Calc
+sleep 1000
+send ^v
+sleep 8000
+send ^+s
+sleep 2000
+send ^a
+sleep 500
+send {Backspace}
+sleep 500
+send c:\research\lineup\whoscored\data\offense_1516_2_20151206.csv
+sleep 5
+sleep 5
+sleep 5
+sleep 5
+sleep 5
+sleep 5
+sleep 2000
+send {Return}
+sleep 5000
+sleep 5
+sleep 5
+send {Return}
+sleep 2000
+send ^a
+sleep 500
+send {Backspace}
+sleep 500
+send {Down}
+sleep 100
+send {Up}
+SetTitleMatchMode, 2
+WinActivateBottom, - Microsoft Edge
+sleep 1000
+click 812,605
+sleep 8000
+send ^a
+sleep 500
+send ^c
+sleep 500
+SetTitleMatchMode, 2
+WinActivateBottom, - OpenOffice Calc
+sleep 1000
+send ^v
+sleep 8000
+send ^+s
+sleep 2000
+send ^a
+sleep 500
+send {Backspace}
+sleep 500
+send c:\research\lineup\whoscored\data\offense_1516_3_20151206.csv
+sleep 5
+sleep 5
+sleep 5
+sleep 5
+sleep 5
+sleep 5
+sleep 2000
+send {Return}
+sleep 5000
+sleep 5
+sleep 5
+send {Return}
+sleep 2000
+send ^a
+sleep 500
+send {Backspace}
+sleep 500
+send {Down}
+sleep 100
+send {Up}
+SetTitleMatchMode, 2
+WinActivateBottom, - Microsoft Edge
+sleep 1000
+sleep 8000
+return
+ExitApp
+Esc::ExitApp

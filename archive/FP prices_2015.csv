@@ -1,0 +1,705 @@
+Ref,Name,Pos,Team,Value,Owners
+1,Wojciech Szczesny,Goalkeeper,Arsenal,5.2,163506
+2,Laurent Koscielny,Defender,Arsenal,6.1,345504
+3,Thomas Vermaelen,Defender,Arsenal,5,4219
+4,Kieran Gibbs,Defender,Arsenal,5.2,58431
+5,Carl Jenkinson,Defender,West Ham,5,28033
+6,Per Mertesacker,Defender,Arsenal,6.1,180844
+7,Nacho Monreal,Defender,Arsenal,4.9,123689
+8,Isaac Hayden,Defender,Arsenal,4.3,1805
+9,Hector Bellerin,Defender,Arsenal,4.8,242338
+10,Jack Wilshere,Midfielder,Arsenal,6.3,79706
+11,Theo Walcott,Midfielder,Arsenal,8.2,13413
+12,Aaron Ramsey,Midfielder,Arsenal,8.8,467602
+13,Tomas Rosicky,Midfielder,Arsenal,4.6,18394
+14,Mikel Arteta,Midfielder,Arsenal,5.2,23041
+15,Alex OxladeChamberlain,Midfielder,Arsenal,6.2,35488
+16,Santiago Cazorla,Midfielder,Arsenal,8.4,520111
+17,Vassiriki Diaby,Midfielder,Arsenal,4.7,1599
+18,Serge Gnabry,Midfielder,Arsenal,4.8,505
+19,Gedion Zelalem,Midfielder,Arsenal,4.7,720
+20,Mathieu Flamini,Midfielder,Arsenal,4.8,8459
+21,Mesut Ozil,Midfielder,Arsenal,9,155863
+22,Ryo Miyaichi,Midfielder,Arsenal,4.5,974
+23,Alexis Sanchez,Midfielder,Arsenal,11.6,1304010
+24,Lukas Podolski,Forward,Arsenal,7.2,14032
+25,Olivier Giroud,Forward,Arsenal,8.7,666094
+26,Yaya Sanogo,Forward,Crystal Palace,4.7,23282
+27,Chuba Akpom,Forward,Arsenal,4.8,928
+28,Joel Campbell,Forward,Arsenal,5,13989
+29,Shay Given,Goalkeeper,Aston Villa,4,257015
+30,Bradley Guzan,Goalkeeper,Aston Villa,4.6,407931
+31,Nathan Baker,Defender,Aston Villa,4.3,4554
+32,Ciaran Clark,Defender,Aston Villa,4.2,22307
+33,Matthew Lowton,Defender,Aston Villa,4,4800
+34,Ron Vlaar,Defender,Aston Villa,4.3,325116
+35,Joe Bennett,Defender,Aston Villa,4.5,640
+36,Jores Okore,Defender,Aston Villa,4.2,12953
+37,Antonio Luna,Defender,Aston Villa,4.5,296
+38,Janoi Donacien,Defender,Aston Villa,3.9,7968
+39,Philippe Senderos,Defender,Aston Villa,4.3,32525
+40,Fabian Delph,Midfielder,Aston Villa,4.8,44833
+41,Charles NZogbia,Midfielder,Aston Villa,5.2,8457
+42,Gary Gardner,Midfielder,Aston Villa,4.3,4096
+43,Karim El Ahmadi,Midfielder,Aston Villa,4.4,68617
+44,Ashley Westwood,Midfielder,Aston Villa,4.7,9760
+45,Leandro Bacuna,Midfielder,Aston Villa,5,5064
+46,Aleksandar Tonev,Midfielder,Aston Villa,4.5,557
+47,Samir Carruthers,Midfielder,Aston Villa,4.5,87
+48,Daniel Johnson,Midfielder,Aston Villa,4.4,711
+49,Jack Grealish,Midfielder,Aston Villa,4.3,19286
+50,Joe Cole,Midfielder,Aston Villa,5.3,1880
+51,Kieran Richardson,Midfielder,Aston Villa,4.9,7602
+52,Gabriel Agbonlahor,Forward,Aston Villa,5,56020
+53,Andreas Weimann,Forward,Aston Villa,5.1,76968
+54,Christian Benteke,Forward,Aston Villa,8,424154
+55,Libor Kozak,Forward,Aston Villa,5.9,213
+56,Callum Robinson,Forward,Aston Villa,4.3,4702
+57,Darren Bent,Forward,Aston Villa,4.6,14594
+58,Thomas Heaton,Goalkeeper,Burnley,4.7,194010
+59,Matthew Gilks,Goalkeeper,Burnley,3.9,109131
+60,Michael Duff,Defender,Burnley,3.9,224726
+61,Jason Shackell,Defender,Burnley,4.4,20585
+62,Kevin Long,Defender,Burnley,3.8,20180
+63,Daniel Lafferty,Defender,Burnley,3.9,16714
+64,Ben Mee,Defender,Burnley,4.5,8657
+65,Kieran Trippier,Defender,Burnley,4.8,77518
+66,Dean Marney,Midfielder,Burnley,4.2,9572
+67,David Jones,Midfielder,Burnley,4.5,24062
+68,Ross Wallace,Midfielder,Burnley,4.2,4473
+69,Scott Arfield,Midfielder,Burnley,4.7,12321
+70,Michael Kightly,Midfielder,Burnley,4.5,2082
+71,Matthew Taylor,Midfielder,Burnley,4.7,2444
+72,Steven Reid,Midfielder,Burnley,4.2,9788
+73,Danny Ings,Forward,Burnley,5.5,147225
+74,Sam Vokes,Forward,Burnley,5.3,490
+75,Ashley Barnes,Forward,Burnley,4.4,33475
+76,Marvin Sordell,Forward,Burnley,4.6,1453
+77,Petr Cech,Goalkeeper,Chelsea,5.4,60685
+78,Thibaut Courtois,Goalkeeper,Chelsea,5.9,345659
+79,Gary Cahill,Defender,Chelsea,6.3,428000
+80,John Terry,Defender,Chelsea,7.1,795967
+81,Branislav Ivanovic,Defender,Chelsea,7.7,1057459
+82,Cesar Azpilicueta,Defender,Chelsea,6.2,294881
+83,Nathan Ake,Defender,Chelsea,4.3,2162
+84,Ryan Bertrand,Defender,Southampton,5.8,728040
+85,Josh McEachran,Midfielder,Chelsea,4.5,304
+86,Ramires Santos do Nascimento,Midfielder,Chelsea,5.3,14643
+87,John Obi Mikel,Midfielder,Chelsea,4.3,15207
+88,Lucas Piazon,Midfielder,Chelsea,5,63
+89,Eden Hazard,Midfielder,Chelsea,10.8,1207090
+90,Oscar dos Santos Emboaba Junior,Midfielder,Chelsea,7.9,148424
+91,Andre Schurrle,Midfielder,Chelsea,7.1,90466
+92,Marco van Ginkel,Midfielder,Chelsea,5.9,862
+93,Isaiah Brown,Midfielder,Chelsea,4.3,1424
+94,Willian,Midfielder,Chelsea,7.7,31962
+95,Nemanja Matic,Midfielder,Chelsea,5.5,122463
+96,Mohamed Salah,Midfielder,Chelsea,6,5779
+97,Lewis Baker,Midfielder,Chelsea,4.8,423
+98,John Swift,Midfielder,Chelsea,4.5,112
+99,Victor Moses,Midfielder,Stoke,5,9723
+100,Cesc Fibregas,Midfielder,Chelsea,9.1,928925
+101,Fernando Torres,Forward,Chelsea,7.3,12046
+102,Demba Ba,Forward,Chelsea,7,294
+103,Romelu Lukaku,Forward,Everton,8.7,253819
+104,Julian Speroni,Goalkeeper,Crystal Palace,4.8,104718
+105,Wayne Hennessey,Goalkeeper,Crystal Palace,4.3,5753
+106,Joel Ward,Defender,Crystal Palace,4.7,94776
+107,Damien Delaney,Defender,Crystal Palace,4.9,17544
+108,Patrick McCarthy,Defender,Crystal Palace,3.9,13163
+109,Jack Hunt,Defender,Crystal Palace,4,986
+110,Adrian Mariappa,Defender,Crystal Palace,4.2,3941
+111,Ryan Inniss,Defender,Crystal Palace,3.9,6418
+112,Scott Dann,Defender,Crystal Palace,4.9,59010
+113,Barry Bannan,Midfielder,Crystal Palace,4.7,747
+114,Yannick Bolasie,Midfielder,Crystal Palace,5.6,243072
+115,Owen Garvan,Midfielder,Crystal Palace,4.5,564
+116,Mile Jedinak,Midfielder,Crystal Palace,5,75836
+117,Jonathan Williams,Midfielder,Crystal Palace,4.8,483
+118,Jerome Thomas,Midfielder,Crystal Palace,4.3,1245
+119,Jason Puncheon,Midfielder,Crystal Palace,5.5,178216
+120,Jose Campana,Midfielder,Crystal Palace,4.5,54
+121,Stuart OKeefe,Midfielder,Crystal Palace,4.5,1174
+122,Jimmy Kebe,Midfielder,Crystal Palace,4.5,1609
+123,Adlene Guedioura,Midfielder,Crystal Palace,4.4,945
+124,Hiram Boateng,Midfielder,Crystal Palace,4.3,9809
+125,Joe Ledley,Midfielder,Crystal Palace,5.2,2270
+126,Glenn Murray,Forward,Crystal Palace,4.5,49922
+127,Dwight Gayle,Forward,Crystal Palace,4.5,25093
+128,Stephen Dobbie,Forward,Crystal Palace,4.5,570
+129,Marouane Chamakh,Forward,Crystal Palace,5.2,12988
+130,Tim Howard,Goalkeeper,Everton,5.1,324458
+131,Joel Robles,Goalkeeper,Everton,4.8,2739
+132,Phil Jagielka,Defender,Everton,5.8,557019
+133,Tony Hibbert,Defender,Everton,4.3,2152
+134,Leighton Baines,Defender,Everton,7.1,458814
+135,Sylvain Distin,Defender,Everton,5.2,48468
+136,Shane Duffy,Defender,Everton,4,4691
+137,Seamus Coleman,Defender,Everton,6.8,191552
+138,Antolin Alcaraz,Defender,Everton,4.2,3566
+139,John Stones,Defender,Everton,5.2,57865
+140,Luke Garbutt,Defender,Everton,3.9,11101
+141,Tyias Browning,Defender,Everton,4,6554
+142,Bryan Oviedo,Defender,Everton,4.7,649
+143,Leon Osman,Midfielder,Everton,5,16095
+144,Darron Gibson,Midfielder,Everton,4.2,14317
+145,Ross Barkley,Midfielder,Everton,6.6,116681
+146,Steven Pienaar,Midfielder,Everton,5.7,11748
+147,Kevin Mirallas,Midfielder,Everton,7.2,70958
+148,James McCarthy,Midfielder,Everton,4.6,47439
+149,Aiden McGeady,Midfielder,Everton,5.3,35840
+150,Ryan Ledson,Midfielder,Everton,4.3,1710
+151,Gareth Barry,Midfielder,Everton,4.7,57400
+152,Steven Naismith,Forward,Everton,4.7,376834
+153,Arouna Kone,Forward,Everton,5.4,2377
+154,Conor McAleny,Forward,Everton,4.3,3627
+155,Allan McGregor,Goalkeeper,Hull,4.7,81136
+156,Steve Harper,Goalkeeper,Hull,4.4,7074
+157,Liam Rosenior,Defender,Hull,4.1,9079
+158,James Chester,Defender,Hull,4.3,87197
+159,Paul McShane,Defender,Hull,3.9,85758
+160,Joe Dudgeon,Defender,Hull,3.9,1324
+161,Alex Bruce,Defender,Hull,4,382014
+162,Maynor Figueroa,Defender,Hull,4.1,12953
+163,Curtis Davies,Defender,Hull,4.7,59150
+164,Stephen Quinn,Midfielder,Hull,4.4,25014
+165,Robbie Brady,Midfielder,Hull,4.4,7092
+166,David Meyler,Midfielder,Hull,4.7,2085
+167,Ahmed Elmohamady,Midfielder,Hull,5,85071
+168,George Boyd,Midfielder,Burnley,4.5,217937
+169,Tom Huddlestone,Midfielder,Hull,5.3,42235
+170,Jake Livermore,Midfielder,Hull,5.1,17042
+171,Sone Aluko,Midfielder,Hull,4.4,2578
+172,Tom Ince,Midfielder,Hull,5,16328
+173,Robert Snodgrass,Midfielder,Hull,5.6,10520
+174,Nikica Jelavic,Forward,Hull,5.6,39759
+175,Nick Proschwitz,Forward,Hull,4.5,326
+176,Shane Long,Forward,Southampton,5.4,50748
+177,Yannick Sagbo,Forward,Hull,4.9,840
+178,Kasper Schmeichel,Goalkeeper,Leicester,4.5,169209
+179,Ben Hamer,Goalkeeper,Leicester,4,239183
+180,Wes Morgan,Defender,Leicester,4.6,110802
+181,Marcin Wasilewski,Defender,Leicester,3.9,184924
+182,Liam Moore,Defender,Leicester,3.9,47576
+183,Ritchie de Laet,Defender,Leicester,4.3,9121
+184,Jeffrey Schlupp,Defender,Leicester,4.5,75317
+185,Paul Konchesky,Defender,Leicester,4.4,19935
+186,Matthew Upson,Defender,Leicester,3.9,15774
+187,Daniel Drinkwater,Midfielder,Leicester,5,4225
+188,Dean Hammond,Midfielder,Leicester,4.4,2447
+189,Matthew James,Midfielder,Leicester,4.4,4309
+190,Riyad Mahrez,Midfielder,Leicester,4.9,31137
+191,Anthony Knockaert,Midfielder,Leicester,5,2135
+192,Andy King,Midfielder,Leicester,4.2,55903
+193,Gary TaylorFletcher,Midfielder,Leicester,4.2,13686
+194,Marc Albrighton,Midfielder,Leicester,4.3,107409
+195,David Nugent,Forward,Leicester,4.9,13996
+196,Jamie Vardy,Forward,Leicester,4.6,172817
+197,Chris Wood,Forward,Leicester,4.3,28266
+198,Jack Barmby,Forward,Leicester,4.2,7325
+199,Jose Reina,Goalkeeper,Liverpool,5.5,831
+200,Simon Mignolet,Goalkeeper,Liverpool,5.4,343563
+201,Martin Kelly,Defender,Crystal Palace,4.4,21237
+202,Glen Johnson,Defender,Liverpool,5.2,25497
+203,Martin Skrtel,Defender,Liverpool,5.9,320568
+204,Daniel Agger,Defender,Liverpool,5.4,5871
+205,Jose Enrique,Defender,Liverpool,4.5,8258
+206,Sebastian Coates,Defender,Sunderland,4.4,2490
+207,Andre Wisdom,Defender,West Brom,4,474204
+208,Conor Coady,Defender,Liverpool,4,597
+209,Kolo Toure,Defender,Liverpool,4.7,16826
+210,Jon Flanagan,Defender,Liverpool,4.7,7523
+211,Mamadou Sakho,Defender,Liverpool,5.1,26431
+212,Tiago Ilori,Defender,Liverpool,4,2849
+213,Brad Smith,Defender,Liverpool,4,858
+214,Steven Gerrard,Midfielder,Liverpool,8.6,140201
+215,Leiva Lucas,Midfielder,Liverpool,4.3,36202
+216,Jordan Henderson,Midfielder,Liverpool,6.6,771068
+217,Raheem Sterling,Midfielder,Liverpool,8.3,996624
+218,Joe Allen,Midfielder,Liverpool,4.8,4822
+219,Philippe Coutinho,Midfielder,Liverpool,7.9,327007
+220,Jordon Ibe,Midfielder,Liverpool,4.3,18995
+221,Suso,Midfielder,Liverpool,4.7,845
+222,Jordan Rossiter,Midfielder,Liverpool,4.4,1027
+223,Teixeira,Midfielder,Liverpool,4.5,654
+224,Oussama Assaidi,Midfielder,Liverpool,4.8,1751
+225,Emre Can,Midfielder,Liverpool,5.2,10470
+226,Adam Lallana,Midfielder,Liverpool,8.3,17408
+227,Daniel Sturridge,Forward,Liverpool,11.1,268627
+228,Iago Aspas,Forward,Liverpool,6,102
+229,Rickie Lambert,Forward,Liverpool,6.8,64631
+230,Fabio Borini,Forward,Liverpool,6,7361
+231,Joe Hart,Goalkeeper,Man City,6.1,243815
+232,Willy Caballero,Goalkeeper,Man City,5.1,3661
+233,Aleksandar Kolarov,Defender,Man City,5.8,147728
+234,Micah Richards,Defender,Man City,4.9,3066
+235,Pablo Zabaleta,Defender,Man City,6.4,184118
+236,Vincent Kompany,Defender,Man City,6.4,298584
+237,Gail Clichy,Defender,Man City,5.3,257597
+238,Karim Rekik,Defender,Man City,4.5,350
+239,Matija Nastasic,Defender,Man City,5.1,8568
+240,Dedryck Boyata,Defender,Man City,4.2,2447
+241,Martin Demichelis,Defender,Man City,5.9,48391
+242,Bacary Sagna,Defender,Man City,5.1,44362
+243,Jack Rodwell,Midfielder,Sunderland,4.7,50311
+244,Samir Nasri,Midfielder,Man City,8.2,61197
+245,David Silva,Midfielder,Man City,9.8,866296
+246,Yaya Toure,Midfielder,Man City,10.8,238581
+247,James Milner,Midfielder,Man City,5.4,58698
+248,Javi Garcia,Midfielder,Man City,4.5,3278
+249,Jesus Navas,Midfielder,Man City,7.2,39268
+250,Fernandinho,Midfielder,Man City,6.8,28100
+251,Scott Sinclair,Midfielder,Aston Villa,4.9,5745
+252,Fernando,Midfielder,Man City,4.8,17986
+253,Edin Dzeko,Forward,Man City,7.9,129688
+254,Sergio Aguero,Forward,Man City,12.9,1050578
+255,Alvaro Negredo,Forward,Man City,9,1525
+256,Stevan Jovetic,Forward,Man City,7.8,97606
+257,David de Gea,Goalkeeper,Man Utd,5.8,779457
+258,Anders Lindegaard,Goalkeeper,Man Utd,4.8,3118
+259,Chris Smalling,Defender,Man Utd,5.3,66606
+260,Phil Jones,Defender,Man Utd,5,86584
+261,Rafael,Defender,Man Utd,5.1,18185
+262,Patrice Evra,Defender,Man Utd,5.5,2078
+263,Jonny Evans,Defender,Man Utd,5,10169
+264,Guillermo Varela,Defender,Man Utd,4.3,1632
+265,Michael Keane,Defender,Burnley,4.2,3471
+266,Luke Shaw,Defender,Man Utd,5.7,89317
+267,Juan Mata,Midfielder,Man Utd,8.5,367760
+268,Marouane Fellaini,Midfielder,Man Utd,6.4,70675
+269,Antonio Valencia,Midfielder,Man Utd,5.7,22979
+270,Luis Nani,Midfielder,Man Utd,7,19828
+271,Anderson Oliveira,Midfielder,Man Utd,4.7,862
+272,Michael Carrick,Midfielder,Man Utd,5.4,4223
+273,Darren Fletcher,Midfielder,West Brom,4.5,16096
+274,Tom Cleverley,Midfielder,Aston Villa,5.3,42857
+275,Ashley Young,Midfielder,Man Utd,5.1,101221
+276,Nick Powell,Midfielder,Man Utd,4.4,1097
+277,Shinji Kagawa,Midfielder,Man Utd,6.3,5450
+278,Jesse Lingard,Midfielder,Man Utd,4.3,3123
+279,Adnan Januzaj,Midfielder,Man Utd,6.1,38921
+280,Wilfried Zaha,Midfielder,Crystal Palace,5.1,31080
+281,Ander Herrera,Midfielder,Man Utd,7.2,109622
+282,Robin van Persie,Forward,Man Utd,12,69746
+283,Javier Hernandez,Forward,Man Utd,5.9,11709
+284,Wayne Rooney,Forward,Man Utd,10.6,541301
+285,Danny Welbeck,Forward,Arsenal,6.9,159223
+286,James Wilson,Forward,Man Utd,4.3,12078
+287,Tom Lawrence,Forward,Leicester,4.3,2949
+288,Tim Krul,Goalkeeper,Newcastle,4.4,448437
+289,Robert Elliot,Goalkeeper,Newcastle,4,84587
+290,Michael Williamson,Defender,Newcastle,4.3,17848
+291,Steven Taylor,Defender,Newcastle,3.8,100416
+292,Fabricio Coloccini,Defender,Newcastle,4.5,115205
+293,Ryan Taylor,Defender,Newcastle,4.4,2524
+294,Davide Santon,Defender,Newcastle,4.3,2487
+295,Mathieu Debuchy,Defender,Arsenal,5.2,141834
+296,Mapou YangaMbiwa,Defender,Newcastle,4.4,3805
+297,Massadio Haidara,Defender,Newcastle,4.1,13299
+298,Paul Dummett,Defender,Newcastle,4.1,164680
+299,Lubomir Satka,Defender,Newcastle,3.9,6676
+300,Gabriel Obertan,Midfielder,Newcastle,4.3,7718
+301,Cheick Tiote,Midfielder,Newcastle,4.3,39285
+302,Hatem Ben Arfa,Midfielder,Newcastle,5.5,17392
+303,Shane Ferguson,Midfielder,Newcastle,4.5,1249
+304,Mehdi Abeid,Midfielder,Newcastle,4.3,1489
+305,Sylvain Marveaux,Midfielder,Newcastle,4.5,49
+306,Gael Bigirimana,Midfielder,Newcastle,4.4,1007
+307,Vurnon Anita,Midfielder,Newcastle,4.7,2755
+308,Moussa Sissoko,Midfielder,Newcastle,5.8,63523
+309,Jack Colback,Midfielder,Newcastle,4.7,99941
+310,Jonas Gutierrez,Midfielder,Newcastle,4.2,11750
+311,Yoan Gouffran,Midfielder,Newcastle,6,16855
+312,Sammy Ameobi,Midfielder,Newcastle,4.2,85781
+313,Siem de Jong,Midfielder,Newcastle,6.8,14208
+314,Papiss Demba Cisse,Forward,Newcastle,5.2,29587
+315,Adam Campbell,Forward,Newcastle,4.4,4654
+316,Adam Armstrong,Forward,Newcastle,4.3,5565
+317,Ayoze,Forward,Newcastle,4.3,62886
+318,Robert Green,Goalkeeper,QPR,4.5,89053
+319,Brian Murphy,Goalkeeper,QPR,3.9,63952
+320,Richard Dunne,Defender,QPR,4.2,5425
+321,Clint Hill,Defender,QPR,4.2,2315
+322,Nedum Onuoha,Defender,QPR,4.3,3326
+323,Yun,Defender,QPR,3.9,57910
+324,Danny Simpson,Defender,Leicester,4.1,5936
+325,Armand Traore,Midfielder,QPR,4.3,10933
+326,Alejandro Faurlin,Midfielder,QPR,4.2,2717
+327,Karl Henry,Midfielder,QPR,4.4,5896
+328,Joey Barton,Midfielder,QPR,4.8,7185
+329,Jermaine Jenas,Midfielder,QPR,4.4,5290
+330,Gary ONeil,Midfielder,QPR,4.4,1593
+331,Junior Hoilett,Midfielder,QPR,4.3,5570
+332,Shaun WrightPhillips,Midfielder,QPR,4.5,5347
+333,Matthew Phillips,Midfielder,QPR,4.6,29795
+334,Adel Taarabt,Midfielder,QPR,5.3,3869
+335,Loic Remy,Forward,Chelsea,6.9,75030
+336,Bobby Zamora,Forward,QPR,4.1,109728
+337,Charlie Austin,Forward,QPR,6.1,578926
+338,Paulo Gazzaniga,Goalkeeper,Southampton,4.3,2911
+339,Artur Boruc,Goalkeeper,Southampton,4.7,7160
+340,Jos Hooiveld,Defender,Southampton,4,5825
+341,Jose Fonte,Defender,Southampton,5.8,469846
+342,Nathaniel Clyne,Defender,Southampton,5.9,1138355
+343,Maya Yoshida,Defender,Southampton,4.1,80648
+344,Dejan Lovren,Defender,Liverpool,4.9,346541
+345,Calum Chambers,Defender,Arsenal,4.5,228246
+346,Jack Stephens,Defender,Southampton,3.9,5309
+347,Matt Targett,Defender,Southampton,3.9,15596
+348,Jack Cork,Midfielder,Swansea,4.3,63999
+349,Morgan Schneiderlin,Midfielder,Southampton,5.5,194513
+350,Steven Davis,Midfielder,Southampton,4.7,58106
+351,James WardProwse,Midfielder,Southampton,4.8,38747
+352,Gaston Ramirez,Midfielder,Hull,5.4,4671
+353,Victor Wanyama,Midfielder,Southampton,4.6,137321
+354,Lloyd Isgrove,Midfielder,Southampton,4.2,18274
+355,Harrison Reed,Midfielder,Southampton,4.3,2177
+356,Dusan Tadic,Midfielder,Southampton,7.4,127476
+357,Billy Sharp,Forward,Southampton,4.5,1260
+358,Jay Rodriguez,Forward,Southampton,7.3,3879
+359,Emmanuel Mayuka,Forward,Southampton,4.7,1499
+360,Pablo Osvaldo,Forward,Southampton,7,639
+361,Sam Gallagher,Forward,Southampton,4.7,1075
+362,Graziano Pelle,Forward,Southampton,7.5,402329
+363,Brad Friedel,Goalkeeper,Spurs,4.7,3775
+364,Hugo Lloris,Goalkeeper,Spurs,5.4,310511
+365,Michael Dawson,Defender,Hull,4.6,53594
+366,Danny Rose,Defender,Spurs,4.8,224823
+367,Benoit AssouEkotto,Defender,Spurs,4.4,5812
+368,Younes Kaboul,Defender,Spurs,4.6,55199
+369,Kyle Walker,Defender,Spurs,5.8,20328
+370,Kyle Naughton,Defender,Swansea,4,11868
+371,Jan Vertonghen,Defender,Spurs,5.8,66757
+372,Vlad Chiriches,Defender,Spurs,4.7,3396
+373,Ezekiel Fryers,Defender,Crystal Palace,4.2,1031
+374,Milos Veljkovic,Defender,Spurs,3.9,8637
+375,Ryan Fredericks,Defender,Spurs,4,3130
+376,Mousa Dembele,Midfielder,Spurs,5,12713
+377,Sandro Ranieri Guimaraes Cordeiro,Midfielder,QPR,4.8,3279
+378,Aaron Lennon,Midfielder,Everton,6.2,25702
+379,Iago Falque,Midfielder,Spurs,4.5,157
+380,Tom Carroll,Midfielder,Swansea,4.4,4907
+381,Gylfi Sigurdsson,Midfielder,Swansea,6.5,873514
+382,Paulinho,Midfielder,Spurs,6.7,35340
+383,Andros Townsend,Midfielder,Spurs,6.2,12857
+384,Nacer Chadli,Midfielder,Spurs,6.2,389381
+385,Etienne Capoue,Midfielder,Spurs,4.8,3182
+386,Erik Lamela,Midfielder,Spurs,7.4,49009
+387,Christian Eriksen,Midfielder,Spurs,7.9,644954
+388,Nabil Bentaleb,Midfielder,Spurs,4.3,30087
+389,Harry Winks,Midfielder,Spurs,4.4,1569
+390,Alex Pritchard,Midfielder,Spurs,4.5,46
+391,Lewis Holtby,Midfielder,Spurs,5.8,2996
+392,Emmanuel Adebayor,Forward,Spurs,7.9,64764
+393,Harry Kane,Forward,Spurs,6,1571020
+394,Roberto Soldado,Forward,Spurs,7.6,26746
+395,Asmir Begovic,Goalkeeper,Stoke,4.8,192577
+396,Thomas Sorensen,Goalkeeper,Stoke,4.3,7934
+397,Andy Wilkinson,Defender,Stoke,3.8,69090
+398,Ryan Shawcross,Defender,Stoke,5.3,246084
+399,Robert Huth,Defender,Leicester,4.7,19229
+400,Marc Wilson,Defender,Stoke,4.3,43488
+401,Geoff Cameron,Defender,Stoke,4.2,120627
+402,Erik Pieters,Defender,Stoke,4.6,32871
+403,Marc Muniesa,Defender,Stoke,4.2,6138
+404,Phil Bardsley,Defender,Stoke,4.9,17749
+405,Teixeira,Defender,Stoke,4.2,521
+406,Ryan Shotton,Defender,Stoke,4,5711
+407,Stephen Ireland,Midfielder,Stoke,4.7,4500
+408,Charlie Adam,Midfielder,Stoke,5.4,35991
+409,Glenn Whelan,Midfielder,Stoke,4.9,1386
+410,Wilson Palacios,Midfielder,Stoke,4.3,8333
+411,Jonathan Walters,Midfielder,Stoke,5.1,108501
+412,Steven NZonzi,Midfielder,Stoke,4.9,15951
+413,Brek Shea,Midfielder,Stoke,4.3,1130
+414,Jamie Ness,Midfielder,Stoke,4.4,382
+415,Charlie Ward,Midfielder,Stoke,4.3,3307
+416,Steve Sidwell,Midfielder,Stoke,5,42791
+417,Marko Arnautovic,Midfielder,Stoke,6.2,20490
+418,Peter Odemwingie,Midfielder,Stoke,6.1,9360
+419,Peter Crouch,Forward,Stoke,5.6,49554
+420,Cameron Jerome,Forward,Stoke,5,2049
+421,Mame Biram Diouf,Forward,Stoke,6.1,21669
+422,Vito Mannone,Goalkeeper,Sunderland,4.1,154781
+423,Costel Pantilimon,Goalkeeper,Sunderland,4.5,144394
+424,John OShea,Defender,Sunderland,4.6,263852
+425,Wes Brown,Defender,Sunderland,4.3,14398
+426,Modibo Diakite,Defender,Sunderland,4,13268
+427,Valentin Roberge,Defender,Sunderland,4,3663
+428,Billy Jones,Defender,Sunderland,4.3,3116
+429,Adam Johnson,Midfielder,Sunderland,5.9,84213
+430,Lee Cattermole,Midfielder,Sunderland,4.3,92346
+431,Sebastian Larsson,Midfielder,Sunderland,5.3,154894
+432,Alfred NDiaye,Midfielder,Sunderland,4.5,1068
+433,Cabral,Midfielder,Sunderland,4.3,1329
+434,Emanuele Giaccherini,Midfielder,Sunderland,5.8,681
+435,ElHadji Ba,Midfielder,Sunderland,4.5,676
+436,Charalampos Mavrias,Midfielder,Sunderland,4.3,1175
+437,Liam Bridcutt,Midfielder,Sunderland,4.2,10055
+438,Liam Agnew,Midfielder,Sunderland,4.3,1949
+439,Jordi Gomez GarciaPenche,Midfielder,Sunderland,5.1,29680
+440,Connor Wickham,Forward,Sunderland,5.6,39075
+441,Steven Fletcher,Forward,Sunderland,5,14778
+442,Mikael Mandron,Forward,Sunderland,4.3,2621
+443,M Karlsson,Forward,Sunderland,4.5,643
+444,Jozy Altidore,Forward,Sunderland,5.1,6603
+445,Ignacio Scocco,Forward,Sunderland,5,79
+446,Danny Graham,Forward,Sunderland,4.7,7632
+447,Michel Vorm,Goalkeeper,Spurs,4.7,13352
+448,Lukasz Fabianski,Goalkeeper,Swansea,5.3,285411
+449,Ashley Williams,Defender,Swansea,5.4,318678
+450,Neil Taylor,Defender,Swansea,4.8,163758
+451,Alan Tate,Defender,Swansea,3.9,3665
+452,Angel Rangel,Defender,Swansea,4.9,17415
+453,Chico,Defender,Swansea,5,1508
+454,Kyle Bartley,Defender,Swansea,3.9,41297
+455,Ben Davies,Defender,Spurs,4.4,28714
+456,Dwight Tiendalli,Defender,Swansea,4.3,1051
+457,Jordi Amat,Defender,Swansea,4.1,7652
+458,Ashley Richards,Defender,Swansea,4,12857
+459,Stephen Kingsley,Defender,Swansea,4.3,990
+460,Wayne Routledge,Midfielder,Swansea,5.4,33036
+461,Nathan Dyer,Midfielder,Swansea,5.2,161515
+462,Leon Britton,Midfielder,Swansea,4.4,2317
+463,Pablo Hernandez,Midfielder,Swansea,6,1160
+464,Alex Pozuelo,Midfielder,Swansea,4.5,63
+465,Jonjo Shelvey,Midfielder,Swansea,5.2,109140
+466,Miguel Michu,Midfielder,Swansea,7.5,126
+467,Jose Canas,Midfielder,Swansea,4.4,2261
+468,Lee Lucas,Midfielder,Swansea,4.5,2662
+469,Jay Fulton,Midfielder,Swansea,4.4,563
+470,Adam King,Midfielder,Swansea,4.3,3294
+471,Ki Sungyueng,Midfielder,Swansea,5.1,217992
+472,Wilfried Bony,Forward,Man City,8.1,131854
+473,Rory Donnelly,Forward,Swansea,4.4,973
+474,Bafetimbi Gomis,Forward,Swansea,6.5,18514
+475,Marvin Emnes,Forward,Swansea,4.9,709
+476,Boaz Myhill,Goalkeeper,West Brom,4.1,479407
+477,Ben Foster,Goalkeeper,West Brom,4.5,136474
+478,Jonas Olsson,Defender,West Brom,4.6,5213
+479,Gareth McAuley,Defender,West Brom,4.7,10999
+480,Craig Dawson,Defender,West Brom,4.5,129097
+481,Liam ONeil,Defender,West Brom,3.9,10200
+482,Donervon Daniels,Defender,West Brom,3.9,2955
+483,Joleon Lescott,Defender,West Brom,5.1,128959
+484,Chris Baird,Defender,West Brom,3.8,90156
+485,Sebastien Pocognoli,Defender,West Brom,4.1,6992
+486,Stephane Sessegnon,Midfielder,West Brom,5.4,9299
+487,George Thorne,Midfielder,West Brom,4.5,55
+488,Graham Dorrans,Midfielder,West Brom,4.7,11269
+489,Craig Gardner,Midfielder,West Brom,5.5,4201
+490,James Morrison,Midfielder,West Brom,5.5,1945
+491,Youssuf Mulumbu,Midfielder,West Brom,4.6,4207
+492,Chris Brunt,Midfielder,West Brom,5.2,27295
+493,Claudio Yacob,Midfielder,West Brom,4.4,7622
+494,Kemar Roofe,Midfielder,West Brom,4.4,1682
+495,Victor Anichebe,Forward,West Brom,4.9,7893
+496,Saido Berahino,Forward,West Brom,5.6,399080
+497,Jussi Jaaskelainen,Goalkeeper,West Ham,4.2,21033
+498,Adrian,Goalkeeper,West Ham,5.2,100857
+499,James Collins,Defender,West Ham,4.4,12227
+500,Joey OBrien,Defender,West Ham,4.2,12526
+501,Winston Reid,Defender,West Ham,4.8,23634
+502,Guy Demel,Defender,West Ham,4.7,6227
+503,Daniel Potts,Defender,West Ham,3.9,10142
+504,James Tomkins,Defender,West Ham,4.6,11660
+505,Leo Chambers,Defender,West Ham,3.9,24112
+506,Aaron Cresswell,Defender,West Ham,5.6,183709
+507,Stewart Downing,Midfielder,West Ham,5.9,655802
+508,Mark Noble,Midfielder,West Ham,5.3,46971
+509,Ravel Morrison,Midfielder,West Ham,4.8,592
+510,Kevin Nolan,Midfielder,West Ham,6.2,36869
+511,Mohamed Diame,Midfielder,Hull,5.1,27969
+512,Alou Diarra,Midfielder,West Ham,4.5,2748
+513,Matthew Jarvis,Midfielder,West Ham,5.2,1664
+514,Cheikhou Kouyate,Midfielder,West Ham,4.9,16862
+515,Diego Poyet,Midfielder,West Ham,4.3,15682
+516,Andy Carroll,Forward,West Ham,6.3,8570
+517,Ricardo Vaz Te,Forward,West Ham,4.1,50825
+518,Modibo Maiga,Forward,West Ham,4.9,576
+519,Elliot Lee,Forward,West Ham,4.3,5787
+520,Carlton Cole,Forward,West Ham,4.6,19993
+521,Mauro Zarate,Forward,QPR,6.1,13893
+522,Costa,Forward,Chelsea,10.6,1000865
+523,Lukas Jutkiewicz,Forward,Burnley,4.4,7407
+524,Lazar Markovic,Midfielder,Liverpool,7,7708
+525,Remy Cabella,Midfielder,Newcastle,7,29806
+526,Emmanuel Riviere,Forward,Newcastle,6.7,14935
+527,Daryl Janmaat,Defender,Newcastle,5.3,262606
+528,Filipe Luis Kasmirski,Defender,Chelsea,5.3,78297
+529,Rio Ferdinand,Defender,QPR,4.2,81473
+530,Enner Valencia,Forward,West Ham,6.3,23429
+531,Brown Ideye,Forward,West Brom,4.8,4235
+532,Leonardo Ulloa,Forward,Leicester,5,282841
+533,Bojan Krkic,Forward,Stoke,4.9,88141
+534,Steven Caulker,Defender,QPR,4.6,168541
+535,Gerhard Tremmel,Goalkeeper,Swansea,4.4,3631
+536,Fraizer Campbell,Forward,Crystal Palace,5,38675
+537,Jefferson Montero,Midfielder,Swansea,5.4,5362
+538,Zoumana Bakayogo,Defender,Leicester,4,6944
+539,Alan Hutton,Defender,Aston Villa,4.3,274090
+540,Kurt Zouma,Defender,Chelsea,4.2,29722
+541,Patrick van Aanholt,Defender,Sunderland,4.1,162469
+542,Didier Drogba,Forward,Chelsea,5.9,36520
+543,David Ospina,Goalkeeper,Arsenal,5,139783
+544,Muhamed Besic,Midfielder,Everton,4.5,9663
+545,Andrew Robertson,Defender,Hull,4.2,16256
+546,Harry Maguire,Defender,Hull,4.1,1892
+547,Brede Hangeland,Defender,Crystal Palace,4.6,24518
+548,Eric Dier,Defender,Spurs,4.6,387319
+549,Facundo Ferreyra,Forward,Newcastle,5.6,1768
+550,Javier Manquillo,Defender,Liverpool,4.4,10435
+551,Frank Lampard,Midfielder,Man City,5,43261
+552,Jordon Mutch,Midfielder,Crystal Palace,5,21481
+553,Jason Davidson,Defender,West Brom,4.2,1132
+554,Cristian Gamboa,Defender,West Brom,4.1,2456
+555,Bradley Jones,Goalkeeper,Liverpool,4.9,1725
+556,Saphir Taider,Midfielder,Southampton,5.4,799
+557,Mauricio Isla,Defender,QPR,4.6,11647
+558,Aly Cissokho,Defender,Aston Villa,4.4,112861
+559,Bruno Zuculini,Midfielder,Man City,5.5,346
+560,Fraser Forster,Goalkeeper,Southampton,5.3,233714
+561,Santiago Vergini,Defender,Sunderland,4.5,45149
+562,Eliaquim Mangala,Defender,Man City,6,33489
+563,Rolando Aarons,Midfielder,Newcastle,4.7,1930
+564,Jerome BinnomWilliams,Defender,Crystal Palace,4.4,1588
+565,Reece James,Defender,Man Utd,4.3,2098
+566,Tyler Blackett,Defender,Man Utd,3.9,30072
+567,Christian Atsu,Midfielder,Everton,5.7,2032
+568,William Buckley,Midfielder,Sunderland,5,1083
+569,Florin Gardos,Defender,Southampton,4,2721
+570,Diafra Sakho,Forward,West Ham,5.2,59990
+571,Francis Coquelin,Midfielder,Arsenal,4.5,13159
+572,Damian Emiliano Martinez,Goalkeeper,Arsenal,4.5,2178
+573,Tom Hopper,Forward,Leicester,4.4,3371
+574,Ben Amos,Goalkeeper,Man Utd,4.5,906
+575,Josh Sheehan,Midfielder,Swansea,4.4,1348
+576,Reece Burke,Defender,West Ham,4,5875
+577,Kelvin Davis,Goalkeeper,Southampton,4.5,51195
+578,Cameron Dummigan,Defender,Burnley,3.9,3176
+579,Alberto Moreno,Defender,Liverpool,5.1,188960
+580,Stephen Ward,Defender,Burnley,4.5,510
+581,Carlos Sanchez,Midfielder,Aston Villa,4.4,15048
+582,Marcos Rojo,Defender,Man Utd,5.7,24753
+583,Leroy Fer,Midfielder,QPR,5.2,24647
+584,Federico Fernandez,Defender,Swansea,4.9,6661
+585,Eduardo Vargas,Forward,QPR,6.1,3743
+586,Georgios Samaras,Forward,West Brom,4.7,1280
+587,Mario Balotelli,Forward,Liverpool,9.2,42589
+588,Angel Di Maria,Midfielder,Man Utd,9.4,332425
+589,Samuel Etoo,Forward,Everton,5.2,21747
+590,Silvestre Varela,Midfielder,West Brom,6,201
+591,Federico Fazio,Defender,Spurs,4.7,2139
+592,Esteban Cambiasso,Midfielder,Leicester,4.8,87239
+593,Alexandre Song,Midfielder,West Ham,4.8,8819
+594,Abel Hernandez,Forward,Hull,6.3,4171
+595,Benjamin Stambouli,Midfielder,Spurs,4.6,275
+596,RicardoAlvarez,Midfielder,Sunderland,5.7,364
+597,Daley Blind,Midfielder,Man Utd,4.9,35212
+598,James McArthur,Midfielder,Crystal Palace,5.2,601
+599,Morgan Amalfitano,Midfielder,West Ham,4.9,2893
+600,Niko Kranjcar,Midfielder,QPR,4.3,4230
+601,Toby Alderweireld,Defender,Southampton,4.7,82572
+602,Kevin Doyle,Forward,Crystal Palace,4.6,681
+603,Radamel Falcao Garcia,Forward,Man Utd,10.3,63581
+604,Sadio Mane,Midfielder,Southampton,6.3,86165
+605,Sebastian Blanco,Midfielder,West Brom,5.2,87
+606,Nathaniel Chalobah,Midfielder,Chelsea,4.3,439
+607,Alex McCarthy,Goalkeeper,QPR,4,19279
+608,Sam McQueen,Midfielder,Southampton,4.5,644
+609,Adam Smith,Goalkeeper,Leicester,4,5198
+610,Luke Daniels,Goalkeeper,West Brom,4,4385
+611,Andreas Pereira,Midfielder,Man Utd,5,436
+612,Andrew Johnson,Forward,Crystal Palace,4.5,1236
+613,Ryan Mason,Midfielder,Spurs,4.5,7177
+614,Jose Pozo,Forward,Man City,4.7,502
+615,Jason McCarthy,Defender,Southampton,4,2618
+616,Patrick McNair,Defender,Man Utd,4.4,7803
+617,Tom Thorpe,Defender,Man Utd,4,973
+618,Eldin Jakupovic,Goalkeeper,Hull,4,93337
+619,Steven Hewitt,Midfielder,Burnley,4.5,560
+620,Liam Shephard,Defender,Swansea,4,1428
+621,Semi Ajayi,Defender,Arsenal,4,1435
+622,Dominic Solanke,Forward,Chelsea,5,360
+623,Rory Watson,Goalkeeper,Hull,4,4708
+624,Anthony Reveillere,Defender,Sunderland,4.5,4582
+625,Marnick Vermijl,Defender,Man Utd,4,564
+626,Thomas Robson,Defender,Sunderland,4,929
+627,Modou Barrow,Forward,Swansea,4.4,272
+628,Sebastian Lletget,Midfielder,West Ham,4.5,197
+629,Remie Streete,Defender,Newcastle,4,491
+630,Cristian Ceballos,Midfielder,Spurs,5,150
+631,Dominic Ball,Defender,Spurs,4,975
+632,Jack Butland,Goalkeeper,Stoke,4.5,1960
+633,Ryan Huddart,Goalkeeper,Arsenal,4,1157
+634,Oliver Shenton,Midfielder,Stoke,4.4,218
+635,Matthew Macey,Goalkeeper,Arsenal,4,1283
+636,Jak Alnwick,Goalkeeper,Newcastle,3.9,23472
+637,Chris Herd,Defender,Aston Villa,4,792
+638,Will Keane,Forward,Man Utd,4.5,465
+639,Jose Angel Esmoris Tasende,Defender,Man City,4.5,370
+640,Ainsley MaitlandNiles,Midfielder,Arsenal,4.4,157
+641,Jake Hesketh,Midfielder,Southampton,4.9,28
+642,Haris Vuckic,Midfielder,Newcastle,4.4,124
+643,Freddie Woodman,Goalkeeper,Newcastle,4,1274
+644,Mark Schwarzer,Goalkeeper,Leicester,4.5,2586
+645,David Cornell,Goalkeeper,Swansea,4,2202
+646,Riccardo Calder,Midfielder,Aston Villa,4.5,263
+647,Thierry Ambrose,Forward,Man City,4.5,648
+648,Dominic Gape,Midfielder,Southampton,4.5,64
+649,Ryan Seager,Forward,Southampton,4.5,207
+650,Oluwaseyi Ojo,Midfielder,Liverpool,5,78
+651,Russell Griffiths,Goalkeeper,Everton,4,1827
+652,Danny Ward,Goalkeeper,Liverpool,4,4812
+653,Adil Nabi,Forward,West Brom,4.5,482
+654,Victor Valdes,Goalkeeper,Man Utd,4.9,4814
+655,Eljero Elia,Midfielder,Southampton,4.3,25104
+656,Philipp Wollscheid,Defender,Stoke,4.2,9337
+657,Matt Grimes,Midfielder,Swansea,4.9,155
+658,Nelson Miguel Castro Oliveira,Forward,Swansea,5.5,399
+659,Doneil Henry,Defender,West Ham,3.9,1334
+660,DeAndre Yedlin,Defender,Spurs,4.3,633
+661,Carles Gil de Pareja Vicent,Midfielder,Aston Villa,4.2,3331
+662,Jermain Defoe,Forward,Sunderland,4.8,90620
+663,Andrej Kramaric,Forward,Leicester,5,1933
+664,Jordan Williams,Defender,Liverpool,4,1296
+665,Gabriel Armando de Abreu,Defender,Arsenal,5.1,1512
+666,Krystian Bielik,Midfielder,Arsenal,4.4,317
+667,Callum McManaman,Midfielder,West Brom,4.4,515
+668,Shola Ameobi,Forward,Crystal Palace,4.5,390
+669,Andreas Christensen,Defender,Chelsea,4.5,287
+670,Ruben LoftusCheek,Midfielder,Chelsea,5,891
+671,Reece Oxford,Defender,West Ham,4,1432
+672,Jack Rose,Goalkeeper,West Brom,4,5645
+673,Juan Cuadrado,Midfielder,Chelsea,7.2,3778
+674,Filip Djuricic,Midfielder,Southampton,5.7,204
+675,Chungyong Lee,Midfielder,Crystal Palace,5,179
+676,Dame NDoye,Forward,Hull,5.5,15138
+677,Jake Flannigan,Midfielder,Southampton,4.5,252
+678,Michael Doughty,Midfielder,QPR,4.5,32
+679,Pape Souare,Defender,Crystal Palace,4.3,258
+680,Darnell Furlong,Defender,QPR,3.9,413
+681,Anderson Luis de Carvalho,Midfielder,West Ham,5.3,109
+682,Duncan Watmore,Forward,Sunderland,4.5,545
+683,Jake Gray,Midfielder,Crystal Palace,4.5,130
+684,Reece GregoCox,Midfielder,QPR,4.3,69
+685,Brandon Comley,Midfielder,QPR,4.4,141
+686,Emmanuel Onariase,Defender,West Ham,4,441
+687,Josh Cullen,Midfielder,West Ham,4.5,108
+688,Lewis Kinsella,Defender,Aston Villa,4,412
+689,Rushian Hepburn-Murphy,Forward,Aston Villa,4.4,49
+690,Olivier Kemen,Midfielder,Newcastle,4.5,151
+691,Cameron Brannagan,Midfielder,Liverpool,4.5,139
+692,Frankie Sutherland,Midfielder,QPR,4.5,98
+693,Fredrik Ulvestad,Midfielder,Burnley,4.5,114
+694,Aaron Mitchell,Midfielder,QPR,4.5,231
+695,Jamie Sterry,Defender,Newcastle,4,566
+696,George Honeyman,Midfielder,Sunderland,4.5,329
+697,Raheem Hanley,Defender,Swansea,4,455
+698,Mitchell Beeney,Goalkeeper,Chelsea,4,275
+699,Jerome Sinclair,Forward,Liverpool,4.5,154
+700,Brendan Galloway,Defender,Everton,4,97
+701,Jamal Blackman,Goalkeeper,Chelsea,4,179
+704,Jed Steer,Goalkeeper,Aston Villa,4,
+708,Kenji Gorre,Midfielder,Swansea,4.5,
+710,Cole Kpekawa,Defender,QPR,4,
