@@ -6,7 +6,7 @@ suppressWarnings(library(dplyr))
 suppressWarnings(library(tidyr))
 suppressWarnings(library(lubridate))
 
-USERPATH='c:/research/lineup/'
+USERPATH='c:/git/lineup/'
 DATAPATH='d:/whoscored_data/'
 setwd(USERPATH)
 source('admin_funct.r')
@@ -41,3 +41,4 @@ summarydf = ffDataLoading::GetSummaryDF(gbgdf)
 playerDF = ffDataLoading:::ReadCurrentSeasonPlayerDF() %>%
               rename(player = whoscoredPlayer) %>%
               remove_column(c('soccerwayPlayer', 'ffuseswholename', 'adjustedwhoscoredPlayer'))
+
