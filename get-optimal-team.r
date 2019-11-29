@@ -65,5 +65,5 @@ print(idealteamfullinfo$totalexpectedpoint)
 cat('Type \'rivalteaminfo\' to view other teams situations\n')
 
 message('ADvice for current week:')
-currentteampointsummarydf %>% ungroup() %>% select(player, ffPosition, currentgameweek, eMin) %>% arrange(desc(currentgameweek))
-print(currentteampointsummarydf %>% select(player, currentgameweek))
+# currentteampointsummarydf %>% ungroup() %>% select(player, ffPosition, currentgameweek, eMin) %>% arrange(desc(currentgameweek))
+print(currentteampointsummarydf %>% mutate(adj94currentgameweek = 94/eMin * currentgameweek) %>% select(team, player, currentgameweek, eMin, adj94currentgameweek))
