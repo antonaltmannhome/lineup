@@ -1,5 +1,5 @@
 ### let's have a separate file to do the data update
-source('c:/research/lineup/ff_startup.r')
+source('c:/git/lineup/ff_startup.r')
 
 seasoninfo = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
 currentseason = 1920

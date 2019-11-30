@@ -7,7 +7,7 @@ suppressWarnings(library(lubridate))
 # SQLPATH='c:/temp/sqlscript/'
 AHKPATH='c:/research/utils/autohotkeys/'
 source(paste(AHKPATH, 'ahkfunct.r', sep = ''))
-USERPATH='c:/research/lineup/'
+USERPATH='c:/git/lineup/'
 DATAPATH='d:/whoscored_data/'
 TEMPPATH='c:/temp/'
 setwd(USERPATH)

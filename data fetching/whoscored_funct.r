@@ -105,9 +105,9 @@ removefourdownpressesfordesktop = function(comm) {
 	return(comm)
 }
 
-stripcurrentpage=function(myteam, filedir, ahkfile, ishistoric=F, beforeseason = F) {
+stripcurrentpage=function(myteam, DIRTOUSE, ahkfile, ishistoric=F, beforeseason = F) {
 
-	filename=paste(DATAPATH,filedir,'/',myteam,'_',allfiletype,'.txt',sep='')
+	filename=paste(DIRTOUSE,'/',myteam,'_',allfiletype,'.txt',sep='')
 	for (j in 1:length(filename)) if (file.exists(filename[j])) file.remove(filename[j])
 
 	### get hold of links locations  - they need reseting each time
@@ -225,12 +225,12 @@ checkpage=function(myteam, myfiletype, mycolhead) {
 	}
 }
 
-checkteam=function(myteam,filedir,ishistoric=F,beforeseason) {
+checkteam=function(myteam,DIRTOUSE,ishistoric=F,beforeseason) {
 	if (!beforeseason) {
-		filename=paste(DATAPATH,filedir,'/',myteam,'_',allfiletype,'.txt',sep='')
+		filename=paste(DIRTOUSE,'/',myteam,'_',allfiletype,'.txt',sep='')
 	}
 	if (beforeseason) {
-		filename=paste(DATAPATH,filedir,'/',myteam,'_summary.txt',sep='')
+		filename=paste(DIRTOUSE,'/',myteam,'_summary.txt',sep='')
 	}
 	wsteam=teamdf$wsteam[teamdf$team==myteam]
 	iserror=rep(NA,length(allfiletype))
@@ -294,13 +294,13 @@ checkteam=function(myteam,filedir,ishistoric=F,beforeseason) {
 	return(iserror)
 }
 
-processpage=function(myteam,filedir,ishistoric=F,beforeseason) {
+processpage=function(myteam,DIRTOUSE,ishistoric=F,beforeseason) {
 	cat('About to strip',myteam,'data...\n')
 	if (beforeseason) {
-		filename=paste(DATAPATH,filedir,'/',myteam,'_summary.txt',sep='')
+		filename=paste(DIRTOUSE,'/',myteam,'_summary.txt',sep='')
 	}
 	if (!beforeseason) {
-		filename=paste(DATAPATH,filedir,'/',myteam,'_',allfiletype,'.txt',sep='')
+		filename=paste(DIRTOUSE,'/',myteam,'_',allfiletype,'.txt',sep='')
 	}
 	mywsteam=teamdf[which(teamdf$team==myteam),'wsteam']
 	for (j in 1:length(filename)) {
@@ -381,18 +381,17 @@ addmissingteamtosummarydf=function(gotteam, allteam, datetouse) {
 	return(missingsummarydf)
 }
 
-combineteamfile=function(datetouse,beforeseason=FALSE,ishistoric=FALSE) {
-	currentdir=paste(DATAPATH,datetouse,sep='')
-	currentfile=list.files(currentdir)
+combineteamfile=function(DIRTOUSE, datetouse, beforeseason=FALSE,ishistoric=FALSE) {
+	currentfile=list.files(DIRTOUSE)
 	currentsummaryfile=currentfile[grep('^[a-z]+_summary.txt',currentfile)]
 	currentteam=gsub('\\_summary.txt','',currentsummaryfile)
 	combinedteamsummarylist=NULL
 	for (ti in 1:length(currentteam)) {
-		currentteamsummary = processpage(currentteam[ti],datetouse,ishistoric=ishistoric,beforeseason=beforeseason)
+		currentteamsummary = processpage(currentteam[ti],DIRTOUSE,ishistoric=ishistoric,beforeseason=beforeseason)
 		combinedteamsummarylist[[ti]] = currentteamsummary
 	}
 	combinedteamsummary=do.call(rbind,combinedteamsummarylist)
-	fileout=paste(currentdir,'/combined_data.csv',sep='')
+	fileout=paste0(DATAPATH, 'summarised_whoscored_data/combined_data_', datetouse, '.csv')
 	write.csv(file=fileout, combinedteamsummary, row.names=FALSE)
 	cat('Have created',fileout,'...\n')
 }

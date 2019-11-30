@@ -27,7 +27,7 @@ myteamtoget=select.list(allteam,multiple=T,title='select teams to update')
 for (ti in 1:length(myteamtoget)) {
 	Sys.sleep(sample(1:4,1))
 	gotocurrentpage(myteamtoget[ti], thiscomputer = thiscomputer)
-	stripcurrentpage(myteamtoget[ti], datetouse, ahkfile, ishistoric=F,beforeseason)
+	stripcurrentpage(myteamtoget[ti], DIRTOUSE, ahkfile, ishistoric=F,beforeseason)
 }
 
 Sys.sleep(1)
@@ -35,7 +35,7 @@ Sys.sleep(1)
 ### then run the checks and balances
 iserrorarr=array(NA,dim=c(length(myteamtoget),length(allfiletype)))
 for (ti in 1:length(myteamtoget)) {
-	iserrorarr[ti,]=checkteam(myteamtoget[ti],datetouse,ishistoric=F,beforeseason)
+	iserrorarr[ti,]=checkteam(myteamtoget[ti],DIRTOUSE,ishistoric=F,beforeseason)
 }
 
 problemteam = myteamtoget[apply(iserrorarr,1,function(x) any(x==1))]
@@ -43,7 +43,7 @@ problemteam = myteamtoget[apply(iserrorarr,1,function(x) any(x==1))]
 if (length(problemteam) == 0) {
 	print('data all looks good!')
 	print('once you are happy there are no errors, type this line to produce single summary file:')
-	print(paste('combineteamfile(',datetouse,')',sep=''))
+	print(paste0('combineteamfile(\'',DIRTOUSE,'\', ', datetouse, ')'))
 }
 
 if (length(problemteam) > 0) {
@@ -51,3 +51,12 @@ if (length(problemteam) > 0) {
 	problemindex = match(problemteam, myteamtoget)
 	print(paste(problemteam, problemindex))
 }
+
+# final task, zip the whoscored files into current year directory, then delete
+setwd(TEMPPATH)
+currentYear = substr(datetouse, 1, 4)
+targetZipFile = paste0('d:/whoscored_data/whoscored', currentYear, '.7z')
+myCommand = paste0('7z a ', targetZipFile, ' ', datetouse, '\\*.txt')
+system(myCommand)
+
+setwd(USERPATH)
