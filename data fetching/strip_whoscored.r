@@ -8,7 +8,7 @@ datetouse=numericdate()
 
 ### we often have net drop outs, so good to be able to resume in this case
 
-DIRTOUSE=paste(DATAPATH,datetouse,sep='')
+DIRTOUSE=paste(TEMPPATH,datetouse,sep='')
 if (!file.exists(DIRTOUSE)) dir.create(DIRTOUSE)
 ahkfile=paste(TEMPPATH,'temp.ahk',sep='')
 
