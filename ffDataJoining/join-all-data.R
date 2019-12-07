@@ -1,6 +1,6 @@
 ### so we've got all the raw data, just got to join it up. we need the following:
 ### file that runs through the standard procedure for each week
-source(paste0(USERPATH, 'ffDataJoining/data-joining-startup.r'))
+source('c:/git/lineup/ffDataJoining/data-joining-startup.r')
 
 if (FALSE) {
   ffDataJoiningPath = paste0(USERPATH, 'ffDataJoining')

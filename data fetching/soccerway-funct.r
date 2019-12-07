@@ -22,8 +22,8 @@ getwebaddressfordate = function(mydate) {
 	matchAddress = paste0('http://uk.soccerway.com',
 									gsub('(^.+href=\")(.+)(#events.+$)','\\2',b[mgreg]))
 	### also want to grab team and score though
-	hteam = tolower(gsub('[^a-zA-Z ]', '', gsub('(^.+title=\")(.+)', '\\2', b[mgreg-15])))
-	ateam = tolower(gsub('[^a-zA-Z ]', '', gsub('(^.+title=\")(.+)', '\\2', b[mgreg-5])))
+	hteam = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', b[mgreg-15])))
+	ateam = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', b[mgreg-5])))
 	## but want nice team abbreviations
 	hteam = cleanteam(hteam, 'soccerway')
 	ateam = cleanteam(ateam, 'soccerway')
