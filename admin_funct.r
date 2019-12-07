@@ -1,16 +1,18 @@
 
-getalldate=function(startseason='1617') {
+getalldate=function(startseason = '1617') {
 	### often want to get all match dates for current season
-	allfile=list.files(DATAPATH)
-	alldateever=as.numeric(allfile[grep('^[0-9]{8}$',allfile)])
-	startcutoff=as.numeric(paste('20',substr(startseason,1,2),'0801',sep=''))
-	sax=which(alldateever>startcutoff)
-	alldate=alldateever[sax]
+	allfile=list.files(paste0(DATAPATH, 'summarised_whoscored_data/'))
+	allCombinedDataFile = allfile[grep('combined\\_data', allfile)]
+  alldateever=as.numeric(gsub('(.+\\_)([0-9]{8})(\\.csv)','\\2',allCombinedDataFile))
+  startcutoff=as.numeric(paste('20',substr(startseason,1,2),'0801',sep=''))
+  sax=which(alldateever>startcutoff)
+  alldate=alldateever[sax]
+
 	return(alldate)
 }
 
 getpreviousdate=function(datetouse) {
-	### sometimes useful to know what the 
+	### sometimes useful to know what the
 	alldate=getalldate()
 	keep=which(alldate<datetouse)
 	if (length(keep)==0) previousdate=NULL

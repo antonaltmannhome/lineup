@@ -11,7 +11,7 @@
 	### scan them all in
 	tempbigdf=NULL
 	for (di in 1:length(myalldate)) {
-		combinedteamfile=paste(DATAPATH,myalldate[di],'/combined_data.csv',sep='')
+		combinedteamfile=paste0(DATAPATH,'summarised_whoscored_data/combined_data_', myalldate[di],'.csv')
 		tempbigdf[[di]]=read.csv(combinedteamfile)
 		tempbigdf[[di]]$filedate = myalldate[di]
 	}

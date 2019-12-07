@@ -3,7 +3,7 @@ source('c:/research/general_startup.r')
 suppressWarnings(library(dplyr))
 suppressWarnings(library(tidyr))
 suppressWarnings(library(lubridate))
-USERPATH='c:/research/lineup/'
+USERPATH='c:/git/lineup/'
 DATAPATH='d:/whoscored_data/'
 TEMPPATH='c:/temp/'
 setwd(USERPATH)

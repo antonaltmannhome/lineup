@@ -4,26 +4,32 @@ getwebaddressfordate = function(mydate) {
 	myday = gsub('([0-9]{4})([0-9]{2})([0-9]{2})', '\\1/\\2/\\3', mydate)
 	coverpageaddress = paste0('http://uk.soccerway.com/matches/', myday)
 	b = scanrobust(coverpageaddress, '', sep = '\n', quiet = TRUE)
-	mgreg=grep('a href.+matches.+england/premier-league.+ICID',b)
+	# get rid of lines that are just white space
+	allWhiteSpaceIndex = which(nchar(gsub(' ', '', b)) == 0)
+	if (length(allWhiteSpaceIndex) > 0) {
+		b = b[-allWhiteSpaceIndex]
+	}
+	mgreg=grep('matches/[0-9]{4}/[0-9]{2}/[0-9]{2}/england/premier\\-league.+View events', b)
 
 	# but be careful, there are sometimes postponed matches listed, get rid of them
 	mgreg = setdiff(mgreg, mgreg[grep('Postponed', b[mgreg])])
-	
+
 	if (length(mgreg)==0) {
 		stop('No matches on',mydate,'...\n')
 	}
 
 	cat('About to pick up',length(mgreg),'matches on',mydate,'\n')
-	matchAddress = paste('http://uk.soccerway.com',gsub('(^.+")([^"]+)(".+$)','\\2',b[mgreg]),sep='')
+	matchAddress = paste0('http://uk.soccerway.com',
+									gsub('(^.+href=\")(.+)(#events.+$)','\\2',b[mgreg]))
 	### also want to grab team and score though
-	hteam = gsub(' ', '', tolower(gsub('(^.+title=\")([^"]+)(".+$)','\\2',b[mgreg-6])))
-	ateam = gsub(' ', '', tolower(gsub('(^.+title=\")([^"]+)(".+$)','\\2',b[mgreg+7])))
+	hteam = tolower(gsub('[^a-zA-Z ]', '', gsub('(^.+title=\")(.+)', '\\2', b[mgreg-15])))
+	ateam = tolower(gsub('[^a-zA-Z ]', '', gsub('(^.+title=\")(.+)', '\\2', b[mgreg-5])))
 	## but want nice team abbreviations
 	hteam = cleanteam(hteam, 'soccerway')
 	ateam = cleanteam(ateam, 'soccerway')
-	
+
 	matchKey = paste0(mydate, hteam)
-	
+
 	myDF = tibble(key = matchKey, address = matchAddress)
 	return(myDF)
 }
@@ -63,7 +69,7 @@ CleanPlayer = function(messyPlayer) {
 	cleanPlayer = gsub('^-', '', messyPlayer)
 	# then replace hyphens with spaces
 	cleanPlayer = gsub('-+', ' ', cleanPlayer)
-	
+
 	return(cleanPlayer)
 }
 
@@ -89,7 +95,7 @@ ExtractSidelinedInfo = function(sidelinedHtml, homeStatus) {
 	sidelinedPlayer = gsub('(^.+players/)(.+)(/[0-9]+.+$)', '\\2', sidelinedHtml[sidelinedIndex])
 	sidelinedPlayer = CleanPlayer(sidelinedPlayer)
 	sidelinedPlayerId = gsub('(^.+players/[^/]+/)([0-9]+)(/.+$)', '\\2', sidelinedHtml[sidelinedIndex])
-	
+
 	injurySuspension = gsub('(^.+icons )(.+)(\">.+$)','\\2',sidelinedHtml[sidelinedIndex+2])
 	mySidelinedDF = tibble(playerid = sidelinedPlayerId,
 							player = sidelinedPlayer,
@@ -126,16 +132,16 @@ RemoveDoubleListedPlayer = function(appearanceDF) {
   appearanceDF = appearanceDF %>%
     filter(toKeep) %>%
     select(-c(isNumeric, toKeep, isCurrent))
-  
+
   return(appearanceDF)
 }
 
 getappearanceinfo = function(webadd, mykey) {
 	### firstly check to see if we've already got the filename
 	message('webadd = \'', webadd, '\'')
-	message('mykey = \'', mykey, '\'')		
+	message('mykey = \'', mykey, '\'')
 	filen=paste(DATAPATH,'soccerwayhtml/',mykey,'.html',sep='')
-	
+
 	if (!file.exists(filen)) {
 		b1=scanrobust(webadd,'',sep='\n',quiet=T,encoding='UTF-8')
 		write(file=filen,b1)
@@ -148,7 +154,7 @@ getappearanceinfo = function(webadd, mykey) {
 	dum = b1[grep('team-logo',b1)]
 	soccerwayHomeTeam = ExtractSoccerwayTeam(dum[1])
 	soccerwayAwayTeam = ExtractSoccerwayTeam(dum[2])
-	
+
 	### right, we have a problem with player links changing to coach links - need to override when this happens
 	coachIndex=grep('/coaches/',b1)
 	probsax=coachIndex[!grepl('coach:',b1[coachIndex-1])]
@@ -160,7 +166,7 @@ getappearanceinfo = function(webadd, mykey) {
 		probpaste=paste(probplayerid,probplayer,sep='~')
 		coachproblem(probpaste)
 	}
-	
+
 	linb=b1[(grep('header-label.+lineups',b1)+1):(grep('substitutes',b1)-1)]
 	teamb=grep('a href="/teams',linb)
 	startline=grep('<a href="/players/.+/[0-9]',linb)
@@ -171,7 +177,7 @@ getappearanceinfo = function(webadd, mykey) {
 	startplayer = CleanPlayer(startplayer)
 	startplayerid=gsub('(^.+players/[^/]+/)([0-9]+)(/.+$)','\\2',linb[startline])
 	startplayerhastatus=rep(1:2,rep(11,2))
-	
+
 	subb=b1[(grep('substitutes',b1)+1):(grep('additional info',b1)[1]-1)]
 	startline=grep('<a href="/players/.+/[0-9]',subb)
 	### but separate into those who were subs to start with, and those who were subbed off
@@ -189,7 +195,7 @@ getappearanceinfo = function(webadd, mykey) {
 	dum=grep('<div class=\"container right\">',subb)
 	subplayerhastatus[startline<dum]=1
 	subplayerhastatus[startline>dum]=2
-	
+
 	## however, we don't want the doubling up of players, so let's convert things to minute on and minute off
 	unplayerid = unique(c(startplayerid, subplayerid))
 	unplayer=c(startplayer,subplayer)[match(unplayerid, c(startplayerid, subplayerid))]
@@ -202,7 +208,7 @@ getappearanceinfo = function(webadd, mykey) {
 	subonoffix=which(unplayerid %in% subplayerid[substatus==1] & unplayerid %in% subplayerid[substatus==2])
 	msubonoffon=which(substatus==1)[match(unplayerid[subonoffix],subplayerid[substatus==1])]
 	msubonoffoff=which(substatus==2)[match(unplayerid[subonoffix],subplayerid[substatus==2])]
-	
+
 	starttime=endtime=hastatus=rep('U',length(unplayerid))
 	starttime[startix]=0
 	starttime[subonix]=subtime[msubon]
@@ -213,16 +219,16 @@ getappearanceinfo = function(webadd, mykey) {
 	endtime[subonoffix]=subtime[msubonoffoff]
 	starttime = CleanPlusMinute(starttime)
 	endtime = CleanPlusMinute(endtime)
-	
+
 	hastatus=c(startplayerhastatus,subplayerhastatus)[match(unplayerid,c(startplayerid,subplayerid))]
 	homeStatus = hastatus == 1
-	
+
 	playingDF = tibble(playerid = unplayerid,
 							player = unplayer,
 							homeStatus = homeStatus,
 							startTime = starttime,
 							endTime = endtime)
-	
+
 	sidelinedHeaderIndex = grep('sidelined table (right|left)', b1)
 	matchOfficialHeaderIndex = grep('match officials', b1)
 	if (length(sidelinedHeaderIndex) == 0) {
@@ -258,25 +264,25 @@ getappearanceinfo = function(webadd, mykey) {
 		awaySidelinedDF = ExtractSidelinedInfo(awaySidelinedHtml, FALSE)
 		sidelinedDF = bind_rows(homeSidelinedDF, awaySidelinedDF)
 	}
-	
+
 	# but now let's merge the playingDF and sidelineDF
 	appearanceDF = bind_rows(playingDF,
 							sidelinedDF %>%
 							rename(startTime = injurySuspension) %>%
 							mutate(endTime = NA))
-						
+
 	appearanceDF = RemoveDoubleListedPlayer(appearanceDF)
-	
+
 	return(appearanceDF)
 }
 
 FindDateToDo = function(resultdf) {
 	undate = unique(resultdf$date)
-	
+
 	allFile = list.files(paste0(DATAPATH, 'soccerway_saved/'))
 	allFile = allFile[grep('appearance-info-[0-9]{8}.csv', allFile)]
 	doneDate = gsub('(^.+-)([0-9]{8})(.csv)', '\\2', allFile)
-	
+
 	dateToDo = setdiff(undate, doneDate)
 
 	return(dateToDo)
