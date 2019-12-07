@@ -29,6 +29,7 @@ appearanceDF = ffDataJoining:::LoadSoccerwayData()
 ffDataJoining:::UpdateSoccerwayWhoscoredPlayerMap(appearanceDF)
 
 ### and having done that, we now load in all of the player map data:
+### NOTE 07/12/2019: problem with astonvilla / ezri konsa ngoyo 
 playerResultDF = ffDataJoining:::MergeSoccerwayWhoscoredGameData(appearanceDF, gbgdf)
 # note that writes the appearanceDF file to disk, it's what we will use for analysis
 
