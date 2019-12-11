@@ -10,6 +10,14 @@ playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 
 fixtdf = getfixturegoal(resultdf, fixtdf)
 
+# who's got a kind and tricky schedule to come:
+fixtdf %>%
+  filter(gameweek <= min(gameweek) + 9) %>%
+  group_by(team) %>%
+  summarise(sumEScored = sum(gwweight * escored),
+            sumEConceded = sum(gwweight * econceded)) %>%
+  arrange(desc(sumEScored - sumEConceded))
+
 gbgdf = processdeserved(gbgdf)
 summarydf=processdeserved(summarydf)
 
