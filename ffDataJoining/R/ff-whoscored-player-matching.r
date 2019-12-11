@@ -1,11 +1,13 @@
-InitialiseCurrentSeasonPlayerId = function(appearanceDF) {
+InitialiseCurrentSeasonPlayerId = function(playerResultDF) {
   # you run this after the first set of fixtures of the year (although if you leave it later than that it also works fine)
 
-  currentSeasonPlayerDF = appearanceDF %>%
+  currentSeasonPlayerDF = playerResultDF %>%
     filter(season == currentseason) %>%
-    distinct(team, soccerwayPlayer, playerid, player)
+    distinct(team, soccerwayPlayer, playerid, player) %>%
+    rename(whoscoredPlayer = player) %>%
+    mutate(season = currentSeason)
 
-  mostRecentAppearanceByPlayer = appearanceDF %>%
+  mostRecentAppearanceByPlayer = playerResultDF %>%
     filter(season == currentseason) %>%
     group_by(playerid) %>%
     arrange(desc(date)) %>%
@@ -22,12 +24,13 @@ InitialiseCurrentSeasonPlayerId = function(appearanceDF) {
   write.csv(file = currentSeasonPlayerIdFile, currentSeasonPlayerDF, row.names = FALSE)
 }
 
-UpdateCurrentSeasonPlayerId = function(appearanceDF) {
+UpdateCurrentSeasonPlayerId = function(playerResultDF) {
   # firstly load in our existing player ids
 
   currentSeasonPlayerIdFile = paste0(DATAPATH, 'current-season-player-id.csv')
-
-  currentSeasonPlayerId = readr::read_csv(currentSeasonPlayerIdFile, col_types = list(
+  stop('need to check ffDataJoining/ff-whoscored-player-matching/UpdateCurrentSeasonPlayerId code works since changing it')
+  
+  currentSeasonPlayerDF = readr::read_csv(currentSeasonPlayerIdFile, col_types = list(
     season = readr::col_integer(),
     playerid = readr::col_integer(),
     soccerwayPlayer = readr::col_character(),
@@ -40,11 +43,11 @@ UpdateCurrentSeasonPlayerId = function(appearanceDF) {
   ))
 
   # but that could be out of date, let's see if anyone new has turned up
-  upToDateCurrentPlayerDF = appearanceDF %>%
+  upToDateCurrentPlayerDF = playerResultDF %>%
                               filter(season == currentseason) %>%
                               distinct(season, playerid, soccerwayPlayer, player, team)
   newCurrentPlayerDF = anti_join(upToDateCurrentPlayerDF,
-                                    currentSeasonPlayerId,
+                                    currentSeasonPlayerDF,
                                     'playerid') %>%
                         rename(soccerwayPlayer = soccerwayPlayer,
                                 whoscoredPlayer = player) %>%
@@ -52,14 +55,14 @@ UpdateCurrentSeasonPlayerId = function(appearanceDF) {
                                 hasleft = FALSE,
                                 adjustedwhoscoredPlayer = 'none')
 
-  updatedCurrentSeasonPlayerId = bind_rows(currentSeasonPlayerId,
+  updatedCurrentSeasonPlayerDF = bind_rows(currentSeasonPlayerDF,
                                             newCurrentPlayerDF)
 
   # but let's put it back in team/player order of course
-  updatedCurrentSeasonPlayerId = updatedCurrentSeasonPlayerId %>%
+  updatedCurrentSeasonPlayerDF = updatedCurrentSeasonPlayerDF %>%
                                   arrange(team, whoscoredPlayer)
 
-  write.csv(file = currentSeasonPlayerIdFile, updatedCurrentSeasonPlayerId, row.names = FALSE)
+  write.csv(file = currentSeasonPlayerIdFile, updatedCurrentSeasonPlayerDF, row.names = FALSE)
 }
 
 ReadFFPlayerPriceDF = function() {

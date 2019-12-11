@@ -42,8 +42,20 @@ problemteam = myteamtoget[apply(iserrorarr,1,function(x) any(x==1))]
 
 if (length(problemteam) == 0) {
 	print('data all looks good!')
-	print('once you are happy there are no errors, type this line to produce single summary file:')
-	print(paste0('combineteamfile(\'',DIRTOUSE,'\', ', datetouse, ')'))
+	message('If you are happy for me to proceed, type \'y\' and I will produce the summary file and zip the raw html')
+	dum = askcond(F, T)
+	if (dum == 'y') {
+		stop('sort out the command!')
+		print(paste0('combineteamfile(\'',DIRTOUSE,'\', ', datetouse, ')'))
+
+		# final task, zip the whoscored files into current year directory, then delete
+		setwd(TEMPPATH)
+		currentYear = substr(datetouse, 1, 4)
+		targetZipFile = paste0('d:/whoscored_data/whoscored', currentYear, '.7z')
+		myCommand = paste0('7z a ', targetZipFile, ' ', datetouse, '\\*.txt')
+		system(myCommand)
+
+	}
 }
 
 if (length(problemteam) > 0) {
@@ -51,12 +63,5 @@ if (length(problemteam) > 0) {
 	problemindex = match(problemteam, myteamtoget)
 	print(paste(problemteam, problemindex))
 }
-
-# final task, zip the whoscored files into current year directory, then delete
-setwd(TEMPPATH)
-currentYear = substr(datetouse, 1, 4)
-targetZipFile = paste0('d:/whoscored_data/whoscored', currentYear, '.7z')
-myCommand = paste0('7z a ', targetZipFile, ' ', datetouse, '\\*.txt')
-system(myCommand)
 
 setwd(USERPATH)
