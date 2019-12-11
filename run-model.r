@@ -15,6 +15,10 @@ summarydf=processdeserved(summarydf)
 
 playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summarydf, resultDF)
 
+# might want to do this:
+# source(paste0(USERPATH, 'data fetching/strip_ffprice.r')); StripFFPrice()
+playerDF = ffDataJoining:::MatchFFPlayerData(playerDF)
+
 playerfixtdf = getplayerfixture(fixtdf, playerDF, gbgdf)
 playerfixtdf = getfixtureexpectedpoint(playerfixtdf)
 playerDF = getplayervalue(playerDF, playerfixtdf)

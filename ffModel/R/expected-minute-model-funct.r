@@ -82,9 +82,17 @@ SingleQuantityCalculateUpToDatePlayerSmooth = function(theta, quantityChoice, gb
 	# but we're only actually interested in players who are active at the moment
 	subgbgdf = semi_join(subgbgdf, playerDF, c('team', 'player'))
 
-	byPlayerInfo = ffModel:::CalculateSmoothFromPlayerGame(subgbgdf, overallMeanValue,
+	byPlayerInfo = ffModel:::CalculateSmoothFromPlayerGame(subgbgdf %>% filter(isValid),
+	                                                       overallMeanValue,
 																	gameDownweightCoef, seasonDownweightCoef, priorStrength)
-
+	
+	# but what about players who've eg never come off the bench, they're not in byPlayerInfo as things stand
+	missingPlayer = anti_join(subgbgdf %>%
+	                            distinct(team, player),
+	                          byPlayerInfo,
+	                          c('team', 'player'))
+	byPlayerInfo = bind_rows(byPlayerInfo, missingPlayer %>% mutate(expectedValue = overallMeanValue), )
+	
 	byPlayerInfo[,quantityChoice] = byPlayerInfo$expectedValue
 	# maybe should retain sumValue and sumNumOb?
 	byPlayerInfo = remove_column(byPlayerInfo, c('sumValue', 'sumNumOb', 'topLine', 'bottomLine', 'expectedValue'))

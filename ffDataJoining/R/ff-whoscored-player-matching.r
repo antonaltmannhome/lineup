@@ -17,7 +17,6 @@ InitialiseCurrentSeasonPlayerId = function(playerResultDF) {
   currentSeasonPlayerDF$ffuseswholename = FALSE
   currentSeasonPlayerDF$hasleft = FALSE
   currentSeasonPlayerDF$adjustedwhoscoredPlayer = 'none'
-  currentSeasonPlayerDF$ffPrice = NA
 
   currentSeasonPlayerIdFile = paste0(DATAPATH, 'current-season-player-id.csv')
 
@@ -39,7 +38,6 @@ UpdateCurrentSeasonPlayerId = function(playerResultDF) {
     ffuseswholename = readr::col_logical(),
     hasleft = readr::col_logical(),
     adjustedwhoscoredPlayer = readr::col_character(),
-    ffPrice = readr::col_double()
   ))
 
   # but that could be out of date, let's see if anyone new has turned up
@@ -77,11 +75,9 @@ ReadFFPlayerPriceDF = function() {
   return(ffplayerpricedf)
 }
 
-MatchFFPlayerData = function() {
+MatchFFPlayerData = function(playerDF) {
 
   ffplayerpricedf = ffDataJoining:::ReadFFPlayerPriceDF()
-
-  currentSeasonPlayerIdFile = paste0(DATAPATH, 'current-season-player-id.csv')
 
   # there are ones we don't worry about, ie the ones who hven't played a game this season
   # but the ones we should correct are these:
@@ -89,24 +85,23 @@ MatchFFPlayerData = function() {
   satis = FALSE
   while(!satis) {
 
-    currentSeasonPlayerDF = ffDataLoading:::ReadCurrentSeasonPlayerDF()
-
-    currentSeasonPlayerDF = currentSeasonPlayerDF %>%
+    playerDF = playerDF %>%
       mutate(surname = case_when(
-        adjustedwhoscoredPlayer == 'none' & !ffuseswholename ~ gsub('^[^ ]+ ','',whoscoredPlayer),
-        adjustedwhoscoredPlayer == 'none' & ffuseswholename ~ whoscoredPlayer,
+        adjustedwhoscoredPlayer == 'none' & !ffuseswholename ~ gsub('^[^ ]+ ','',player),
+        adjustedwhoscoredPlayer == 'none' & ffuseswholename ~ player,
         adjustedwhoscoredPlayer != 'none' ~ adjustedwhoscoredPlayer))
-    currentSeasonPlayerDF$teamsurname = with(currentSeasonPlayerDF, paste(team, surname))
+    playerDF$teamsurname = with(playerDF, paste(team, surname))
 
-    currentSeasonPlayerDF$ffindex = match(currentSeasonPlayerDF$teamsurname, ffplayerpricedf$ffteamplayer)
+    playerDF$ffindex = match(playerDF$teamsurname, ffplayerpricedf$ffteamplayer)
     unmatchedButCouldMatchIndex =
-      with(currentSeasonPlayerDF, which(!is.na(whoscoredPlayer) & is.na(ffindex) & !hasleft))
+      with(playerDF, which(!is.na(player) & is.na(ffindex) & !hasleft))
     if (length(unmatchedButCouldMatchIndex) == 0) {
       satis = TRUE
     }
 
     if (length(unmatchedButCouldMatchIndex) > 0) {
-      print(currentSeasonPlayerDF[unmatchedButCouldMatchIndex, c('team', 'whoscoredPlayer', 'ffuseswholename', 'hasleft', 'adjustedwhoscoredPlayer', 'teamsurname')])
+      currentSeasonPlayerIdFile = paste0(DATAPATH, 'current-season-player-id.csv')
+      print(playerDF[unmatchedButCouldMatchIndex, c('team', 'player', 'ffuseswholename', 'hasleft', 'adjustedwhoscoredPlayer', 'teamsurname')])
       message('Try to fix up these player names in \'', currentSeasonPlayerIdFile, '\'')
       message('Type \'h\' if you are happy with how it has been matched')
       message('Type \'r\' if you want to edit the spreadsheet and see if you get more matches')
@@ -122,13 +117,11 @@ MatchFFPlayerData = function() {
     }
   }
 
-  currentSeasonPlayerDF$ffPrice = ffplayerpricedf$price[currentSeasonPlayerDF$ffindex]
-  currentSeasonPlayerDF$ffPosition = ffplayerpricedf$ffposition[currentSeasonPlayerDF$ffindex]
-  currentSeasonPlayerDF = remove_column(currentSeasonPlayerDF, c('surname', 'teamsurname', 'ffindex'))
-
-  message('I am about to write the latest version of the player id file to disk, please close it if you have it open!')
-  message('Hit ENTER when it is closed')
-  dum = askcond(FALSE, TRUE)
-
-  write.csv(file = currentSeasonPlayerIdFile, currentSeasonPlayerDF, row.names = FALSE)
+  playerDF$ffPrice = ffplayerpricedf$price[playerDF$ffindex]
+  playerDF$ffPosition = ffplayerpricedf$ffposition[playerDF$ffindex]
+  playerDF = remove_column(playerDF,
+                           c('surname', 'teamsurname', 'ffindex', 'soccerwayPlayer',
+                             'ffuseswholename', 'adjustedwhoscoredPlayer'))
+  
+  return(playerDF)
 }

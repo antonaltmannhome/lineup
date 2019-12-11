@@ -39,6 +39,5 @@ gbgdf = gbgdf %>%
 
 summarydf = ffDataLoading::GetSummaryDF(gbgdf)
 playerDF = ffDataLoading:::ReadCurrentSeasonPlayerDF() %>%
-              rename(player = whoscoredPlayer) %>%
-              remove_column(c('soccerwayPlayer', 'ffuseswholename', 'adjustedwhoscoredPlayer'))
+              rename(player = whoscoredPlayer)
 
