@@ -75,7 +75,7 @@ ReadFFPlayerPriceDF = function() {
   return(ffplayerpricedf)
 }
 
-MatchFFPlayerData = function(playerDF) {
+MatchFFPlayerData = function(playerDF, interactive = FALSE) {
 
   ffplayerpricedf = ffDataJoining:::ReadFFPlayerPriceDF()
 
@@ -102,17 +102,24 @@ MatchFFPlayerData = function(playerDF) {
     if (length(unmatchedButCouldMatchIndex) > 0) {
       currentSeasonPlayerIdFile = paste0(DATAPATH, 'current-season-player-id.csv')
       print(playerDF[unmatchedButCouldMatchIndex, c('team', 'player', 'ffuseswholename', 'hasleft', 'adjustedwhoscoredPlayer', 'teamsurname')])
-      message('Try to fix up these player names in \'', currentSeasonPlayerIdFile, '\'')
-      message('Type \'h\' if you are happy with how it has been matched')
-      message('Type \'r\' if you want to edit the spreadsheet and see if you get more matches')
-
-      userEntry = askcond(FALSE, FALSE)
-      if (userEntry == 'h') {
+      message('These players are logged as being in the squad this year by soccerway but have not been matched up on fantasy football site.')
+      if (!interactive) {
+        message('Add them to \'', currentSeasonPlayerIdFile, '\', if this is a concern')
         satis = TRUE
       }
-      if (userEntry == 'r') {
-        message('Ok make your changes then hit ENTER')
-        dum = askcond(FALSE, TRUE)
+      if (interactive) {
+        message('Try to fix up these player names in \'', currentSeasonPlayerIdFile, '\'')
+        message('Type \'h\' if you are happy with how it has been matched')
+        message('Type \'r\' if you want to edit the spreadsheet and see if you get more matches')
+
+        userEntry = askcond(FALSE, FALSE)
+        if (userEntry == 'h') {
+          satis = TRUE
+        }
+        if (userEntry == 'r') {
+          message('Ok make your changes then hit ENTER')
+          dum = askcond(FALSE, TRUE)
+        }
       }
     }
   }
