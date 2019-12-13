@@ -53,6 +53,8 @@ SimPointFunct = function(numSim) {
           group_by(team, player) %>%
           summarise(sumEPoint = sum(meanPoint)) %>%
           arrange(desc(sumEPoint)))
+  
+  return(lst(simPoint, simMinute))
 }
   
 
@@ -72,3 +74,10 @@ BrowsePlayerGW = function(playerString, myGW) {
 
 # ok but how do we actually predict number of points scored? think we use what we already have in run-knapsack, still go by expected points. but do the subbing in thing, because it's important
 # but do it later
+
+## so let's start selecting our captain and our team for each gameweek
+# ah but you might want to captain a player who isn't gertain to start, if there Epoint is v high
+
+dum = SimPointFunct(1000)
+currentPlayerFixtDF$ePoint = rowSums(dum$simPoint)
+currentPlayerFixtDF$ePoint
