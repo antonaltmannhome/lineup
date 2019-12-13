@@ -8,7 +8,7 @@ PrepareGbgdfForSmoothing = function(gbgdf, quantityChoice) {
 	}
 	if (quantityChoice == 'probOffBench') {
 	  subgbgdf = gbgdf %>%
-	    mutate(isValid = available)
+	    mutate(isValid = available & !isStart)
 	  subgbgdf$value = with(subgbgdf, !isStart & played)
 	}
 	if (quantityChoice == 'eMinStart') {

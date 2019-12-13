@@ -1,5 +1,6 @@
 ### just thinking about the idea of simulating the teams instead, see how different the choices would be
 
+source('run-model.r')
 currentPlayerFixtDF = semi_join(playerfixtdf, currentteam, c('team', 'player')) %>%
                         select(player, team, isHome, oppteam, gameweek, ffPosition,
                                probStart, probOffBench, eMinStart, eMinBench,
@@ -12,38 +13,48 @@ currentPlayerFixtDF = semi_join(playerfixtdf, currentteam, c('team', 'player')) 
 
 numSim = 10
 
-simStart = t(sapply(currentPlayerFixtDF$probStart, function(x) rbinom(numSim, 1, x)))
-simStartPlusEMin = cbind(currentPlayerFixtDF[,c('eMinStart', 'eMinBench')], simStart)
-# what? this is completely wrong
-simMinute = t(apply(simStartPlusEMin, 1, function(x) ifelse(x[3:length(x)] == 1, x[1], x[2])))
-simEGoal = currentPlayerFixtDF$egoal * simMinute / 94
-simEAssist = currentPlayerFixtDF$eassist * simMinute / 94
-simETeamConceded = currentPlayerFixtDF$eteamconceded * simMinute / 94
-
-simGoal = t(apply(simEGoal, 1, function(x) rpois(length(x), x)))
-simAssist = t(apply(simEAssist, 1, function(x) rpois(length(x), x)))
-simTeamConceded = t(apply(simETeamConceded, 1, function(x) rpois(length(x), x)))
-
-MinPointFunct = function(x) {
-  minPoint = rep(0, length(x))
-  minPoint[which(x > 60)] = 2
-  minPoint[which(x > 0 & x < 60)] = 1
-  return(minPoint)
+SimPointFunct = function(numSim) {
+  simStart = t(sapply(currentPlayerFixtDF$probStart, function(x) rbinom(numSim, 1, x)))
+  simBench = (simStart == 0) * t(sapply(currentPlayerFixtDF$probOffBench, function(x) rbinom(numSim, 1, x)))
+  simMinFromStart = currentPlayerFixtDF$eMinStart * simStart
+  simMinFromBench = currentPlayerFixtDF$eMinBench * simBench
+  # what? this is completely wrong
+  simMinute = simMinFromStart + simMinFromBench
+  simEGoal = currentPlayerFixtDF$egoal * simMinute / 94
+  simEAssist = currentPlayerFixtDF$eassist * simMinute / 94
+  simETeamConceded = currentPlayerFixtDF$eteamconceded * simMinute / 94
+  simEGKSave = currentPlayerFixtDF$egksave * simMinute / 94
+  
+  simGoal = t(apply(simEGoal, 1, function(x) rpois(length(x), x)))
+  simAssist = t(apply(simEAssist, 1, function(x) rpois(length(x), x)))
+  simTeamConceded = t(apply(simETeamConceded, 1, function(x) rpois(length(x), x)))
+  simGKSave = t(apply(simEGKSave, 1, function(x) rpois(length(x), x)))
+  
+  MinPointFunct = function(x) {
+    minPoint = rep(0, length(x))
+    minPoint[which(x > 60)] = 2
+    minPoint[which(x > 0 & x < 60)] = 1
+    return(minPoint)
+  }
+  simMinPoint = t(apply(simMinute, 1, MinPointFunct))
+  currentPlayerFixtDF$pointForGoal = c(4, 5, 6, 6)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
+  currentPlayerFixtDF$pointForCS = c(0, 1, 4, 4)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
+  simGoalPoint = currentPlayerFixtDF$pointForGoal * simGoal
+  simAssistPoint = 3 * simAssist
+  simCSPoint = currentPlayerFixtDF$pointForCS * (simTeamConceded == 0) * (simMinute > 60) 
+  simGKPoint = (currentPlayerFixtDF$ffPosition == 'g') * floor(simGKSave / 3)
+  
+  simPoint = simMinPoint + simGoalPoint + simAssistPoint + simCSPoint + simGKPoint
+  
+  # not what we're going to use, but anyway:
+  currentPlayerFixtDF$meanPoint = rowSums(simPoint)
+  
+  print(currentPlayerFixtDF %>%
+          group_by(team, player) %>%
+          summarise(sumEPoint = sum(meanPoint)) %>%
+          arrange(desc(sumEPoint)))
 }
-simMinPoint = t(apply(simMinute, 1, MinPointFunct))
-currentPlayerFixtDF$pointForGoal = c(4, 5, 6, 6)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'd'))]
-currentPlayerFixtDF$pointForCS = c(0, 1, 4, 4)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'd'))]
-simGoalPoint = currentPlayerFixtDF$pointForGoal * simGoal
-simAssistPoint = 3 * simAssist
-simCSPoint = currentPlayerFixtDF$pointForCS * (simTeamConceded == 0) * (simMinute > 60) 
-
-simPoint = simGoalPoint + simAssistPoint + simCSPoint
-
-# but then you have to add goalie stuff, then the clean sheet stuff
-
-# not what we're going to use, but anyway:
-currentPlayerFixtDF$meanPoint = rowSums(simPoint)
-currentPlayerFixtDF %>% group_by(team, player) %>% summarise(sumEPoint = sum(meanPoint)) %>% arrange(desc(sumEPoint))
+  
 
 # this is really hard to browse at the moment, that's the first problem
 BrowsePlayerGW = function(playerString, myGW) {
@@ -58,3 +69,6 @@ BrowsePlayerGW = function(playerString, myGW) {
   print('sim team conceded:')
   print(simETeamConceded[playerGWIndex,])
 }
+
+# ok but how do we actually predict number of points scored? think we use what we already have in run-knapsack, still go by expected points. but do the subbing in thing, because it's important
+# but do it later
