@@ -110,7 +110,7 @@ CalculateUpToDatePlayerSmooth = function(gbgdf) {
 		playerDF = lazy_left_join(playerDF, currentSmoothDF, c('team', 'player'), quantityChoiceVector[qi])
 		message('Have got latest smoothed values for ', quantityChoiceVector[qi],'...')
 	}
-	playerDF$eMin = with(playerDF, probStart * eMinStart + probOffBench * eMinBench)
+	playerDF$eMin = with(playerDF, probStart * eMinStart + (1 - probStart) * probOffBench * eMinBench)
 
 	return(playerDF)
 }
