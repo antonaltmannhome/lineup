@@ -24,11 +24,16 @@ currentPlayerFixtDF = currentPlayerFixtDF %>%
          eMinPoint = 2 * probStart * (eMinStart > 60) + (1 - probStart) * probOffBench,
          eGoalPoint = pointForGoal * egoal,
          eAssistPoint = 3 * eassist,
-         eCSPoint = pointForCS * dpois(0, eteamconceded),
-         eGKSavePoint = pointForGKSave * sum(floor( (0:10)/3) * dpois(0:10, egksave)))
+         eCSPoint = pointForCS * dpois(0, eteamconceded)) %>%
+          rowwise() %>%
+         mutate(eGKSavePoint = pointForGKSave * sum(floor( (0:10)/3) * dpois(0:10, egksave)),
+         ePoint = eMinPoint + eGoalPoint +  eAssistPoint + eCSPoint + eGKSavePoint) %>%
+  ungroup()
 
 # diagnosis time
-currentPlayerFixtDF %>% filter(gameweek == 17) %>% select(player, isHome, oppteam, eMin, egoal, eassist, eMinPoint, eGoalPoint, eAssistPoint, eCSPoint, eGKSavePoint)    
+currentPlayerFixtDF %>% filter(gameweek == 17) %>% select(player, isHome, oppteam, eMin, egoal, eassist, egksave, eMinPoint, eGoalPoint, eAssistPoint, eCSPoint, eGKSavePoint, ePoint)    
+
+# ok, so that can give us the chosen squad for each week
 
     eGoalPoint = with(currentPlayerFixtDF)
 simEGoal = currentPlayerFixtDF$egoal * simMinute / 94
