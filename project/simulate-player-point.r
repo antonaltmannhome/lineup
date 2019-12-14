@@ -3,13 +3,38 @@
 source('run-model.r')
 currentPlayerFixtDF = semi_join(playerfixtdf, currentteam, c('team', 'player')) %>%
                         select(player, team, isHome, oppteam, gameweek, ffPosition,
-                               probStart, probOffBench, eMinStart, eMinBench,
+                               probStart, probOffBench, eMinStart, eMinBench, eMin,
                               egoal, eassist, eteamconceded, egksave)
 
 ### argh, it's more difficult than i thought to get retro-player expected minutes. want to know distro of minutes given all the expected minute values
 ### don't think you need to do anything that complicated.
 ### just simulate 1/0 do they start or not, then assume they play the expected minutes if they start. that's got to be close to correct.
 ### the expected minutes will be too high for ever-presents of course, but that's a model issue to be dealt with at model level
+
+# we need two things, the newly calculated expected points (which does minutes played properly) which we use to select the team. then we use the sims to calcualte actual points
+
+currentPlayerFixtDF$pointForGoal = c(4, 5, 6, 6)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
+currentPlayerFixtDF$pointForCS = c(0, 1, 4, 4)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
+currentPlayerFixtDF$eMinPoint = with(currentPlayerFixtDF, 2 * probStart * (eMinStart > 60) +
+                                                          (1 - probStart) * probOffBench)
+currentPlayerFixtDF = currentPlayerFixtDF %>%
+  mutate(pointForGoal = c(4, 5, 6, 6)[match(ffPosition, c('f', 'm', 'd', 'g'))],
+         pointForCS = c(0, 1, 4, 4)[match(ffPosition, c('f', 'm', 'd', 'g'))],
+         pointForGKSave = c(0, 0, 0, 1)[match(ffPosition, c('f', 'm', 'd', 'g'))],
+         eMinPoint = 2 * probStart * (eMinStart > 60) + (1 - probStart) * probOffBench,
+         eGoalPoint = pointForGoal * egoal,
+         eAssistPoint = 3 * eassist,
+         eCSPoint = pointForCS * dpois(0, eteamconceded),
+         eGKSavePoint = pointForGKSave * sum(floor( (0:10)/3) * dpois(0:10, egksave)))
+
+# diagnosis time
+currentPlayerFixtDF %>% filter(gameweek == 17) %>% select(player, isHome, oppteam, eMin, egoal, eassist, eMinPoint, eGoalPoint, eAssistPoint, eCSPoint, eGKSavePoint)    
+
+    eGoalPoint = with(currentPlayerFixtDF)
+simEGoal = currentPlayerFixtDF$egoal * simMinute / 94
+simEAssist = currentPlayerFixtDF$eassist * simMinute / 94
+simETeamConceded = currentPlayerFixtDF$eteamconceded * simMinute / 94
+simEGKSave = currentPlayerFixtDF$egksave * simMinute / 94
 
 numSim = 10
 
@@ -37,8 +62,6 @@ SimPointFunct = function(numSim) {
     return(minPoint)
   }
   simMinPoint = t(apply(simMinute, 1, MinPointFunct))
-  currentPlayerFixtDF$pointForGoal = c(4, 5, 6, 6)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
-  currentPlayerFixtDF$pointForCS = c(0, 1, 4, 4)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
   simGoalPoint = currentPlayerFixtDF$pointForGoal * simGoal
   simAssistPoint = 3 * simAssist
   simCSPoint = currentPlayerFixtDF$pointForCS * (simTeamConceded == 0) * (simMinute > 60) 
@@ -80,4 +103,28 @@ BrowsePlayerGW = function(playerString, myGW) {
 
 dum = SimPointFunct(1000)
 currentPlayerFixtDF$ePoint = rowSums(dum$simPoint)
+# so step 1, select the best team of the 15 players
+
+# this is a mess, shouldn't be doing this for the simulations, just do it on expected points surely
+# then once team is selected, need function that brings in the subs/vice captain thing
+SelectBestTeam = function(subPlayerDF) {
+  obj=subPlayerDF$ePoint
+  myNumPlayer = nrow(subPlayerDF)
+  var.types <- c(rep("B", myNumPlayer),'I','I','I','C')
+  mat10=matrix(0,nrow=myNumPlayer,ncol=myNumPlayer)
+  diag(mat10)=1
+  conmat=rbind(
+    mat10,
+    as.numeric(subPlayerDF$ffPosition == 'g'),
+    as.numeric(subPlayerDF$ffPosition == 'd'),
+    as.numeric(subPlayerDF$ffPosition == 'f'),
+    rep(1,myNumPlayer)
+  )
+  direction=c(rep('<=',myNumPlayer),'==',rep('>=',2),'==')
+  rhs=c(rep(1,myNumPlayer),1,3,1,11)
+  sol=Rglpk_solve_LP(obj=obj,mat=conmat,dir=direction,rhs=rhs,types=var.types,max=T)
+  subPlayerDF$selected = sol$solution
+  subPlayerDF$captain = subPlayerDF$expectedpoint == max(subPlayerDF$expectedpoint)
+
+
 currentPlayerFixtDF$ePoint
