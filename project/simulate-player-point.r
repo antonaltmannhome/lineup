@@ -39,7 +39,7 @@ MakeTeamFixtDF = function(myTeam) {
   
   teamFixtDF = semi_join(playerfixtdf %>%
                            filter(gameweek <= min(gameweek) + 9),  # i think we should truncate to next ten weeks
-                         currentteam, c('team', 'player')) %>%
+                         myTeam, c('team', 'player')) %>%
     select(player, team, isHome, oppteam, gameweek, ffPosition,
            probStart, probOffBench, eMinStart, eMinBench, eMin,
            egoal, eassist, eteamconceded, egksave) %>%
@@ -312,3 +312,29 @@ CalculateSimulatedPoint(currentTeam, 1000)
 
 # 1000 sims seems enough. doing sensible things
 # does crash if you do something ludicrous like player 5 liverpool players when they don't have a fixture one week, probably not an issue
+
+# have got ideal team from get-optimal-team and..
+
+forcedInclusionExclusion = tibble(team = 'mancity', player = 'aymeric laporte', includeOrExclude = 'exclude')
+idealteam = RunKnapsack(playerDF, forcedInclusionExclusion, currentmoney)
+CalculateSimulatedPoint(idealteam, 1000)
+# 559
+
+forcedInclusionExclusion = tibble(team = 'mancity', player = 'kevin de bruyne', includeOrExclude = 'include')
+idealteam = RunKnapsack(playerDF, forcedInclusionExclusion, currentmoney)
+CalculateSimulatedPoint(idealteam, 1000)
+# 551
+
+forcedInclusionExclusion = tibble(team = 'liverpool', player = 'sadio mane', includeOrExclude = 'include')
+idealteam = RunKnapsack(playerDF, forcedInclusionExclusion, currentmoney)
+CalculateSimulatedPoint(idealteam, 1000)
+# 544
+
+forcedInclusionExclusion = tibble(team = c('mancity', 'liverpool'), player = c('raheem sterling', 'sadio mane'), includeOrExclude = rep('include', 2))
+idealteam = RunKnapsack(playerDF, forcedInclusionExclusion, currentmoney)
+CalculateSimulatedPoint(idealteam, 1000)
+# 551
+
+# interesting, we should ignore the captain thing, just doing what we're doing seems fine.
+# we've not tried forcibly including a cheap but ever present defender though, will try that next
+# but this doesn't seem like a game changer. let's focus on the expected minutes and time downweight in scoring instead
