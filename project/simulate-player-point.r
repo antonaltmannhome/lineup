@@ -242,6 +242,9 @@ RecalculateSelected = function(myGameweek, numSim) {
   
   revisedSelectedMat = rbind(revisedGKSelectedMat, revisedOFSelectedMat)
   
+  # then reallocate the captain if necessary
+  
+  
   revisedSelectedDF = as.data.frame(revisedSelectedMat)
   
   return(revisedSelectedDF)
@@ -254,5 +257,22 @@ ViewSingleSim = function(myGameweek, mySimNo) {
   View(cbind(teamFixtDF[myIndex, c('player', 'ePoint', 'selected', 'subOrder')], simMinute[myIndex, mySimNo], revisedSelected[myIndex, mySimNo]))
 }
 
-### no, not finished yet, still got to reallocate the captain
+RecalculateCaptain = function(myGameweek, numSim) {
+  cgwIndex = with(teamFixtDF, which(gameweek == myGameweek))
+  cgwSimPlayed = !near(simMinute[cgwIndex,], 0)
+  revisedCaptainMat = matrix(FALSE, nrow = length(cgwIndex), ncol = numSim)
+  isCaptainIndex = which(teamFixtDF$captain[cgwIndex])
+  isViceCaptainIndex = which(teamFixtDF$viceCaptain[cgwIndex])
+  captainPlayedIndex = which(cgwSimPlayed[isCaptainIndex,])
+  captainNotPlayedIndex = which(!cgwSimPlayed[isCaptainIndex,])
+  revisedCaptainMat[isCaptainIndex, captainPlayedIndex] = TRUE
+  revisedCaptainMat[isViceCaptainIndex, captainNotPlayedIndex] = TRUE
+  
+  revisedCaptainDF = as.data.frame(revisedCaptainMat)
+  
+  return(revisedCaptainDF)
+}
+
+revisedCaptain = purrr::map_df(unique(teamFixtDF$gameweek), RecalculateCaptain, numSim = 1000)
+
 ### yeehah, done all the tedious stuff. now just a case of adding up the expected points, and get summed points for a chosen team, the fun bit
