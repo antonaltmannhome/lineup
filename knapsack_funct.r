@@ -1,7 +1,4 @@
 
-suppressWarnings(library('Rglpk'))
-
-
 RunKnapsack = function(playerDF, forcedInclusionExclusion, currentmoney) {
 	# quick fudge, get rid of NAs
 	playerDF = playerDF %>%
