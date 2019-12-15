@@ -218,5 +218,7 @@ RecalculateSelected = function(myGameweek, numSim) {
   sumSelectedAndPlayed = colSums(cgwSimPlayed & cgwInfo$selected)
   numReqSub = 11 - sumSelectedAndPlayed
   
-  ### arrghh too tired, but we're getting there
+  ### now label the non-playing selecteds to enable us to loop
+  # no, but you need to bring in the selected info, hmm, how to do that
+ # nonPlayingSelected = apply(cgwSimPlayed, 1, function
 }
