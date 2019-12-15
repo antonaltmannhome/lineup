@@ -33,42 +33,45 @@ playerfixtdf = getplayerfixture(fixtdf, playerDF, gbgdf)
 playerfixtdf = getfixtureexpectedpoint(playerfixtdf)
 playerDF = getplayervalue(playerDF, playerfixtdf)
 
-currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
-# test it handles rarely playing players well
-currentteam[which(currentteam$ffposition == 'm')[1],] = c('mancity', 'riyad mahrez', 'm')
+## this will go into a library eventually
 
-teamFixtDF = semi_join(playerfixtdf, currentteam, c('team', 'player')) %>%
-                        select(player, team, isHome, oppteam, gameweek, ffPosition,
-                               probStart, probOffBench, eMinStart, eMinBench, eMin,
-                              egoal, eassist, eteamconceded, egksave) %>%
-          arrange(gameweek, match(ffPosition, c('g', 'd', 'm', 'f')))
+MakeTeamFixtDF = function(myTeam) {
+  
+  teamFixtDF = semi_join(playerfixtdf %>%
+                           filter(gameweek <= min(gameweek) + 9),  # i think we should truncate to next ten weeks
+                         currentteam, c('team', 'player')) %>%
+    select(player, team, isHome, oppteam, gameweek, ffPosition,
+           probStart, probOffBench, eMinStart, eMinBench, eMin,
+           egoal, eassist, eteamconceded, egksave) %>%
+    arrange(gameweek, match(ffPosition, c('g', 'd', 'm', 'f')))
+  
+  ### argh, it's more difficult than i thought to get retro-player expected minutes. want to know distro of minutes given all the expected minute values
+  ### don't think you need to do anything that complicated.
+  ### just simulate 1/0 do they start or not, then assume they play the expected minutes if they start. that's got to be close to correct.
+  ### the expected minutes will be too high for ever-presents of course, but that's a model issue to be dealt with at model level
+  
+  # we need two things, the newly calculated expected points (which does minutes played properly) which we use to select the team. then we use the sims to calcualte actual points
+  
+  teamFixtDF$pointForGoal = c(4, 5, 6, 6)[match(teamFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
+  teamFixtDF$pointForCS = c(0, 1, 4, 4)[match(teamFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
+  teamFixtDF$eMinPoint = with(teamFixtDF, 2 * probStart * (eMinStart > 60) +
+                                (1 - probStart) * probOffBench)
+  teamFixtDF = teamFixtDF %>%
+    mutate(pointForGoal = c(4, 5, 6, 6)[match(ffPosition, c('f', 'm', 'd', 'g'))],
+           pointForCS = c(0, 1, 4, 4)[match(ffPosition, c('f', 'm', 'd', 'g'))],
+           pointForGKSave = c(0, 0, 0, 1)[match(ffPosition, c('f', 'm', 'd', 'g'))],
+           eMinPoint = 2 * probStart * (eMinStart > 60) + (1 - probStart) * probOffBench,
+           eGoalPoint = pointForGoal * egoal * eMin / 94,
+           eAssistPoint = 3 * eassist * eMin / 94,
+           eCSPoint = pointForCS * dpois(0, eteamconceded) * probStart * (eMinStart > 60)) %>%
+    rowwise() %>%
+    mutate(eGKSavePoint = pointForGKSave * sum(floor( (0:10)/3) * dpois(0:10, egksave * eMin / 94)),
+           ePoint = eMinPoint + eGoalPoint +  eAssistPoint + eCSPoint + eGKSavePoint) %>%
+    ungroup()
 
-### argh, it's more difficult than i thought to get retro-player expected minutes. want to know distro of minutes given all the expected minute values
-### don't think you need to do anything that complicated.
-### just simulate 1/0 do they start or not, then assume they play the expected minutes if they start. that's got to be close to correct.
-### the expected minutes will be too high for ever-presents of course, but that's a model issue to be dealt with at model level
+  return(teamFixtDF)  
+}
 
-# we need two things, the newly calculated expected points (which does minutes played properly) which we use to select the team. then we use the sims to calcualte actual points
-
-teamFixtDF$pointForGoal = c(4, 5, 6, 6)[match(teamFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
-teamFixtDF$pointForCS = c(0, 1, 4, 4)[match(teamFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
-teamFixtDF$eMinPoint = with(teamFixtDF, 2 * probStart * (eMinStart > 60) +
-                                                          (1 - probStart) * probOffBench)
-teamFixtDF = teamFixtDF %>%
-  mutate(pointForGoal = c(4, 5, 6, 6)[match(ffPosition, c('f', 'm', 'd', 'g'))],
-         pointForCS = c(0, 1, 4, 4)[match(ffPosition, c('f', 'm', 'd', 'g'))],
-         pointForGKSave = c(0, 0, 0, 1)[match(ffPosition, c('f', 'm', 'd', 'g'))],
-         eMinPoint = 2 * probStart * (eMinStart > 60) + (1 - probStart) * probOffBench,
-         eGoalPoint = pointForGoal * egoal * eMin / 94,
-         eAssistPoint = 3 * eassist * eMin / 94,
-         eCSPoint = pointForCS * dpois(0, eteamconceded) * probStart * (eMinStart > 60)) %>%
-          rowwise() %>%
-         mutate(eGKSavePoint = pointForGKSave * sum(floor( (0:10)/3) * dpois(0:10, egksave * eMin / 94)),
-         ePoint = eMinPoint + eGoalPoint +  eAssistPoint + eCSPoint + eGKSavePoint) %>%
-  ungroup()
-
-# diagnosis line
-# teamFixtDF %>% filter(gameweek == 17) %>% select(player, isHome, oppteam, eMin, egoal, eassist, egksave, eMinPoint, eGoalPoint, eAssistPoint, eCSPoint, eGKSavePoint, ePoint)    
 
 SelectBestTeam = function(subPlayerDF) {
   obj=subPlayerDF$ePoint
@@ -84,7 +87,9 @@ SelectBestTeam = function(subPlayerDF) {
     rep(1,myNumPlayer)
   )
   direction=c(rep('<=',myNumPlayer),'==',rep('>=',2),'==')
-  rhs=c(rep(1,myNumPlayer),1,3,1,11)
+  # you might not have enough eligible players to field of course
+  maxEligiblePlayer = pmin(10, sum(subPlayerDF$ffPosition != 'g')) + pmin(1, sum(subPlayerDF$ffPosition == 'g'))
+  rhs=c(rep(1,myNumPlayer),1,3,1,maxEligiblePlayer)
   sol=Rglpk_solve_LP(obj=obj,mat=conmat,dir=direction,rhs=rhs,types=var.types,max=T)
   subPlayerDF$selected = sol$solution == 1
   subPlayerDF$captain = subPlayerDF$ePoint == max(subPlayerDF$ePoint)
@@ -93,17 +98,11 @@ SelectBestTeam = function(subPlayerDF) {
   subPlayerDF = subPlayerDF %>%
     mutate(subOrder = 99) %>%
     mutate_cond(!selected & ffPosition != 'g', subOrder = rank(-ePoint))
-
+  
   return(subPlayerDF)
 }
 
-teamFixtDF = teamFixtDF %>%
-  group_by(gameweek) %>%
-  do(SelectBestTeam(.))
-
-numSim = 10
-
-SimPointFunct = function(numSim) {
+SimPointFunct = function(numSim, teamFixtDF) {
   simStart = t(sapply(teamFixtDF$probStart, function(x) rbinom(numSim, 1, x)))
   simBench = (simStart == 0) * t(sapply(teamFixtDF$probOffBench, function(x) rbinom(numSim, 1, x)))
   simMinFromStart = teamFixtDF$eMinStart * simStart
@@ -144,7 +143,7 @@ SimPointFunct = function(numSim) {
   
   return(lst(simPoint, simMinute))
 }
-  
+
 
 # this is really hard to browse at the moment, that's the first problem
 BrowsePlayerGW = function(playerString, myGW) {
@@ -159,19 +158,6 @@ BrowsePlayerGW = function(playerString, myGW) {
   print('sim team conceded:')
   print(simETeamConceded[playerGWIndex,])
 }
-
-# ok but how do we actually predict number of points scored? think we use what we already have in run-knapsack, still go by expected points. but do the subbing in thing, because it's important
-# but do it later
-
-## so let's start selecting our captain and our team for each gameweek
-# ah but you might want to captain a player who isn't gertain to start, if there Epoint is v high
-
-dum = SimPointFunct(1000)
-simPoint = dum$simPoint
-simMinute = dum$simMinute
-
-# then once team is selected, need function that brings in the subs/vice captain thing
-## right, now we can start on that bit# actually i say sod that, just sub the next best player in, it's close enough surely
 
 ReviseSubOrder1 = function(x) {
   x[which(x == 1)] = 99
@@ -198,7 +184,7 @@ RevisedSelectedOutfield = function(bigVec) {
   return(myRevisedSelectedStatus)
 }
 
-RecalculateSelected = function(myGameweek, numSim) {
+RecalculateSelected = function(myGameweek, numSim, simMinute, teamFixtDF) {
   cgwGKIndex = with(teamFixtDF, which(gameweek == myGameweek & ffPosition == 'g'))
   cgwOFIndex = with(teamFixtDF, which(gameweek == myGameweek & ffPosition != 'g'))
   cgwGKSimPlayed = !near(simMinute[cgwGKIndex,], 0)
@@ -229,7 +215,7 @@ RecalculateSelected = function(myGameweek, numSim) {
   revisedSubOrder[,sub2NotPlayed] = apply(revisedSubOrder[,sub2NotPlayed], 2, ReviseSubOrder2)
   
   sumSelectedAndPlayed = colSums(cgwOFSimPlayed & cgwOFInfo$selected)
-  numReqSub = 10 - sumSelectedAndPlayed
+  numReqSub = pmin(3, 10 - sumSelectedAndPlayed)
   
   ### now label the non-playing selecteds to enable us to loop
   # no, but you need to bring in the selected info, hmm, how to do that
@@ -250,14 +236,8 @@ RecalculateSelected = function(myGameweek, numSim) {
   return(revisedSelectedDF)
 }
 
-revisedSelected = purrr::map_df(unique(teamFixtDF$gameweek), RecalculateSelected, numSim = 1000)
 
-ViewSingleSim = function(myGameweek, mySimNo) {
-  myIndex = which(teamFixtDF$gameweek == myGameweek)
-  View(cbind(teamFixtDF[myIndex, c('player', 'ePoint', 'selected', 'subOrder')], simMinute[myIndex, mySimNo], revisedSelected[myIndex, mySimNo]))
-}
-
-RecalculateCaptain = function(myGameweek, numSim) {
+RecalculateCaptain = function(myGameweek, numSim, simMinute, teamFixtDF) {
   cgwIndex = with(teamFixtDF, which(gameweek == myGameweek))
   cgwSimPlayed = !near(simMinute[cgwIndex,], 0)
   revisedCaptainMat = matrix(FALSE, nrow = length(cgwIndex), ncol = numSim)
@@ -273,6 +253,56 @@ RecalculateCaptain = function(myGameweek, numSim) {
   return(revisedCaptainDF)
 }
 
-revisedCaptain = purrr::map_df(unique(teamFixtDF$gameweek), RecalculateCaptain, numSim = 1000)
+ViewSingleSim = function(myGameweek, mySimNo) {
+  myIndex = which(teamFixtDF$gameweek == myGameweek)
+  View(cbind(teamFixtDF[myIndex, c('player', 'ePoint', 'selected', 'subOrder')], simMinute[myIndex, mySimNo], revisedSelected[myIndex, mySimNo]))
+}
 
-### yeehah, done all the tedious stuff. now just a case of adding up the expected points, and get summed points for a chosen team, the fun bit
+CalculateSimulatedPoint = function(myTeam, numSim) {
+  
+  teamFixtDF = MakeTeamFixtDF(myTeam)
+  # diagnosis line
+  # teamFixtDF %>% filter(gameweek == 17) %>% select(player, isHome, oppteam, eMin, egoal, eassist, egksave, eMinPoint, eGoalPoint, eAssistPoint, eCSPoint, eGKSavePoint, ePoint)    
+  
+  teamFixtDF = teamFixtDF %>%
+    group_by(gameweek) %>%
+    do(SelectBestTeam(.))
+  
+  # ok but how do we actually predict number of points scored? think we use what we already have in run-knapsack, still go by expected points. but do the subbing in thing, because it's important
+  # but do it later
+  
+  ## so let's start selecting our captain and our team for each gameweek
+  # ah but you might want to captain a player who isn't gertain to start, if there Epoint is v high
+  
+  dum = SimPointFunct(numSim, teamFixtDF)
+  simPoint = dum$simPoint
+  simMinute = dum$simMinute
+  
+  # then once team is selected, need function that brings in the subs/vice captain thing
+  ## right, now we can start on that bit# actually i say sod that, just sub the next best player in, it's close enough surely
+  revisedSelected = purrr::map_df(unique(teamFixtDF$gameweek), RecalculateSelected, numSim = 1000, simMinute = simMinute, teamFixtDF = teamFixtDF)
+  
+  revisedCaptain = purrr::map_df(unique(teamFixtDF$gameweek), RecalculateCaptain, numSim = 1000, simMinute = simMinute, teamFixtDF = teamFixtDF)
+  
+  ### yeehah, done all the tedious stuff. now just a case of adding up the expected points, and get summed points for a chosen team, the fun bit
+  simPointAdjForPlaying = simPoint * revisedSelected + simPoint * revisedCaptain
+  
+  totalPointBySim = colSums(simPointAdjForPlaying)
+  meanTotalPoint = mean(totalPointBySim)
+  
+  return(meanTotalPoint)
+}
+
+# let's experiment with it a bit
+numSim = 1000
+currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
+# test it handles rarely playing players well
+currentteam[which(currentteam$ffposition == 'd')[1],] = c('liverpool', 'trent alexander arnold', 'd')
+currentteam[which(currentteam$ffposition == 'm')[1],] = c('liverpool', 'sadio mane', 'm')
+currentteam[which(currentteam$ffposition == 'm')[2],] = c('mancity', 'raheem sterling', 'm')
+currentteam[which(currentteam$ffposition == 'm')[3],] = c('mancity', 'kevin de bruyne', 'm')
+currentteam[which(currentteam$ffposition == 'f')[3],] = c('tottenham', 'harry kane', 'm')
+
+CalculateSimulatedPoint(currentTeam, 1000)
+
+# 1000 sims seems enough. doing sensible things
