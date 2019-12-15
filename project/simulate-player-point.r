@@ -37,10 +37,11 @@ currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
 # test it handles rarely playing players well
 currentteam[which(currentteam$ffposition == 'm')[1],] = c('mancity', 'riyad mahrez', 'm')
 
-currentPlayerFixtDF = semi_join(playerfixtdf, currentteam, c('team', 'player')) %>%
+teamFixtDF = semi_join(playerfixtdf, currentteam, c('team', 'player')) %>%
                         select(player, team, isHome, oppteam, gameweek, ffPosition,
                                probStart, probOffBench, eMinStart, eMinBench, eMin,
-                              egoal, eassist, eteamconceded, egksave)
+                              egoal, eassist, eteamconceded, egksave) %>%
+          arrange(gameweek, match(ffPosition, c('g', 'd', 'm', 'f')))
 
 ### argh, it's more difficult than i thought to get retro-player expected minutes. want to know distro of minutes given all the expected minute values
 ### don't think you need to do anything that complicated.
@@ -49,11 +50,11 @@ currentPlayerFixtDF = semi_join(playerfixtdf, currentteam, c('team', 'player')) 
 
 # we need two things, the newly calculated expected points (which does minutes played properly) which we use to select the team. then we use the sims to calcualte actual points
 
-currentPlayerFixtDF$pointForGoal = c(4, 5, 6, 6)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
-currentPlayerFixtDF$pointForCS = c(0, 1, 4, 4)[match(currentPlayerFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
-currentPlayerFixtDF$eMinPoint = with(currentPlayerFixtDF, 2 * probStart * (eMinStart > 60) +
+teamFixtDF$pointForGoal = c(4, 5, 6, 6)[match(teamFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
+teamFixtDF$pointForCS = c(0, 1, 4, 4)[match(teamFixtDF$ffPosition, c('f', 'm', 'd', 'g'))]
+teamFixtDF$eMinPoint = with(teamFixtDF, 2 * probStart * (eMinStart > 60) +
                                                           (1 - probStart) * probOffBench)
-currentPlayerFixtDF = currentPlayerFixtDF %>%
+teamFixtDF = teamFixtDF %>%
   mutate(pointForGoal = c(4, 5, 6, 6)[match(ffPosition, c('f', 'm', 'd', 'g'))],
          pointForCS = c(0, 1, 4, 4)[match(ffPosition, c('f', 'm', 'd', 'g'))],
          pointForGKSave = c(0, 0, 0, 1)[match(ffPosition, c('f', 'm', 'd', 'g'))],
@@ -67,7 +68,7 @@ currentPlayerFixtDF = currentPlayerFixtDF %>%
   ungroup()
 
 # diagnosis line
-# currentPlayerFixtDF %>% filter(gameweek == 17) %>% select(player, isHome, oppteam, eMin, egoal, eassist, egksave, eMinPoint, eGoalPoint, eAssistPoint, eCSPoint, eGKSavePoint, ePoint)    
+# teamFixtDF %>% filter(gameweek == 17) %>% select(player, isHome, oppteam, eMin, egoal, eassist, egksave, eMinPoint, eGoalPoint, eAssistPoint, eCSPoint, eGKSavePoint, ePoint)    
 
 SelectBestTeam = function(subPlayerDF) {
   obj=subPlayerDF$ePoint
@@ -96,28 +97,23 @@ SelectBestTeam = function(subPlayerDF) {
   return(subPlayerDF)
 }
 
-currentPlayerFixtDF = currentPlayerFixtDF %>%
+teamFixtDF = teamFixtDF %>%
   group_by(gameweek) %>%
   do(SelectBestTeam(.))
-
-simEGoal = currentPlayerFixtDF$egoal * simMinute / 94
-simEAssist = currentPlayerFixtDF$eassist * simMinute / 94
-simETeamConceded = currentPlayerFixtDF$eteamconceded * simMinute / 94
-simEGKSave = currentPlayerFixtDF$egksave * simMinute / 94
 
 numSim = 10
 
 SimPointFunct = function(numSim) {
-  simStart = t(sapply(currentPlayerFixtDF$probStart, function(x) rbinom(numSim, 1, x)))
-  simBench = (simStart == 0) * t(sapply(currentPlayerFixtDF$probOffBench, function(x) rbinom(numSim, 1, x)))
-  simMinFromStart = currentPlayerFixtDF$eMinStart * simStart
-  simMinFromBench = currentPlayerFixtDF$eMinBench * simBench
+  simStart = t(sapply(teamFixtDF$probStart, function(x) rbinom(numSim, 1, x)))
+  simBench = (simStart == 0) * t(sapply(teamFixtDF$probOffBench, function(x) rbinom(numSim, 1, x)))
+  simMinFromStart = teamFixtDF$eMinStart * simStart
+  simMinFromBench = teamFixtDF$eMinBench * simBench
   # what? this is completely wrong
   simMinute = simMinFromStart + simMinFromBench
-  simEGoal = currentPlayerFixtDF$egoal * simMinute / 94
-  simEAssist = currentPlayerFixtDF$eassist * simMinute / 94
-  simETeamConceded = currentPlayerFixtDF$eteamconceded * simMinute / 94
-  simEGKSave = currentPlayerFixtDF$egksave * simMinute / 94
+  simEGoal = teamFixtDF$egoal * simMinute / 94
+  simEAssist = teamFixtDF$eassist * simMinute / 94
+  simETeamConceded = teamFixtDF$eteamconceded * simMinute / 94
+  simEGKSave = teamFixtDF$egksave * simMinute / 94
   
   simGoal = t(apply(simEGoal, 1, function(x) rpois(length(x), x)))
   simAssist = t(apply(simEAssist, 1, function(x) rpois(length(x), x)))
@@ -131,17 +127,17 @@ SimPointFunct = function(numSim) {
     return(minPoint)
   }
   simMinPoint = t(apply(simMinute, 1, MinPointFunct))
-  simGoalPoint = currentPlayerFixtDF$pointForGoal * simGoal
+  simGoalPoint = teamFixtDF$pointForGoal * simGoal
   simAssistPoint = 3 * simAssist
-  simCSPoint = currentPlayerFixtDF$pointForCS * (simTeamConceded == 0) * (simMinute > 60) 
-  simGKPoint = (currentPlayerFixtDF$ffPosition == 'g') * floor(simGKSave / 3)
+  simCSPoint = teamFixtDF$pointForCS * (simTeamConceded == 0) * (simMinute > 60) 
+  simGKPoint = (teamFixtDF$ffPosition == 'g') * floor(simGKSave / 3)
   
   simPoint = simMinPoint + simGoalPoint + simAssistPoint + simCSPoint + simGKPoint
   
   # not what we're going to use, but anyway:
-  currentPlayerFixtDF$meanPoint = rowSums(simPoint)
+  teamFixtDF$meanPoint = rowSums(simPoint)
   
-  print(currentPlayerFixtDF %>%
+  print(teamFixtDF %>%
           group_by(team, player) %>%
           summarise(sumEPoint = sum(meanPoint)) %>%
           arrange(desc(sumEPoint)))
@@ -152,8 +148,8 @@ SimPointFunct = function(numSim) {
 
 # this is really hard to browse at the moment, that's the first problem
 BrowsePlayerGW = function(playerString, myGW) {
-  playerGWIndex = with(currentPlayerFixtDF, which(grepl(playerString, player) & gameweek == myGW))
-  print(currentPlayerFixtDF[playerGWIndex,])
+  playerGWIndex = with(teamFixtDF, which(grepl(playerString, player) & gameweek == myGW))
+  print(teamFixtDF[playerGWIndex,])
   print('sim minute:')
   print(simMinute[playerGWIndex,])
   print('sim expected goal:')
@@ -188,37 +184,75 @@ ReviseSubOrder2 = function(x) {
   x[which(x == 3)] = 2
   return(x)
 }
-RevisedSelected = function()
+RevisedSelectedOutfield = function(bigVec) {
+  numOutfieldPlayer = (length(bigVec) - 1) / 3
+  myPlayedStatus = bigVec[1:numOutfieldPlayer]
+  myInitSelectedStatus = bigVec[(numOutfieldPlayer + 1) : (2 * numOutfieldPlayer)]
+  mySubOrder = bigVec[(2 * numOutfieldPlayer + 1): (3 * numOutfieldPlayer)]
+  myNumReqSub = tail(bigVec, 1)
+  
+  myRevisedSelectedStatus = myInitSelectedStatus
+  myRevisedSelectedStatus[which(myPlayedStatus == 0 & myInitSelectedStatus == 1)] = FALSE
+  myRevisedSelectedStatus[which(mySubOrder <= myNumReqSub)] = TRUE
+  
+  return(myRevisedSelectedStatus)
+}
 
 RecalculateSelected = function(myGameweek, numSim) {
-  cgwIndex = which(currentPlayerFixtDF$gameweek == myGameweek)
-  cgwSimPlayed = !near(simPoint[cgwIndex,], 0)
-  cgwInfo = currentPlayerFixtDF[cgwIndex,c('selected', 'subOrder', 'captain', 'viceCaptain', 'ffPosition')]
+  cgwGKIndex = with(teamFixtDF, which(gameweek == myGameweek & ffPosition == 'g'))
+  cgwOFIndex = with(teamFixtDF, which(gameweek == myGameweek & ffPosition != 'g'))
+  cgwGKSimPlayed = !near(simMinute[cgwGKIndex,], 0)
+  cgwOFSimPlayed = !near(simMinute[cgwOFIndex,], 0)
+  cgwGKInfo = teamFixtDF[cgwGKIndex,c('selected', 'subOrder', 'captain', 'viceCaptain')]
+  cgwOFInfo = teamFixtDF[cgwOFIndex,c('selected', 'subOrder', 'captain', 'viceCaptain')]
   
-  updateSelectedMat = matrix(FALSE, nrow = length(cgwIndex), ncol = numSim)
+  myNumGK = length(cgwGKIndex)
+  revisedGKSelectedMat = matrix(FALSE, nrow = myNumGK, ncol = numSim)
   # sub the gk if needed
-  mainGKIndex = which(cgwInfo$ffPosition == 'g' & cgwInfo$selected)
-  subGKIndex = which(cgwInfo$ffPosition == 'g' & !cgwInfo$selected)
-  selectedGKPlayed = cgwSimPlayed[which(cgwInfo$ffPosition == 'g' & cgwInfo$selected)]
-  updateSelectedMat[mainGKIndex, which(selectedGKPlayed)] = TRUE
-  updateSelectedMat[subGKIndex, which(!selectedGKPlayed)] = TRUE
-
+  mainGKIndex = which(cgwGKInfo$selected)
+  subGKIndex = which(!cgwGKInfo$selected)
+  mainGKPlayed = cgwGKSimPlayed[mainGKIndex,]
+  subGKPlayed = cgwGKSimPlayed[subGKIndex,]
+  revisedGKSelectedMat[mainGKIndex, which(mainGKPlayed)] = TRUE
+  revisedGKSelectedMat[subGKIndex, which(!mainGKPlayed & subGKPlayed)] = TRUE
+  
   # then the rest
-  revisedSubOrder = matrix(rep(cgwInfo$subOrder, numSim), ncol = numSim)
+  revisedSubOrder = matrix(rep(cgwOFInfo$subOrder, numSim), ncol = numSim)
   # first step, subs who didn't play, subsequent subs get promoted
   # but need to do this twice in case both 1st and 2nd sub don't play
-  sub1NotPlayed = which(colSums(revisedSubOrder == 1 & !cgwSimPlayed) == 1)
+  sub1NotPlayed = which(colSums(revisedSubOrder == 1 & !cgwOFSimPlayed) == 1)
   for (i in 1:2) {
     revisedSubOrder[,sub1NotPlayed] = apply(revisedSubOrder[,sub1NotPlayed], 2, ReviseSubOrder1)
-    sub1NotPlayed = which(colSums(revisedSubOrder == 1 & !cgwSimPlayed) == 1)
+    sub1NotPlayed = which(colSums(revisedSubOrder == 1 & !cgwOFSimPlayed) == 1)
   }
-  sub2NotPlayed = which(colSums(revisedSubOrder == 2 & !cgwSimPlayed) == 1)
+  sub2NotPlayed = which(colSums(revisedSubOrder == 2 & !cgwOFSimPlayed) == 1)
   revisedSubOrder[,sub2NotPlayed] = apply(revisedSubOrder[,sub2NotPlayed], 2, ReviseSubOrder2)
   
-  sumSelectedAndPlayed = colSums(cgwSimPlayed & cgwInfo$selected)
-  numReqSub = 11 - sumSelectedAndPlayed
+  sumSelectedAndPlayed = colSums(cgwOFSimPlayed & cgwOFInfo$selected)
+  numReqSub = 10 - sumSelectedAndPlayed
   
   ### now label the non-playing selecteds to enable us to loop
   # no, but you need to bring in the selected info, hmm, how to do that
- # nonPlayingSelected = apply(cgwSimPlayed, 1, function
+  # making a big array seems the only way i can think of
+  bigArr = rbind(cgwOFSimPlayed,
+                 matrix(rep(cgwOFInfo$selected, numSim), ncol = numSim),
+                 revisedSubOrder,
+                 numReqSub)
+  revisedOFSelectedMat = apply(bigArr, 2, RevisedSelectedOutfield)
+  
+  revisedSelectedMat = rbind(revisedGKSelectedMat, revisedOFSelectedMat)
+  
+  revisedSelectedDF = as.data.frame(revisedSelectedMat)
+  
+  return(revisedSelectedDF)
 }
+
+revisedSelected = purrr::map_df(unique(teamFixtDF$gameweek), RecalculateSelected, numSim = 1000)
+
+ViewSingleSim = function(myGameweek, mySimNo) {
+  myIndex = which(teamFixtDF$gameweek == myGameweek)
+  View(cbind(teamFixtDF[myIndex, c('player', 'ePoint', 'selected', 'subOrder')], simMinute[myIndex, mySimNo], revisedSelected[myIndex, mySimNo]))
+}
+
+### no, not finished yet, still got to reallocate the captain
+### yeehah, done all the tedious stuff. now just a case of adding up the expected points, and get summed points for a chosen team, the fun bit
