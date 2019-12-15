@@ -207,13 +207,17 @@ RecalculateSelected = function(myGameweek, numSim, simMinute, teamFixtDF) {
   # first step, subs who didn't play, subsequent subs get promoted
   # but need to do this twice in case both 1st and 2nd sub don't play
   sub1NotPlayed = which(colSums(revisedSubOrder == 1 & !cgwOFSimPlayed) == 1)
-  for (i in 1:2) {
-    revisedSubOrder[,sub1NotPlayed] = apply(revisedSubOrder[,sub1NotPlayed], 2, ReviseSubOrder1)
-    sub1NotPlayed = which(colSums(revisedSubOrder == 1 & !cgwOFSimPlayed) == 1)
+  if (length(sub1NotPlayed) > 0) {
+    for (i in 1:2) {
+      revisedSubOrder[,sub1NotPlayed] = apply(revisedSubOrder[,sub1NotPlayed, drop = FALSE], 2, ReviseSubOrder1)
+      sub1NotPlayed = which(colSums(revisedSubOrder == 1 & !cgwOFSimPlayed) == 1)
+    }
   }
   sub2NotPlayed = which(colSums(revisedSubOrder == 2 & !cgwOFSimPlayed) == 1)
-  revisedSubOrder[,sub2NotPlayed] = apply(revisedSubOrder[,sub2NotPlayed], 2, ReviseSubOrder2)
-  
+  if (length(sub2NotPlayed) > 0) {
+    revisedSubOrder[,sub2NotPlayed] = apply(revisedSubOrder[,sub2NotPlayed, drop = FALSE], 2, ReviseSubOrder2)
+  }
+    
   sumSelectedAndPlayed = colSums(cgwOFSimPlayed & cgwOFInfo$selected)
   numReqSub = pmin(3, 10 - sumSelectedAndPlayed)
   
@@ -298,6 +302,7 @@ numSim = 1000
 currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
 # test it handles rarely playing players well
 currentteam[which(currentteam$ffposition == 'd')[1],] = c('liverpool', 'trent alexander arnold', 'd')
+currentteam[which(currentteam$ffposition == 'd')[2],] = c('mancity', 'kyle walker', 'd')
 currentteam[which(currentteam$ffposition == 'm')[1],] = c('liverpool', 'sadio mane', 'm')
 currentteam[which(currentteam$ffposition == 'm')[2],] = c('mancity', 'raheem sterling', 'm')
 currentteam[which(currentteam$ffposition == 'm')[3],] = c('mancity', 'kevin de bruyne', 'm')
@@ -306,3 +311,4 @@ currentteam[which(currentteam$ffposition == 'f')[3],] = c('tottenham', 'harry ka
 CalculateSimulatedPoint(currentTeam, 1000)
 
 # 1000 sims seems enough. doing sensible things
+# does crash if you do something ludicrous like player 5 liverpool players when they don't have a fixture one week, probably not an issue
