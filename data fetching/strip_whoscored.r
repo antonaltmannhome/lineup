@@ -40,13 +40,18 @@ for (ti in 1:length(myteamtoget)) {
 
 problemteam = myteamtoget[apply(iserrorarr,1,function(x) any(x==1))]
 
+if (length(problemteam) > 0) {
+	print('You need to need to rerun for the following teams:')
+	problemindex = match(problemteam, myteamtoget)
+	print(paste(problemteam, problemindex))
+}
+
 if (length(problemteam) == 0) {
 	print('data all looks good!')
 	message('If you are happy for me to proceed, type \'y\' and I will produce the summary file and zip the raw html')
 	dum = askcond(F, T)
 	if (dum == 'y') {
-		stop('sort out the command!')
-		print(paste0('combineteamfile(\'',DIRTOUSE,'\', ', datetouse, ')'))
+		combineteamfile(DIRTOUSE, datetouse)
 
 		# final task, zip the whoscored files into current year directory, then delete
 		setwd(TEMPPATH)
@@ -55,13 +60,6 @@ if (length(problemteam) == 0) {
 		myCommand = paste0('7z a ', targetZipFile, ' ', datetouse, '\\*.txt')
 		system(myCommand)
 
+		setwd(USERPATH)
 	}
 }
-
-if (length(problemteam) > 0) {
-	print('You need to need to rerun for the following teams:')
-	problemindex = match(problemteam, myteamtoget)
-	print(paste(problemteam, problemindex))
-}
-
-setwd(USERPATH)
