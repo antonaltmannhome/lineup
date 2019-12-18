@@ -42,3 +42,8 @@ summarydf = ffDataLoading::GetSummaryDF(gbgdf)
 playerDF = ffDataLoading:::ReadCurrentSeasonPlayerDF() %>%
               rename(player = whoscoredPlayer)
 
+doubledUpPlayer = playerDF %>% count(playerid) %>% filter(n>1)
+if (nrow(doubledUpPlayer) > 0) {
+  print(doubledUpPlayer)
+  stop('aaargh, some players appear twice in playerDF')
+}

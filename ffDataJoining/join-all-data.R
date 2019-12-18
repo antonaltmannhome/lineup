@@ -5,8 +5,8 @@ source('c:/git/lineup/ffDataJoining/data-joining-startup.r')
 if (FALSE) {
   ffDataJoiningPath = paste0(USERPATH, 'ffDataJoining')
   # usethis::create_package(ffDataJoiningPath)
-  #devtools::install(ffDataJoiningPath)
-  devtools::load_all(ffDataJoiningPath)
+  devtools::install(ffDataJoiningPath)
+  #devtools::load_all(ffDataJoiningPath)
 }
 
 # results, along with past odds (EDIT no this is not part of this)
@@ -43,7 +43,10 @@ if (FALSE) {
 }
 
 ffDataJoining:::UpdateCurrentSeasonPlayerId(playerResultDF)
-ffDataJoining:::MatchFFPlayerData(interactive = TRUE)
+playerDF = playerResultDF %>%
+  distinct(playerid, season, team, player)
+# think we might still have a problem as a player moves from NA to non-NA
+playerDF = ffDataJoining:::MatchFFPlayerData(playerDF, interactive = TRUE)
 
 ### next, odds
 ### actually, don't do this, because there's a fair chance you'll want to redo it more recently than the data stripping

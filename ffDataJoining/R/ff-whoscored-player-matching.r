@@ -5,7 +5,7 @@ InitialiseCurrentSeasonPlayerId = function(playerResultDF) {
     filter(season == currentseason) %>%
     distinct(team, soccerwayPlayer, playerid, player) %>%
     rename(whoscoredPlayer = player) %>%
-    mutate(season = currentSeason)
+    mutate(season = currentseason)
 
   mostRecentAppearanceByPlayer = playerResultDF %>%
     filter(season == currentseason) %>%
@@ -27,17 +27,16 @@ UpdateCurrentSeasonPlayerId = function(playerResultDF) {
   # firstly load in our existing player ids
 
   currentSeasonPlayerIdFile = paste0(DATAPATH, 'current-season-player-id.csv')
-  stop('need to check ffDataJoining/ff-whoscored-player-matching/UpdateCurrentSeasonPlayerId code works since changing it')
-  
+
   currentSeasonPlayerDF = readr::read_csv(currentSeasonPlayerIdFile, col_types = list(
-    season = readr::col_integer(),
-    playerid = readr::col_integer(),
     soccerwayPlayer = readr::col_character(),
+    playerid = readr::col_integer(),
     whoscoredPlayer = readr::col_character(),
     team = readr::col_character(),
     ffuseswholename = readr::col_logical(),
     hasleft = readr::col_logical(),
     adjustedwhoscoredPlayer = readr::col_character(),
+    season = readr::col_integer()
   ))
 
   # but that could be out of date, let's see if anyone new has turned up
@@ -47,8 +46,7 @@ UpdateCurrentSeasonPlayerId = function(playerResultDF) {
   newCurrentPlayerDF = anti_join(upToDateCurrentPlayerDF,
                                     currentSeasonPlayerDF,
                                     'playerid') %>%
-                        rename(soccerwayPlayer = soccerwayPlayer,
-                                whoscoredPlayer = player) %>%
+                        rename(whoscoredPlayer = player) %>%
                         mutate(ffuseswholename = FALSE,
                                 hasleft = FALSE,
                                 adjustedwhoscoredPlayer = 'none')
@@ -77,15 +75,29 @@ ReadFFPlayerPriceDF = function() {
 
 MatchFFPlayerData = function(playerDF, interactive = FALSE) {
 
-  ffplayerpricedf = ffDataJoining:::ReadFFPlayerPriceDF()
-
   # there are ones we don't worry about, ie the ones who hven't played a game this season
   # but the ones we should correct are these:
-
+  ffplayerpricedf = ffDataJoining:::ReadFFPlayerPriceDF()
+  
   satis = FALSE
   while(!satis) {
 
+    currentSeasonPlayerIdFile = paste0(DATAPATH, 'current-season-player-id.csv')
+    
+    currentSeasonPlayerDF = readr::read_csv(currentSeasonPlayerIdFile, col_types = list(
+      soccerwayPlayer = readr::col_character(),
+      playerid = readr::col_integer(),
+      whoscoredPlayer = readr::col_character(),
+      team = readr::col_character(),
+      ffuseswholename = readr::col_logical(),
+      hasleft = readr::col_logical(),
+      adjustedwhoscoredPlayer = readr::col_character(),
+      season = readr::col_integer()
+    ))
+    
     playerDF = playerDF %>%
+      filter(season == currentseason) %>%
+      lazy_left_join(currentSeasonPlayerDF, 'playerid', c('ffuseswholename', 'adjustedwhoscoredPlayer', 'hasleft')) %>%
       mutate(surname = case_when(
         adjustedwhoscoredPlayer == 'none' & !ffuseswholename ~ gsub('^[^ ]+ ','',player),
         adjustedwhoscoredPlayer == 'none' & ffuseswholename ~ player,
@@ -100,7 +112,6 @@ MatchFFPlayerData = function(playerDF, interactive = FALSE) {
     }
 
     if (length(unmatchedButCouldMatchIndex) > 0) {
-      currentSeasonPlayerIdFile = paste0(DATAPATH, 'current-season-player-id.csv')
       print(playerDF[unmatchedButCouldMatchIndex, c('team', 'player', 'ffuseswholename', 'hasleft', 'adjustedwhoscoredPlayer', 'teamsurname')])
       message('These players are logged as being in the squad this year by soccerway but have not been matched up on fantasy football site.')
       if (!interactive) {
@@ -127,7 +138,7 @@ MatchFFPlayerData = function(playerDF, interactive = FALSE) {
   playerDF$ffPrice = ffplayerpricedf$price[playerDF$ffindex]
   playerDF$ffPosition = ffplayerpricedf$ffposition[playerDF$ffindex]
   playerDF = remove_column(playerDF,
-                           c('surname', 'teamsurname', 'ffindex', 'soccerwayPlayer',
+                           c('surname', 'teamsurname', 'ffindex',
                              'ffuseswholename', 'adjustedwhoscoredPlayer'))
   
   return(playerDF)

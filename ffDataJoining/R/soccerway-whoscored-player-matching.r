@@ -240,6 +240,7 @@ CheckDoubleNamePlayer = function(playerMatchDF) {
 }
 
 CheckNonTrivialMissing = function(appearanceDF) {
+  stop('this function is deprecated')
   appearanceDF$nonTrivialMissing = with(appearanceDF, is.na(player) & !startTime %in% c('U', 'UU', 'injury', 'suspension'))
   if (sum(appearanceDF$nonTrivialMissing) > 0) {
     message('These are the non-trivial examples of datas being in soccerway data but not in whoscored:')
