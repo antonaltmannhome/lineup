@@ -40,4 +40,17 @@ if (FALSE) {
     ungroup()
 }
 
-### so features 
+### so features we want in this:
+## prior to the position
+## and prior to proportion of previous season to when they joined their team/data
+## and prior to proportion of previous team if they change teams, if available
+## no that's a silly idea: just downweight a bit more
+## maybe downweiht abit more between seasons? also allow different time downweights for D/M/F
+### although determining likely position by stats would of course be better, but sounds tricky for now
+
+# i think we want to loop over all unique game-for-team numbers as in the playing or not code
+# let's nab that
+
+## is this the wrong code to have set up? maybe we should start with the expected minute stuff instead
+
+
