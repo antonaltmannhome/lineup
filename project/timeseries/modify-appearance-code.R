@@ -9,16 +9,33 @@ dum = ffModel:::CalculateSeasonDeservedGoalAssist(summarydf, gbgdf)
 seasondeservedsummary = dum$seasondeservedsummary
 gbgdf = dum$gbgdf
 
+
+gameForTeamNumberDF = gbgdf %>%
+  filter(played) %>%
+  group_by(team, player) %>%
+  arrange(seasonNumber, teamgamenumber) %>%
+  mutate(gameForTeamNumber = 1:n()) %>%
+  ungroup()
+
+gbgdf = lazy_left_join(gbgdf,
+                  gameForTeamNumberDF,
+                  c('team', 'player', 'seasonNumber', 'teamgamenumber'),
+                  'gameForTeamNumber')
+
+gbgdf = gbgdf %>%
+  mutate(normDeservedGoal = deservedgoal * (94 / minute) / teamoddsescored,
+         normDeservedAssist = deservedassist * (94 / minute) / teamoddsescored)
+
 PrepareGbgdfForSmoothing = function(gbgdf, quantityChoice, position) {
   
   subgbgdf = gbgdf %>%
     filter(played & mainpos == position)
   if (quantityChoice == 'goal') {
-    subgbgdf$smoothValue = subgbgdf$deservedgoal
+    subgbgdf$smoothValue = subgbgdf$normDeservedGoal
     subgbgdf$predValue = subgbgdf$goal
   }
   if (quantityChoice == 'assist') {
-    subgbgdf$smoothValue = subgbgdf$deservedassist
+    subgbgdf$smoothValue = subgbgdf$normDeservedAssist
     subgbgdf$predValue = subgbgf$assist
   }
   
@@ -50,14 +67,14 @@ MakeTimeDownweight = function(myAppearanceDF, gameDownweightCoef, seasonDownweig
   return(myAppearanceDF)
 }
 
-CalculateSmoothFromPlayerGame = function(mygbgdf, overallMeanValue,
+CalculateSmoothFromPlayerGame = function(subgbgdf, overallMeanValue,
                                          gameDownweightCoef, seasonDownweightCoef, priorStrength) {
-  mygbgdf = MakeTimeDownweight(mygbgdf, gameDownweightCoef, seasonDownweightCoef)
+  subgbgdf = MakeTimeDownweight(subgbgdf, gameDownweightCoef, seasonDownweightCoef)
   
-  byPlayerInfo = mygbgdf %>%
+  byPlayerInfo = subgbgdf %>%
     group_by(team, player) %>%
-    summarise(sumValue = sum(timeDownweight * smoothValue),
-              sumNumOb = sum(timeDownweight)) %>%
+    summarise(sumValue = sum(timeDownweight * smoothValue * minute / 94),
+              sumNumOb = sum(timeDownweight * minute / 94)) %>%
     ungroup()
   
   ### now we can make our probabilities
@@ -68,23 +85,23 @@ CalculateSmoothFromPlayerGame = function(mygbgdf, overallMeanValue,
   return(byPlayerInfo)
 }
 
-SingleQuantityCalculateUpToDatePlayerSmooth = function(theta, quantityChoice, gbgdf) {
+SingleQuantityCalculateUpToDatePlayerSmooth = function(theta, quantityChoice, position, gbgdf) {
   # theta = c(-0.9439482, -0.1502391, -0.8147686) # is sensible
   gameDownweightCoef = exp(theta[1])
   seasonDownweightCoef = exp(theta[2])
   priorStrength = exp(theta[3])
   
-  subgbgdf = PrepareGbgdfForSmoothing(gbgdf, quantityChoice)
+  subgbgdf = PrepareGbgdfForSmoothing(gbgdf, quantityChoice, position)
   subgbgdf$expectedValue = NA
   
-  overallMeanValue = with(subgbgdf, mean(value[isValid]))
+  overallMeanValue = with(subgbgdf, mean(predValue))
   
   # but we're only actually interested in players who are active at the moment
   subgbgdf = semi_join(subgbgdf, playerDF, c('team', 'player'))
   
-  byPlayerInfo = ffModel:::CalculateSmoothFromPlayerGame(subgbgdf %>% filter(isValid),
-                                                         overallMeanValue,
-                                                         gameDownweightCoef, seasonDownweightCoef, priorStrength)
+  byPlayerInfo = CalculateSmoothFromPlayerGame(subgbgdf,
+                                                overallMeanValue,
+                                                gameDownweightCoef, seasonDownweightCoef, priorStrength)
   
   # but what about players who've eg never come off the bench, they're not in byPlayerInfo as things stand
   missingPlayer = anti_join(subgbgdf %>%
@@ -145,10 +162,10 @@ CalculateHistoricSingleQuantity = function(theta, quantityChoice, position, gbgd
                                currentTeamPlayer,
                                c('team', 'player'))
       pastgbgdf = currentgbgdf %>%
-        filter(isValid & gameForTeamNumber < gi)
+        filter(gameForTeamNumber < gi)
       
-      byPlayerInfo = ffModel:::CalculateSmoothFromPlayerGame(pastgbgdf, overallMeanValue,
-                                                             gameDownweightCoef, seasonDownweightCoef, priorStrength)
+      byPlayerInfo = CalculateSmoothFromPlayerGame(pastgbgdf, overallMeanValue,
+                                                    gameDownweightCoef, seasonDownweightCoef, priorStrength)
       
       byPlayerInfo = byPlayerInfo %>%
         mutate(gameForTeamNumber = gi)
@@ -174,21 +191,12 @@ CalculateHistoricSingleQuantity = function(theta, quantityChoice, position, gbgd
                              c('seasonNumber', 'team', 'player', 'teamgamenumber'),
                              'expectedValue')
   
-  gbgdfPlus = gbgdfPlus %>%
-    rename(!!quantityChoice := expectedValue)
-  
   return(gbgdfPlus)
 }
 
-CalculateHistoricExpectedMinute = function(gbgdf) {
+CalculateHistoricExpectedValue = function(gbgdf) {
   
-  gbgdf = gbgdf %>%
-    group_by(team, player) %>%
-    arrange(seasonNumber, teamgamenumber) %>%
-    mutate(gameForTeamNumber = 1:n()) %>%
-    ungroup()
-  
-  quantityChoiceVector = c('probStart', 'probOffBench', 'eMinStart', 'eMinBench')
+  quantityChoiceVector = c('goal', 'assist')
   for (qi in 1:length(quantityChoiceVector)) {
     optThetaFile = system.file(paste0('opt-theta-', quantityChoiceVector[qi], '.dat'), package = 'ffModel')
     theta = scan(optThetaFile, quiet = TRUE)
