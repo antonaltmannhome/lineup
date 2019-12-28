@@ -150,12 +150,12 @@ LikFunct = function(theta, quantityChoice, position, runMode) {
   
   if (runMode == 'fit') {
     toReturn = subgbgdf %>%
-      select(season, teamgamenumber, team, player, expectedValue)
+      select(season, teamgamenumber, team, player, expectedValue, opgoal, penaltyscored)
   }
   
   if (runMode == 'max') {
     if (quantityChoice == 'goal') {
-      subgbgdf$logLik = with(subgbgdf, log(dpois(goal, expectedValue)))
+      subgbgdf$logLik = with(subgbgdf, log(dpois(opgoal, expectedValue)))
     }
     if (quantityChoice == 'assist') {
       subgbgdf$logLik = with(subgbgdf, log(dpois(assist, expectedValue)))
@@ -163,7 +163,7 @@ LikFunct = function(theta, quantityChoice, position, runMode) {
     
     sumLogLik = sum(subgbgdf$logLik)
     
-    calibplot(subgbgdf$expectedValue, subgbgdf$goal)
+    calibplot(subgbgdf$expectedValue, subgbgdf$opgoal)
     print(sumLogLik)
     
     toReturn = -sumLogLik
@@ -185,6 +185,57 @@ for (mi in 1:nrow(maxThetaArr)) {
                 quantityChoice = maxThetaArr$quantityChoice[mi],
                 position = maxThetaArr$mainpos[mi],
                 runMode = 'max')
-  # -3.340669 -8.119093  2.063635
+  # -6.888534 -9.606497  2.217833 for FW, goal - season DW non-existant effectively
   maxThetaArr[mi,3:5] = maxInfo$est
 }
+
+
+### hmmm, wondering if there's a problem with deserved goals, the big team strikers always seem to get more than they deserve
+
+regularStriker = gbgdf %>%
+  group_by(player) %>%
+  summarise(sumMinute = sum(minute),
+            sumGoalRate = 94 * sum(opgoal) / sum(minute)) %>%
+  filter(sumMinute > 18 * 94 & sumGoalRate > 0.3)
+
+regularInBetween = gbgdf %>%
+  filter(mainpos != 'GK') %>%
+  group_by(player) %>%
+  summarise(sumMinute = sum(minute),
+            sumGoalRate = 94 * sum(opgoal) / sum(minute)) %>%
+  filter(sumMinute > 18 * 94 & between(sumGoalRate,0.05, 0.3))
+
+regularNonStriker = gbgdf %>%
+  filter(mainpos != 'GK') %>%
+  group_by(player) %>%
+  summarise(sumMinute = sum(minute),
+            sumGoalRate = 94 * sum(opgoal) / sum(minute)) %>%
+  filter(sumMinute > 18 * 94 & sumGoalRate <0.05)
+
+# right, let's compute deserved versus observed for all three
+
+strikBias = gbgdf %>%
+  semi_join(regularStriker, 'player') %>%
+  summarise(sumDeserved = sum(deservedgoal),
+            sumGoal = sum(opgoal))
+# A tibble: 1 x 2
+# sumDeserved sumGoal
+# <dbl>   <dbl>
+#   1     1274.25    1365
+inBetweenBias = gbgdf %>%
+  semi_join(regularInBetween, 'player') %>%
+  summarise(sumDeserved = sum(deservedgoal),
+            sumGoal = sum(opgoal))
+# A tibble: 1 x 2
+# sumDeserved sumGoal
+# <dbl>   <dbl>
+#   1     1797.33    1455
+nonStrikBias = gbgdf %>%
+  semi_join(regularNonStriker, 'player') %>%
+  summarise(sumDeserved = sum(deservedgoal),
+            sumGoal = sum(opgoal))
+# A tibble: 1 x 2
+# sumDeserved sumGoal
+# <dbl>   <dbl>
+#   1     515.428     208
+### crap. that's no good. no wonder we never want to sign kane/vardy etc
