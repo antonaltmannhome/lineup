@@ -45,25 +45,22 @@ PrepareGbgdfForSmoothing = function(gbgdf, quantityChoice, position) {
   return(subgbgdf)
 }
 
-MakeTimeDownweight = function(subgbgdf, gameDownweightCoef, seasonDownweightCoef) {
+MakeTimeDownweight = function(subgbgdf, dayDownweightCoef, seasonDownweightCoef) {
   subgbgdf = subgbgdf %>%
     left_join(subgbgdf %>%
-                group_by(seasonNumber, team, player) %>%
-                summarise(maxGameForTeamWithinSeason = max(teamgamenumber)),
-              c('seasonNumber', 'team', 'player')) %>%
-    left_join(subgbgdf %>%
                 group_by(team, player) %>%
-                summarise(maxSeasonNumber = max(seasonNumber)),
+                summarise(maxSeasonNumber = max(seasonNumber),
+                          maxDaynum = max(daynum)),
               c('team', 'player'))
-  # OMG this is fukd, need to heavily revise this
+
   subgbgdf$seasDelta = with(subgbgdf, maxSeasonNumber - seasonNumber)
-  subgbgdf$gameDelta = with(subgbgdf, maxGameForTeamWithinSeason - teamgamenumber)
-  subgbgdf$gameTimeDownweight = with(subgbgdf, exp(-gameDownweightCoef * gameDelta))
-  subgbgdf$seasonTimeMult = with(subgbgdf, exp(seasonDownweightCoef * seasDelta))
-  subgbgdf$timeDownweight = with(subgbgdf, gameTimeDownweight * seasonTimeMult)
+  subgbgdf$dayDelta = with(subgbgdf, maxDaynum - daynum)
+  subgbgdf$dayDownweight = with(subgbgdf, exp(-dayDownweightCoef * dayDelta))
+  subgbgdf$seasonDownweight = with(subgbgdf, exp(-seasonDownweightCoef * seasDelta))
+  subgbgdf$timeDownweight = with(subgbgdf, dayDownweight * seasonDownweight)
   
   # but we don't need all of the intermediate columns so get rid
-  subgbgdf = within(subgbgdf, rm(maxSeasonNumber, maxGameForTeamWithinSeason, seasDelta, gameDelta, gameTimeDownweight, seasonTimeDownweight))
+  subgbgdf = within(subgbgdf, rm(maxSeasonNumber, maxDaynum, seasDelta, dayDelta, dayDownweight, seasonDownweight))
   
   return(subgbgdf)
 }
@@ -146,7 +143,7 @@ CalculateHistoricSingleQuantity = function(theta, quantityChoice, position, gbgd
 LikFunct = function(theta, quantityChoice, position, runMode) {
   
   # for debugging:
-  # theta = c(log(0.05), log(0.5), log(5)); quantityChoice = 'goal'; position = 'FW'
+  # theta = c(log(0.002), log(0.5), log(5)); quantityChoice = 'goal'; position = 'FW'
   print(exp(theta))
   subgbgdf = CalculateHistoricSingleQuantity(theta, quantityChoice, position, gbgdf)
   subgbgdf$expectedValue = with(subgbgdf, normExpectedValue * teamoddsescored * minute2 / 94)
@@ -181,7 +178,7 @@ maxThetaArr = expand.grid(mainpos = posToMax,
                           quantityChoice = c('goal', 'assist'),
                           stringsAsFactors = FALSE)
 maxThetaArr = cbind(maxThetaArr, array(NA, dim = c(nrow(maxThetaArr), 3)))
-theta = c(log(0.05), log(0.001), log(5))
+theta = c(log(0.002), log(0.5), log(5))
 
 for (mi in 1:nrow(maxThetaArr)) {
   maxInfo = nlm(LikFunct, p = theta,
