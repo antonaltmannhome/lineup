@@ -127,3 +127,9 @@ AlignGameweekAndSeasonWithResultDF = function(resultDF) {
 
 	return(resultDF = resultDF)
 }
+
+CreateDaynum = function(resultDF) {
+  # could we get away with changing the dates so that they're actually dates? not sure, in the meantime, let's make daynum
+  resultDF$daynum =  time_length(interval(min(ymd(resultDF$date)), ymd(resultDF$date)), 'days')
+  return(resultDF)
+}

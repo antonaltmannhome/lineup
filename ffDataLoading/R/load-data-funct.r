@@ -136,7 +136,7 @@ BolsterGbgDF = function(gbgdf, resultdf) {
 
 	gbgdf = left_join(gbgdf,
 						resultdf %>%
-						select(date, team, oddsescored, oppteam, conceded, oddseconceded, gksave) %>%
+						select(date, daynum, team, oddsescored, oppteam, conceded, oddseconceded, gksave) %>%
 						dplyr::rename(teamconceded = conceded,
 										teamoddsescored = oddsescored,
 										teamoddseconceded = oddseconceded),
