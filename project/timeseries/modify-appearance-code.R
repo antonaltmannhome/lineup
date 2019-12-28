@@ -23,8 +23,9 @@ gbgdf = lazy_left_join(gbgdf,
                   'gameForTeamNumber')
 
 gbgdf = gbgdf %>%
-  mutate(normDeservedGoal = deservedgoal * (94 / minute) / teamoddsescored,
-         normDeservedAssist = deservedassist * (94 / minute) / teamoddsescored)
+  mutate(minute2 = ifelse(minute > 0, minute, 1),
+        normDeservedGoal = deservedgoal * (94 / minute2) / teamoddsescored,
+         normDeservedAssist = deservedassist * (94 / minute2) / teamoddsescored)
 
 PrepareGbgdfForSmoothing = function(gbgdf, quantityChoice, position) {
   
@@ -39,7 +40,7 @@ PrepareGbgdfForSmoothing = function(gbgdf, quantityChoice, position) {
     subgbgdf$predValue = subgbgf$assist
   }
   
-  subgbgdf$expectedValue = NA
+  subgbgdf$normExpectedValue = NA
   
   return(subgbgdf)
 }
@@ -73,63 +74,16 @@ CalculateSmoothFromPlayerGame = function(subgbgdf, overallMeanValue,
   
   byPlayerInfo = subgbgdf %>%
     group_by(team, player) %>%
-    summarise(sumValue = sum(timeDownweight * smoothValue * minute / 94),
-              sumNumOb = sum(timeDownweight * minute / 94)) %>%
+    summarise(sumValue = sum(timeDownweight * smoothValue * minute2 / 94),
+              sumNumOb = sum(timeDownweight * minute2 / 94)) %>%
     ungroup()
   
   ### now we can make our probabilities
   byPlayerInfo$topLine = with(byPlayerInfo, priorStrength * overallMeanValue + sumValue)
   byPlayerInfo$bottomLine = with(byPlayerInfo, priorStrength + sumNumOb)
-  byPlayerInfo$expectedValue = with(byPlayerInfo, topLine / bottomLine)
+  byPlayerInfo$normExpectedValue = with(byPlayerInfo, topLine / bottomLine)
   
   return(byPlayerInfo)
-}
-
-SingleQuantityCalculateUpToDatePlayerSmooth = function(theta, quantityChoice, position, gbgdf) {
-  # theta = c(-0.9439482, -0.1502391, -0.8147686) # is sensible
-  gameDownweightCoef = exp(theta[1])
-  seasonDownweightCoef = exp(theta[2])
-  priorStrength = exp(theta[3])
-  
-  subgbgdf = PrepareGbgdfForSmoothing(gbgdf, quantityChoice, position)
-  subgbgdf$expectedValue = NA
-  
-  overallMeanValue = with(subgbgdf, mean(predValue))
-  
-  # but we're only actually interested in players who are active at the moment
-  subgbgdf = semi_join(subgbgdf, playerDF, c('team', 'player'))
-  
-  byPlayerInfo = CalculateSmoothFromPlayerGame(subgbgdf,
-                                                overallMeanValue,
-                                                gameDownweightCoef, seasonDownweightCoef, priorStrength)
-  
-  # but what about players who've eg never come off the bench, they're not in byPlayerInfo as things stand
-  missingPlayer = anti_join(subgbgdf %>%
-                              distinct(team, player),
-                            byPlayerInfo,
-                            c('team', 'player'))
-  byPlayerInfo = bind_rows(byPlayerInfo, missingPlayer %>% mutate(expectedValue = overallMeanValue), )
-  
-  byPlayerInfo[,quantityChoice] = byPlayerInfo$expectedValue
-  # maybe should retain sumValue and sumNumOb?
-  byPlayerInfo = remove_column(byPlayerInfo, c('sumValue', 'sumNumOb', 'topLine', 'bottomLine', 'expectedValue'))
-  
-  return(byPlayerInfo)
-}
-
-CalculateUpToDatePlayerSmooth = function(gbgdf) {
-  
-  quantityChoiceVector = c('probStart', 'probOffBench', 'eMinStart', 'eMinBench')
-  for (qi in 1:length(quantityChoiceVector)) {
-    optThetaFile = system.file(paste0('opt-theta-', quantityChoiceVector[qi], '.dat'), package = 'ffModel')
-    theta = scan(optThetaFile, quiet = TRUE)
-    currentSmoothDF = ffModel:::SingleQuantityCalculateUpToDatePlayerSmooth(theta, quantityChoiceVector[qi], gbgdf)
-    playerDF = lazy_left_join(playerDF, currentSmoothDF, c('team', 'player'), quantityChoiceVector[qi])
-    message('Have got latest smoothed values for ', quantityChoiceVector[qi],'...')
-  }
-  playerDF$eMin = with(playerDF, probStart * eMinStart + (1 - probStart) * probOffBench * eMinBench)
-  
-  return(playerDF)
 }
 
 CalculateHistoricSingleQuantity = function(theta, quantityChoice, position, gbgdf) {
@@ -140,10 +94,10 @@ CalculateHistoricSingleQuantity = function(theta, quantityChoice, position, gbgd
   priorStrength = exp(theta[3])
   
   subgbgdf = PrepareGbgdfForSmoothing(gbgdf, quantityChoice, position)
-  subgbgdf$expectedValue = NA
+  subgbgdf$normExpectedValue = NA
   
   totalNumValue = with(subgbgdf, sum(predValue))
-  totalTeamOddsEScored = with(subgbgdf, sum( (teamoddsescored * minute / 94)))
+  totalTeamOddsEScored = with(subgbgdf, sum( (teamoddsescored * minute2 / 94)))
   overallMeanValue = totalNumValue / totalTeamOddsEScored
   for (gi in unique(subgbgdf$gameForTeamNumber)) {
     # first fill out the first game with the prior
@@ -152,7 +106,7 @@ CalculateHistoricSingleQuantity = function(theta, quantityChoice, position, gbgd
         group_by(team, player) %>%
         arrange(seasonNumber, teamgamenumber) %>%
         slice(1) %>%
-        mutate(expectedValue = overallMeanValue)
+        mutate(normExpectedValue = overallMeanValue)
     }
     if (gi > 1) {
       ### ah no there's a problem, players' data get eliminate if their mainpos gets reclassified, that's bollox
@@ -173,40 +127,61 @@ CalculateHistoricSingleQuantity = function(theta, quantityChoice, position, gbgd
       missingPlayerInfo = anti_join(currentTeamPlayer,
                                     byPlayerInfo,
                                     c('team', 'player')) %>%
-        mutate(expectedValue = overallMeanValue) %>%
-        select(team, player, gameForTeamNumber, expectedValue)
+        mutate(normExpectedValue = overallMeanValue) %>%
+        select(team, player, gameForTeamNumber, normExpectedValue)
       byPlayerInfo = bind_rows(byPlayerInfo, missingPlayerInfo)
     }
     
     subgbgdf = join_on_overlap(subgbgdf,
                                byPlayerInfo %>%
-                                 select(team, player, gameForTeamNumber, expectedValue),
+                                 select(team, player, gameForTeamNumber, normExpectedValue),
                                c('team', 'player', 'gameForTeamNumber'))
     if ( (gi %% 20) == 0) message('Have calculated ', quantityChoice, ' for team-game number ', gi)
   }
   
-  # get it back onto original DF
-  gbgdfPlus = lazy_left_join(gbgdf,
-                             subgbgdf,
-                             c('seasonNumber', 'team', 'player', 'teamgamenumber'),
-                             'expectedValue')
-  
-  return(gbgdfPlus)
+
+  return(subgbgdf)
 }
 
-CalculateHistoricExpectedValue = function(gbgdf) {
+LikFunct = function(theta, quantityChoice, position, runMode) {
   
-  quantityChoiceVector = c('goal', 'assist')
-  for (qi in 1:length(quantityChoiceVector)) {
-    optThetaFile = system.file(paste0('opt-theta-', quantityChoiceVector[qi], '.dat'), package = 'ffModel')
-    theta = scan(optThetaFile, quiet = TRUE)
-    
-    gbgdfPlusQuantity = CalculateHistoricSingleQuantity(theta, quantityChoice = quantityChoiceVector[qi], gbgdf)
-    gbgdf = lazy_left_join(gbgdf,
-                           gbgdfPlusQuantity,
-                           c('seasonNumber', 'team', 'player', 'teamgamenumber'),
-                           quantityChoiceVector[qi])
+  # for debugging:
+  # theta = c(log(0.05), log(1), log(5)); quantityChoice = 'goal'; position = 'FW'
+  print(exp(theta))
+  subgbgdf = CalculateHistoricSingleQuantity(theta, quantityChoice, position, gbgdf)
+  subgbgdf$expectedValue = with(subgbgdf, normExpectedValue * teamoddsescored * minute2 / 94)
+  
+  if (runMode == 'fit') {
+    toReturn = subgbgdf %>%
+      select(season, teamgamenumber, team, player, expectedValue)
   }
   
-  return(gbgdf)
+  if (runMode == 'max') {
+    if (quantityChoice == 'goal') {
+      subgbgdf$logLik = with(subgbgdf, log(dpois(goal, expectedValue)))
+    }
+    if (quantityChoice == 'assist') {
+      subgbgdf$logLik = with(subgbgdf, log(dpois(assist, expectedValue)))
+    }
+    
+    sumLogLik = sum(subgbgdf$logLik)
+    
+    calibplot(subgbgdf$expectedValue, subgbgdf$goal)
+    print(sumLogLik)
+    
+    toReturn = -sumLogLik
+  }
+  
+  return(toReturn)
 }
+
+posToMax = c('FW', 'AM', 'M', 'DMC', 'D')
+
+theta = c(log(0.05), log(1), log(5))
+maxInfoGoalFW = nlm(LikFunct, p = theta, quantityChoice = 'goal', position = 'FW', runMode = 'max')
+# -3.340669 -8.119093  2.063635
+goalFWGbgdf = LikFunct(maxInfoGoalFW$estimate, quantityChoice = 'goal', position = 'FW', runMode = 'fit')
+
+maxInfoGoalAM = nlm(LikFunct, p = theta, quantityChoice = 'goal', position = 'AM', runMode = 'max')
+# -3.340669 -8.119093  2.063635
+goalAMGbgdf = LikFunct(maxInfoGoalFW$estimate, quantityChoice = 'goal', position = 'FW', runMode = 'fit')
