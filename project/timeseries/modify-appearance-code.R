@@ -45,27 +45,27 @@ PrepareGbgdfForSmoothing = function(gbgdf, quantityChoice, position) {
   return(subgbgdf)
 }
 
-MakeTimeDownweight = function(myAppearanceDF, gameDownweightCoef, seasonDownweightCoef) {
-  myAppearanceDF = myAppearanceDF %>%
-    left_join(myAppearanceDF %>%
+MakeTimeDownweight = function(subgbgdf, gameDownweightCoef, seasonDownweightCoef) {
+  subgbgdf = subgbgdf %>%
+    left_join(subgbgdf %>%
                 group_by(seasonNumber, team, player) %>%
                 summarise(maxGameForTeamWithinSeason = max(teamgamenumber)),
               c('seasonNumber', 'team', 'player')) %>%
-    left_join(myAppearanceDF %>%
+    left_join(subgbgdf %>%
                 group_by(team, player) %>%
                 summarise(maxSeasonNumber = max(seasonNumber)),
               c('team', 'player'))
-  
-  myAppearanceDF$seasDelta = with(myAppearanceDF, maxSeasonNumber - seasonNumber)
-  myAppearanceDF$gameDelta = with(myAppearanceDF, maxGameForTeamWithinSeason - teamgamenumber)
-  myAppearanceDF$gameTimeDownweight = with(myAppearanceDF, exp(-gameDownweightCoef * gameDelta))
-  myAppearanceDF$seasonTimeDownweight = with(myAppearanceDF, exp( - seasonDownweightCoef * seasDelta))
-  myAppearanceDF$timeDownweight = with(myAppearanceDF, gameTimeDownweight * seasonTimeDownweight)
+  # OMG this is fukd, need to heavily revise this
+  subgbgdf$seasDelta = with(subgbgdf, maxSeasonNumber - seasonNumber)
+  subgbgdf$gameDelta = with(subgbgdf, maxGameForTeamWithinSeason - teamgamenumber)
+  subgbgdf$gameTimeDownweight = with(subgbgdf, exp(-gameDownweightCoef * gameDelta))
+  subgbgdf$seasonTimeMult = with(subgbgdf, exp(seasonDownweightCoef * seasDelta))
+  subgbgdf$timeDownweight = with(subgbgdf, gameTimeDownweight * seasonTimeMult)
   
   # but we don't need all of the intermediate columns so get rid
-  myAppearanceDF = within(myAppearanceDF, rm(maxSeasonNumber, maxGameForTeamWithinSeason, seasDelta, gameDelta, gameTimeDownweight, seasonTimeDownweight))
+  subgbgdf = within(subgbgdf, rm(maxSeasonNumber, maxGameForTeamWithinSeason, seasDelta, gameDelta, gameTimeDownweight, seasonTimeDownweight))
   
-  return(myAppearanceDF)
+  return(subgbgdf)
 }
 
 CalculateSmoothFromPlayerGame = function(subgbgdf, overallMeanValue,
@@ -146,7 +146,7 @@ CalculateHistoricSingleQuantity = function(theta, quantityChoice, position, gbgd
 LikFunct = function(theta, quantityChoice, position, runMode) {
   
   # for debugging:
-  # theta = c(log(0.05), log(1), log(5)); quantityChoice = 'goal'; position = 'FW'
+  # theta = c(log(0.05), log(0.5), log(5)); quantityChoice = 'goal'; position = 'FW'
   print(exp(theta))
   subgbgdf = CalculateHistoricSingleQuantity(theta, quantityChoice, position, gbgdf)
   subgbgdf$expectedValue = with(subgbgdf, normExpectedValue * teamoddsescored * minute2 / 94)
@@ -177,11 +177,17 @@ LikFunct = function(theta, quantityChoice, position, runMode) {
 
 posToMax = c('FW', 'AM', 'M', 'DMC', 'D')
 
-theta = c(log(0.05), log(1), log(5))
-maxInfoGoalFW = nlm(LikFunct, p = theta, quantityChoice = 'goal', position = 'FW', runMode = 'max')
-# -3.340669 -8.119093  2.063635
-goalFWGbgdf = LikFunct(maxInfoGoalFW$estimate, quantityChoice = 'goal', position = 'FW', runMode = 'fit')
+maxThetaArr = expand.grid(mainpos = posToMax,
+                          quantityChoice = c('goal', 'assist'),
+                          stringsAsFactors = FALSE)
+maxThetaArr = cbind(maxThetaArr, array(NA, dim = c(nrow(maxThetaArr), 3)))
+theta = c(log(0.05), log(0.001), log(5))
 
-maxInfoGoalAM = nlm(LikFunct, p = theta, quantityChoice = 'goal', position = 'AM', runMode = 'max')
-# -3.340669 -8.119093  2.063635
-goalAMGbgdf = LikFunct(maxInfoGoalFW$estimate, quantityChoice = 'goal', position = 'FW', runMode = 'fit')
+for (mi in 1:nrow(maxThetaArr)) {
+  maxInfo = nlm(LikFunct, p = theta,
+                quantityChoice = maxThetaArr$quantityChoice[mi],
+                position = maxThetaArr$mainpos[mi],
+                runMode = 'max')
+  # -3.340669 -8.119093  2.063635
+  maxThetaArr[mi,3:5] = maxInfo$est
+}
