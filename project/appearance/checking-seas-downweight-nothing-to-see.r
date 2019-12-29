@@ -238,3 +238,111 @@ LikFunct = function(theta, quantityChoice) {
 
 maxInfo = nlm(LikFunct, p = theta, 'probStart')
 # -0.437398 no better, nothing in this
+
+# what about just downweighting by games back?
+
+
+
+MakeTimeDownweight3 = function(pastGbgDF, gameDownweightCoef, gi) {
+
+  pastGbgDF$gameDelta = with(pastGbgDF, gi - gameForTeamNumber)
+  pastGbgDF$timeDownweight = with(pastGbgDF, exp(-gameDownweightCoef * gameDelta))
+    
+  return(pastGbgDF)
+}
+
+CalculateSmoothFromPlayerGame3 = function(pastGbgDF, overallMeanValue,
+                                          gameDownweightCoef, priorStrength, gi) {
+  pastGbgDF = MakeTimeDownweight3(pastGbgDF, gameDownweightCoef, gi)
+  
+  byPlayerInfo = pastGbgDF %>%
+    group_by(team, player) %>%
+    summarise(sumValue = sum(timeDownweight * value),
+              sumNumOb = sum(timeDownweight)) %>%
+    ungroup()
+  
+  ### now we can make our probabilities
+  byPlayerInfo$topLine = with(byPlayerInfo, priorStrength * overallMeanValue + sumValue)
+  byPlayerInfo$bottomLine = with(byPlayerInfo, priorStrength + sumNumOb)
+  byPlayerInfo$expectedValue = with(byPlayerInfo, topLine / bottomLine)
+  
+  return(byPlayerInfo)
+}
+
+CalculateHistoricSingleQuantity3 = function(theta, quantityChoice, gbgdf) {
+  
+  # theta = c(log(0.05), log(3)) # is sensible
+  gameDownweightCoef = exp(theta[1])
+  priorStrength = exp(theta[2])
+  
+  subGbgDF = ffModel:::PrepareGbgdfForSmoothing(gbgdf, quantityChoice)
+  subGbgDF$expectedValue = NA
+  
+  overallMeanValue = with(subGbgDF, mean(value[isValid]))
+  for (gi in unique(subGbgDF$gameForTeamNumber)) {
+    # first fill out the first game with the prior
+    if (gi == 1) {
+      byPlayerInfo = subGbgDF %>%
+        group_by(team, player) %>%
+        arrange(seasonNumber, teamgamenumber) %>%
+        slice(1) %>%
+        mutate(expectedValue = overallMeanValue)
+    }
+    if (gi > 1) {
+      currentTeamPlayer = subGbgDF %>%
+        filter(gameForTeamNumber == gi)
+      currentgbgdf = semi_join(subGbgDF,
+                               currentTeamPlayer,
+                               c('team', 'player'))
+      pastGbgDF = currentgbgdf %>%
+        filter(isValid & gameForTeamNumber < gi)
+      
+      byPlayerInfo = CalculateSmoothFromPlayerGame3(pastGbgDF, overallMeanValue,
+                                                    gameDownweightCoef, priorStrength,
+                                                    gi)
+      
+      byPlayerInfo = byPlayerInfo %>%
+        mutate(gameForTeamNumber = gi)
+      # but that won't include e.g players who have never started if we're looking at expected minutes given starting. so should put in prior for that
+      missingPlayerInfo = anti_join(currentTeamPlayer,
+                                    byPlayerInfo,
+                                    c('team', 'player')) %>%
+        mutate(expectedValue = overallMeanValue) %>%
+        select(team, player, gameForTeamNumber, expectedValue)
+      byPlayerInfo = bind_rows(byPlayerInfo, missingPlayerInfo)
+    }
+    
+    subGbgDF = join_on_overlap(subGbgDF,
+                               byPlayerInfo %>%
+                                 select(team, player, gameForTeamNumber, expectedValue),
+                               c('team', 'player', 'gameForTeamNumber'))
+    if ( (gi %% 20) == 0) message('Have calculated ', quantityChoice, ' for team-game number ', gi)
+  }
+  
+  # get it back onto original DF
+  gbgdfPlus = lazy_left_join(gbgdf,
+                             subGbgDF,
+                             c('seasonNumber', 'team', 'player', 'teamgamenumber'),
+                             'expectedValue')
+  
+  gbgdfPlus = gbgdfPlus %>%
+    rename(!!quantityChoice := expectedValue)
+  
+  return(gbgdfPlus)
+}
+
+theta = c(log(0.1), log(0.5))
+LikFunct = function(theta, quantityChoice) {
+  gbgdfPlusQuantity = CalculateHistoricSingleQuantity3(theta, quantityChoice, gbgdf)
+  
+  ### and the loglik is:
+  gbgdfPlusQuantity$logLik = with(gbgdfPlusQuantity, log(dbinom(isStart, 1, probStart)))
+  meanLogLik = with(gbgdfPlusQuantity, mean(logLik[available]))
+  
+  print(meanLogLik)
+  return(-meanLogLik)
+}
+
+maxInfo = nlm(LikFunct, p = theta, 'probStart')
+
+# -0.4330739 fkin get in there, fuck off season downweight

@@ -21,6 +21,8 @@ devtools::install(ffDataLoadingPath)
 }
 
 seasoninfo = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
+##### aaarghhh, want to define seasonNumber at this point but it starts with 1516, whereas appearanceDF starts with 1617, and uses 1 for 1617.
+### the solution: appearanceDF should use seasoninfo as its guide for season numbers. 
 currentseason = 1920
 
 resultdf = ffDataLoading:::GetResultDF()
