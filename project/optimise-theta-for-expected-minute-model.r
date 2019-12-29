@@ -7,27 +7,51 @@ gbgdf = gbgdf %>%
   mutate(gameForTeamNumber = 1:n()) %>%
   ungroup()
 
-ProbStartLogLik = function(theta) {
-  gbgdfPlusProbStart = ffModel:::CalculateHistoricSingleQuantity(theta, quantityChoice = 'probStart', gbgdf)
-  gbgdfPlusProbStart$logLik = with(gbgdfPlusProbStart, log(dbinom(isStart, 1, probStart)))
-  sumLogLik = with(gbgdfPlusProbStart, sum(logLik[available]))
+LikFunct = function(theta, quantityChoice) {
 
+  gbgdfPlus = ffModel:::CalculateHistoricSingleQuantity(theta, quantityChoice, gbgdf)
+  if (quantityChoice == 'probStart') {
+    gbgdfPlus$logLik = with(gbgdfPlus, log(dbinom(isStart, 1, probStart)))
+    sumLogLik = with(gbgdfPlus, sum(logLik[available]))
+    toReturn = -sumLogLik
+  }
+  if (quantityChoice == 'probOffBench') {
+    gbgdfPlus$logLik = with(gbgdfPlus, log(dbinom(!isStart & played, 1, probOffBench)))
+    sumLogLik = with(gbgdfPlus, sum(logLik[available & !isStart]))
+    toReturn = -sumLogLik
+  }
+  if (quantityChoice == 'eMinStart') {
+    gbgdfPlus$sqDiff = with(gbgdfPlus, (minute - eMinStart)^2)
+    sumSqDiff = with(gbgdfPlus, sum(sqDiff[available & isStart]))
+    toReturn = sumSqDiff
+  }
+  if (quantityChoice == 'eMinBench') {
+    gbgdfPlus$sqDiff = with(gbgdfPlus, (minute - eMinBench)^2)
+    sumSqDiff = with(gbgdfPlus, sum(sqDiff[available & !isStart & played]))
+    toReturn = sumSqDiff
+  }
+  
   gameDownweightCoef = exp(theta[1])
-  seasonDownweightCoef = exp(theta[2])
-  priorStrength = exp(theta[3])
+  priorStrength = exp(theta[2])
 
   message('gameDownweightCoef: ', gameDownweightCoef)
-  message('seasonDownweightCoef: ', seasonDownweightCoef)
   message('priorStrength: ', priorStrength)
-  message('mean sumLogLik: ', sumLogLik)
+  message('cost: ', toReturn)
 
-  return(-sumLogLik)
+  return(toReturn)
 }
 
-theta = c(-0.9439482, -0.1502391, -0.8147686)
-maxInfo = nlm(ProbStartLogLik, p = theta, stepmax = 1)
+quantityChoiceVector = c('probStart', 'probOffBench', 'eMinStart', 'eMinBench')
+theta = c(-0.9439482, -0.8147686)
+for (quantityChoice in quantityChoiceVector) {
+  maxInfo = nlm(LikFunct, p = theta, stepmax = 1, quantityChoice = quantityChoice)
+  optThetaFile = system.file(paste0('opt-theta-', quantityChoice, '.dat'), package = 'ffModel')
+  write(x = maxInfo$est, file = optThetaFile)
+}
+ 
 #$estimate
-#[1] -1.031  0.785 -0.658
+#[1] -0.9370021 -1.0360174
+
 
 ProbOffBenchLogLik = function(theta) {
   gbgdfPlusProbOffBench = ffModel:::CalculateHistoricSingleQuantity(theta, quantityChoice = 'probOffBench', gbgdf = gbgdf)
