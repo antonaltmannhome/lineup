@@ -1,12 +1,6 @@
 ### let's try predicting total minutes played in next ten games, not just next game, that seems too prone to inter-game correlation
 source('c:/git/lineup/new-model-startup.r')
 
-gbgdf = gbgdf %>%
-  group_by(team, player) %>%
-  arrange(seasonNumber, teamgamenumber) %>%
-  mutate(gameForTeamNumber = 1:n()) %>%
-  ungroup()
-
 distinctSeasonTeamGameNumber = resultdf %>%
   distinct(season, teamgamenumber) %>%
   mutate(seasonNumber = match(season, unique(season))) %>%
@@ -35,7 +29,7 @@ blockedAppearanceDF = gbgdf %>%
 
 ### now, the idea is, we run the loop as before, but with the same downweight for everything i guess, and compare predicted minutes with actual, just at the blocked time points
 
-theta = c(log(0.35), log(2), log(0.5))
+theta = c(log(0.25), log(0.5))
 CalculateSqDiff = function(theta) {
   quantityChoiceVector = c('probStart', 'probOffBench', 'eMinStart', 'eMinBench')
   for (qi in 1:length(quantityChoiceVector)) {
@@ -67,8 +61,14 @@ CalculateSqDiff = function(theta) {
   blockedAppearanceDF$sqDiff = with(blockedAppearanceDF, (eSumPlayed - sumPlayed)^2)
   
   meanSqDiff = mean(blockedAppearanceDF$sqDiff, na.rm = TRUE)
+  print(exp(theta))
+  print(meanSqDiff)
   
   return(meanSqDiff)
 }
 
 ## season downweight is such an arse though, slows down optimisation so much, for basically nothing
+maxInfo = nlm(CalculateSqDiff, p = theta)
+# [1] 0.1768644 1.2844141
+# that's looking a lot healthier to me. now, just ned to consider if we should actually independently estimate all the other ones, or downweight them
+# might want to reoprtimise just probStart if the others are held more constant
