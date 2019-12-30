@@ -143,7 +143,13 @@ BolsterGbgDF = function(gbgdf, resultdf) {
 						by = c('date', 'team'))
 	gbgdf$gksave[which(gbgdf$gksave < 0)] = 0
 
-  return(gbgdf)
+  gbgdf = gbgdf %>%
+    group_by(team, player) %>%
+    arrange(seasonNumber, teamgamenumber) %>%
+    mutate(gameForTeamNumber = 1:n()) %>%
+    ungroup()
+	  
+	return(gbgdf)
 }
 
 GetSummaryDF = function(gbgdf, beforeseason=F) {

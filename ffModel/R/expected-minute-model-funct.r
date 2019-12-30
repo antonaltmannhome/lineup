@@ -1,7 +1,7 @@
 
 PrepareGbgdfForSmoothing = function(gbgdf, quantityChoice) {
 
-	if (quantityChoice == 'probStart') {
+  if (quantityChoice == 'probStart') {
 		subgbgdf = gbgdf %>%
 							mutate(isValid = available)
 		subgbgdf$value = subgbgdf$isStart
@@ -171,12 +171,6 @@ CalculateHistoricSingleQuantity = function(theta, quantityChoice, gbgdf) {
 
 CalculateHistoricExpectedMinute = function(gbgdf) {
 
-  gbgdf = gbgdf %>%
-    group_by(team, player) %>%
-    arrange(seasonNumber, teamgamenumber) %>%
-    mutate(gameForTeamNumber = 1:n()) %>%
-    ungroup()
-  
   quantityChoiceVector = c('probStart', 'probOffBench', 'eMinStart', 'eMinBench')
   for (qi in 1:length(quantityChoiceVector)) {
     optThetaFile = system.file(paste0('opt-theta-', quantityChoiceVector[qi], '.dat'), package = 'ffModel')
