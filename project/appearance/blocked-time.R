@@ -70,5 +70,58 @@ CalculateSqDiff = function(theta) {
 ## season downweight is such an arse though, slows down optimisation so much, for basically nothing
 maxInfo = nlm(CalculateSqDiff, p = theta)
 # [1] 0.1768644 1.2844141
+# meanSqDiff: 33460.61
 # that's looking a lot healthier to me. now, just ned to consider if we should actually independently estimate all the other ones, or downweight them
 # might want to reoprtimise just probStart if the others are held more constant
+
+### so let's try that now, do we lose anything signficant if we replace eMinStart and eMinBench with global average?
+
+
+theta = c(log(0.25), log(0.5))
+CalculateSqDiff = function(theta) {
+  quantityChoiceVector = c('probStart', 'probOffBench')
+  for (qi in 1:length(quantityChoiceVector)) {
+    
+    gbgdfPlusQuantity = ffModel:::CalculateHistoricSingleQuantity(theta, quantityChoice = quantityChoiceVector[qi], gbgdf)
+    gbgdf = lazy_left_join(gbgdf,
+                           gbgdfPlusQuantity,
+                           c('seasonNumber', 'team', 'player', 'teamgamenumber'),
+                           quantityChoiceVector[qi])
+  }
+  
+  gbgdf = ffModel:::PrepareGbgdfForSmoothing(gbgdf, 'eMinStart')
+  overallMeanMinStart = with(gbgdf, mean(minute[isValid]))
+  gbgdf = ffModel:::PrepareGbgdfForSmoothing(gbgdf, 'eMinBench')
+  overallMeanMinBench = with(gbgdf, mean(minute[isValid]))
+  
+  gbgdf$eMin = with(gbgdf, probStart * overallMeanMinStart + (1 - probStart) * probOffBench * overallMeanMinBench)
+  
+  predictDF = gbgdf %>%
+    filter(predictAt) %>%
+    select(season, player, inBlock, eMin)
+  
+  # now careful, predictDF for eg block 8 is a prediction for block 9
+  predictDF$blockToPredict = predictDF$inBlock + 1
+  blockedAppearanceDF = blockedAppearanceDF %>%
+    left_join(predictDF %>%
+                select(player, blockToPredict, eMin) %>%
+                rename(inBlock = blockToPredict),
+              c('player', 'inBlock'))
+  
+  # then turn eMin into actual prediction, adjusting for available minutes
+  blockedAppearanceDF$eSumPlayed = with(blockedAppearanceDF, eMin / 94 * sumAvailable)
+  
+  blockedAppearanceDF$sqDiff = with(blockedAppearanceDF, (eSumPlayed - sumPlayed)^2)
+  
+  meanSqDiff = mean(blockedAppearanceDF$sqDiff, na.rm = TRUE)
+  print(exp(theta))
+  print(meanSqDiff)
+  
+  return(meanSqDiff)
+}
+
+maxInfo = nlm(CalculateSqDiff, p = theta)
+# 34696.67
+# no, quite a big loss actaully. not surprising, fws get subbed much more than defs or gks eg
+
+### never mind. let's put this into the release though, it looks better
