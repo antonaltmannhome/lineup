@@ -95,10 +95,9 @@ SingleQuantityCalculateUpToDatePlayerSmooth = function(theta, quantityChoice, gb
 CalculateUpToDatePlayerSmooth = function(gbgdf) {
 
 	quantityChoiceVector = c('probStart', 'probOffBench', 'eMinStart', 'eMinBench')
+	optTheta = c(-1.7323719, 0.2503027) # obtained in project/appearance/blocked-time.R
 	for (qi in 1:length(quantityChoiceVector)) {
-		optThetaFile = system.file(paste0('opt-theta-', quantityChoiceVector[qi], '.dat'), package = 'ffModel')
-		theta = scan(optThetaFile, quiet = TRUE)
-		currentSmoothDF = ffModel:::SingleQuantityCalculateUpToDatePlayerSmooth(theta, quantityChoiceVector[qi], gbgdf)
+		currentSmoothDF = ffModel:::SingleQuantityCalculateUpToDatePlayerSmooth(optTheta, quantityChoiceVector[qi], gbgdf)
 		playerDF = lazy_left_join(playerDF, currentSmoothDF, c('team', 'player'), quantityChoiceVector[qi])
 		message('Have got latest smoothed values for ', quantityChoiceVector[qi],'...')
 	}
