@@ -2,17 +2,10 @@
 
 ### let's have the same coef for all positions, just have different prior for each positions
 
+source('ff_startup.r')
 
-rm(list=ls())
-source('c:/research/general_funct.r')
-USERPATH='c:/research/lineup/whoscored/'
-setwd(USERPATH)
-options(warn=2)
-
-library(dplyr)
-
-playerdf=read.csv('data/playerdata_tidy.csv',as.is=T)
-tddf=read.csv('data/teammatchdata_tidy.csv',as.is=T)
+playerdf=read.csv(paste0(DATAPATH, 'playerdata_tidy.csv'),as.is=T)
+tddf=read.csv(paste0(DATAPATH, 'teammatchdata_tidy.csv'),as.is=T)
 
 cat('Have scanned in the player and team/date combination files\n')
 
@@ -46,31 +39,28 @@ playerdf=mutate(playerdf,
 	shotgoal=shotibgoal+shotobgoal+fkgoal
 )
 
-### now try to do some tapply type stuff
-playerdf$pltmsn=with(playerdf,paste(player,team,season))
-unpltmsn=unique(playerdf$pltmsn)
+totshotwmin = playerdf %>%
+  group_by(player, team, season) %>%
+  summarise(
+    totshotibgoal=sum(shotibgoal*gamprop),
+    totshotibtarget=sum(shotibtarget*gamprop),
+    totshotibblock=sum(shotibblock*gamprop),
+    totshotibmiss=sum(shotibmiss*gamprop),
+    totshotobgoal=sum(shotobgoal*gamprop),
+    totshotobtarget=sum(shotobtarget*gamprop),
+    totshotobblock=sum(shotobblock*gamprop),
+    totshotobmiss=sum(shotobmiss*gamprop),
+    totshotib=sum(shotib*gamprop),
+    totshotob=sum(shotob*gamprop),
+    totshotblock=sum(shotblock*gamprop),
+    totshotgoal=sum(shotgoal*gamprop),
+    totshottarget=sum(shottarget*gamprop),
+    totshotmiss=sum(shotmiss*gamprop),
+    totgamprop=sum(gamprop)
+  ) %>%
+  ungroup()
 
-by_pltmsn=group_by(playerdf,pltmsn)
-
-totshotwmin=summarise(by_pltmsn,
-	totshotibgoal=sum(shotibgoal*gamprop),
-	totshotibtarget=sum(shotibtarget*gamprop),
-	totshotibblock=sum(shotibblock*gamprop),
-	totshotibmiss=sum(shotibmiss*gamprop),
-	totshotobgoal=sum(shotobgoal*gamprop),
-	totshotobtarget=sum(shotobtarget*gamprop),
-	totshotobblock=sum(shotobblock*gamprop),
-	totshotobmiss=sum(shotobmiss*gamprop),
-	totshotib=sum(shotib*gamprop),
-	totshotob=sum(shotob*gamprop),
-	totshotblock=sum(shotblock*gamprop),
-	totshotgoal=sum(shotgoal*gamprop),
-	totshottarget=sum(shottarget*gamprop),
-	totshotmiss=sum(shotmiss*gamprop),
-	totgamprop=sum(gamprop)
-)
-
-playerdf=inner_join(playerdf,totshotwmin,by='pltmsn')
+playerdf=inner_join(playerdf,totshotwmin,by=c('player', 'team', 'season'))
 
 ### now create out of sample averages for each player/team/season combo
 
