@@ -48,7 +48,12 @@ apply(cbind(possibleForm, totalAvail), 1,
 # ok. that seems to be working fine
 # the next question is, how likely is ech player to be picked?
 
-CheckByTeamPos = function(mySeason, myTeam, myPos) {
+CheckByTeamPos = function(mySeason, myTeam, myPos, priorPen, availablePos = 'modal') {
+
+  # the raw data:
+  print(gbgdf %>% filter(season == mySeason & team == myTeam & mainpos %in% myPos) %>% group_by(player) %>% summarise(sum(available), sum(isStart)))
+  # gundogan starts 0.75 of the time, but on some occasions, other players haven't been available. we're assuming that everyone's available in that calculation
+  
   # let's take midfielders
   # this feels like a special case of this. because you can only pick each element a maximum of once.
   # so that's surely something else
@@ -71,9 +76,20 @@ CheckByTeamPos = function(mySeason, myTeam, myPos) {
   availableMat = as.matrix(mcmfAvailable[,-1])
   isStartMat = as.matrix(mcmfIsStart[,-1])
   mcmfTotal = rowSums(mcmfIsStart[,2:ncol(mcmfIsStart)])
+  modalNumStart = as.numeric(names(rev(sort(table(mcmfTotal))))[1]) # NB not used for estimation, just presentation of results
   
-  LikFunct = function(theta, mcmfTotal, availableMat, isStartMat) {
-    playerProb = c(1, exp(theta))
+  if (availablePos == 'modal') {
+    numPosToUse = modalNumStart
+  }
+  if (is.numeric(availablePos)) {
+    numPosToUse = availablePos
+  }
+  
+  LikFunct = function(theta, mcmfTotal, availableMat, isStartMat, priorPen) {
+    fullTheta = c(theta, -sum(theta))
+    # playerProb = c(1, exp(theta))
+    playerProb = exp(fullTheta)
+    # print(paste(theta, collapse = ', '))
     logProb = rep(NA, length(mcmfTotal))
     for (j in 1:length(mcmfTotal)) {
       availableIndex = which(availableMat[j,] == 1)
@@ -84,24 +100,37 @@ CheckByTeamPos = function(mySeason, myTeam, myPos) {
     }
     sumLogProb = sum(logProb)
     
-    return(-sumLogProb)
+    priorLogLik = priorPen * sum( (fullTheta - 1)^2)
+    
+    totalLik = sumLogProb - priorLogLik
+    
+    return(-totalLik)
   }
   maxInfo = nlm(LikFunct, p = rep(0, length(currentPlayer) - 1),
                 mcmfTotal = mcmfTotal,
                 availableMat = availableMat,
-                isStartMat = isStartMat)
-  optWgtVec = c(1, exp(maxInfo$est))
-  cbind(currentPlayer, optWgtVec)[order(optWgtVec),]
+                isStartMat = isStartMat,
+                priorPen = priorPen,
+                stepmax = 2)
+  #optWgtVec = c(1, exp(maxInfo$est))
+  optWgtVec = exp(c(maxInfo$est, - sum(maxInfo$est)))
+  print(cbind(currentPlayer, optWgtVec)[order(optWgtVec),])
   
   # surprising variation among the players,let's see how that translates probability wise
   # actually, i want expected prob for each player, can i get that?
-  print(cbind(currentPlayer, BiasedUrn::meanMFNCHypergeo(rep(1, length(currentPlayer)), 4, optWgtVec, precision = 0.1)))
+  message('Assuming that ', modalNumStart, ' players start, these are the prob each player starts:')
+  print(cbind(currentPlayer, BiasedUrn::meanMFNCHypergeo(rep(1, length(currentPlayer)), numPosToUse, optWgtVec, precision = 0.1)))
   # that looks pretty reasonable to be fair
   # compared to the raw data:
-  print(gbgdf %>% filter(season == mySeason & team == myTeam & mainpos %in% myPos) %>% group_by(player) %>% summarise(sum(available), sum(isStart)))
-  # gundogan starts 0.75 of the time, but on some occasions, other players haven't been available. we're assuming that everyone's available in that calculation
   
   # but of course we've got downweighting to worry about, plus tiredness, recovery from injury....ugh
 }
 # no there is something badly wrong here, try liverpool, AM,FW
 # two problems: (1) need some sort of penalty, not sure what (2) don't force a player who hardly ever plays to be 1
+# ok, penalty added, is this now working? need to say, eg if there are 3 spots available, what is prob of each player playing?
+# not sure. take liverpool, M, trend/robertson only 77% to start despite starting 18 out of 19 games, even if you set the prior to bsically nothing. why is that?
+# oh no, i've not fixed it properly yet, it's because we've fixed a silly player to be the reference player
+# no, seem to have fixed that yet it still has the same problem
+# or maybe it's not a problem, reducing the prior size helps, and tweaking the number of positions on offer
+# this might actually be working you know
+# sheffieldutd midfielders crashes, but that's because there's been literally no rotation throughout the season
