@@ -8,6 +8,7 @@
 ## so if maguire scores and gets CS, his entry will be 94 G,CS
 
 source('c:/git/lineup/new-model-startup.r')
+playerDF = ffDataJoining:::MatchFFPlayerData(playerDF)
 
 lookBack = 5
 
@@ -34,8 +35,9 @@ subgbgdf = gbgdf %>%
   semi_join(allCurrentTeam, 'team') %>%
   lazy_left_join(allTimeTeamNumGame, c('date', 'team'), 'allTimeTeamGameNumber') %>%
   left_join(totalTeamNumGame, 'team') %>%
-  group_by(team) %>%
   filter(allTimeTeamGameNumber >= maxTeamNumGame - lookBack) %>%
+  group_by(team, player) %>%
+  mutate(gameBack = maxTeamNumGame - allTimeTeamGameNumber) %>%  
   mutate(appearanceInfo = ifelse(played, paste0('(', startTime, ', ', endTime, ')'), startTime),
           goalInfo = ifelse(goal > 0, paste0('G', goal), ''),
          assistInfo = ifelse(assist > 0, paste0('A', assist), ''),
@@ -49,5 +51,9 @@ subgbgdf = subgbgdf %>%
   mutate_cond(csInfo != '', gameInfo = paste(gameInfo, csInfo, sep = ', '))
 
 horizSubGbgDF = subgbgdf %>%
-  select(team, player, allTimeTeamGameNumber, gameInfo) %>%
-  spread(key = allTimeTeamGameNumber, value = gameInfo)
+  select(team, player, mainpos, gameBack, gameInfo) %>%
+  spread(key = gameBack, value = gameInfo) %>%
+  arrange(team, match(mainpos, c('GK', 'D', 'DMC', 'M', 'AM', 'FW')))
+
+## but then we want the mean played/mean available prior to that
+## but can't be arsed right now, let's just write that out
