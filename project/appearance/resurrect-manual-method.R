@@ -8,7 +8,7 @@
 ## so if maguire scores and gets CS, his entry will be 94 G,CS
 
 source('c:/git/lineup/new-model-startup.r')
-playerDF = ffDataJoining:::MatchFFPlayerData(playerDF)
+playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 
 lookBack = 5
 
@@ -50,10 +50,25 @@ subgbgdf = subgbgdf %>%
   mutate_cond(assistInfo != '', gameInfo = paste(gameInfo, assistInfo, sep = ', ')) %>%
   mutate_cond(csInfo != '', gameInfo = paste(gameInfo, csInfo, sep = ', '))
 
+mainposByPlayer = subgbgdf %>%
+  group_by(team, player) %>%
+  count(mainpos) %>%
+  arrange(desc(n)) %>%
+  slice(1)
+
 horizSubGbgDF = subgbgdf %>%
-  select(team, player, mainpos, gameBack, gameInfo) %>%
+  select(team, player, gameBack, gameInfo) %>%
   spread(key = gameBack, value = gameInfo) %>%
-  arrange(team, match(mainpos, c('GK', 'D', 'DMC', 'M', 'AM', 'FW')))
+  lazy_left_join(mainposByPlayer, c('team', 'player'), 'mainpos') %>%
+  arrange(team, match(mainpos, c('GK', 'D', 'DMC', 'M', 'AM', 'FW'))) %>%
+  lazy_left_join(playerDF, c('team', 'player'), 'eMin') %>%
+  mutate(manualEMin = round(eMin)) %>%
+  select(team, player, mainpos, manualEMin, eMin, everything())
 
 ## but then we want the mean played/mean available prior to that
 ## but can't be arsed right now, let's just write that out
+# also need to do the admin bit, reading in previous file, writing to latest update dir.
+# but will copy that acrosss from existing code. let's just get the actual correct minutes for now
+# why is hause for aston villa NA?
+
+write.csv(file = paste0(DATAPATH, 'active-player.csv'), horizSubGbgDF, row.names = FALSE)
