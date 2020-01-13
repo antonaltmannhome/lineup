@@ -59,9 +59,9 @@ adjustlinkdf=function(linkdf, numgam, numtournament, noupcomingmatchesfound, thi
 	}
 	if (is.na(gamadjlist[numgamlist==numgam])) stop('need to fill out numgamlist\n')
 
-	numtournamentlist = c(1, 2, 3, 4, 5, 6, 7)
+	numtournamentlist = c(1, 2, 3, 4, 5, 6, 7, 8)
 	if (thiscomputer == 'NOVATECHLAPTOP') {
-		tournadjlist = c(0, 0, 0, 10, 40, 70, 100)
+		tournadjlist = c(0, 0, 0, 10, 40, 70, 100, 130)
 	}
 	if (thiscomputer == 'ANTONDESKTOP') {
 		tournadjlist = c(0, 0, 0, 10, 25, 55, 85)
