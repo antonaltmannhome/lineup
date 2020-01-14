@@ -26,9 +26,21 @@ InitialiseCurrentSeasonPlayerId = function(playerResultDF) {
 UpdateCurrentSeasonPlayerId = function(playerResultDF) {
   # firstly load in our existing player ids
 
+  currentSeasonPlayerDF = playerResultDF %>%
+    filter(season == currentseason) %>%
+    mutate(played = grepl('^[0-9]+$', startTime)) %>%
+    group_by(team, soccerwayPlayer, playerid, player) %>%
+    summarise(numGamePlayed = sum(played)) %>%
+    ungroup() %>%
+    rename(whoscoredPlayer = player) %>%
+    mutate(season = currentseason,
+           ffuseswholename = FALSE,
+           hasleft = FALSE,
+           adjustedwhoscoredPlayer = 'none')
+
   currentSeasonPlayerIdFile = paste0(DATAPATH, 'current-season-player-id.csv')
 
-  currentSeasonPlayerDF = readr::read_csv(currentSeasonPlayerIdFile, col_types = list(
+  previousCurrentSeasonPlayerDF = readr::read_csv(currentSeasonPlayerIdFile, col_types = list(
     soccerwayPlayer = readr::col_character(),
     playerid = readr::col_integer(),
     whoscoredPlayer = readr::col_character(),
@@ -39,28 +51,18 @@ UpdateCurrentSeasonPlayerId = function(playerResultDF) {
     season = readr::col_integer()
   ))
   
-  # but that could be out of date, let's see if anyone new has turned up
-  # and someone might be in this despite never having played and their whoscoredPlayer is NA
-  upToDateCurrentPlayerDF = playerResultDF %>%
-                              filter(season == currentseason) %>%
-                              distinct(season, playerid, soccerwayPlayer, player, team)
-  newCurrentPlayerDF = anti_join(upToDateCurrentPlayerDF,
-                                    currentSeasonPlayerDF %>%
-                                   filter(!is.na(whoscoredPlayer)),
-                                    'playerid') %>%
-                        rename(whoscoredPlayer = player) %>%
-                        mutate(ffuseswholename = FALSE,
-                                hasleft = FALSE,
-                                adjustedwhoscoredPlayer = 'none')
+  # all we want to retain is the manually entered info from that, so let's port it across
+  currentSeasonPlayerDF = join_on_overlap(currentSeasonPlayerDF,
+                                          previousCurrentSeasonPlayerDF %>%
+                                            select(playerid, team, ffuseswholename, hasleft, adjustedwhoscoredPlayer),
+                                          c('playerid', 'team'))
+  
 
-  updatedCurrentSeasonPlayerDF = bind_rows(currentSeasonPlayerDF,
-                                            newCurrentPlayerDF)
+  # but let's have it in team/player order of course
+  currentSeasonPlayerDF = currentSeasonPlayerDF %>%
+                            arrange(team, whoscoredPlayer)
 
-  # but let's put it back in team/player order of course
-  updatedCurrentSeasonPlayerDF = updatedCurrentSeasonPlayerDF %>%
-                                  arrange(team, whoscoredPlayer)
-
-  write.csv(file = currentSeasonPlayerIdFile, updatedCurrentSeasonPlayerDF, row.names = FALSE)
+  write.csv(file = currentSeasonPlayerIdFile, currentSeasonPlayerDF, row.names = FALSE)
 }
 
 ReadFFPlayerPriceDF = function() {
@@ -99,7 +101,7 @@ MatchFFPlayerData = function(playerDF, interactive = FALSE) {
     
     playerDF = playerDF %>%
       filter(season == currentseason) %>%
-      lazy_left_join(currentSeasonPlayerDF, 'playerid', c('ffuseswholename', 'adjustedwhoscoredPlayer', 'hasleft')) %>%
+      lazy_left_join(currentSeasonPlayerDF, c('team', 'playerid'), c('ffuseswholename', 'adjustedwhoscoredPlayer', 'hasleft')) %>%
       mutate(surname = case_when(
         adjustedwhoscoredPlayer == 'none' & !ffuseswholename ~ gsub('^[^ ]+ ','',player),
         adjustedwhoscoredPlayer == 'none' & ffuseswholename ~ player,
