@@ -38,13 +38,15 @@ UpdateCurrentSeasonPlayerId = function(playerResultDF) {
     adjustedwhoscoredPlayer = readr::col_character(),
     season = readr::col_integer()
   ))
-
+  
   # but that could be out of date, let's see if anyone new has turned up
+  # and someone might be in this despite never having played and their whoscoredPlayer is NA
   upToDateCurrentPlayerDF = playerResultDF %>%
                               filter(season == currentseason) %>%
                               distinct(season, playerid, soccerwayPlayer, player, team)
   newCurrentPlayerDF = anti_join(upToDateCurrentPlayerDF,
-                                    currentSeasonPlayerDF,
+                                    currentSeasonPlayerDF %>%
+                                   filter(!is.na(whoscoredPlayer)),
                                     'playerid') %>%
                         rename(whoscoredPlayer = player) %>%
                         mutate(ffuseswholename = FALSE,
