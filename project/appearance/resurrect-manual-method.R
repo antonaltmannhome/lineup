@@ -62,6 +62,7 @@ horizSubGbgDF = subgbgdf %>%
   lazy_left_join(mainposByPlayer, c('team', 'player'), 'mainpos') %>%
   arrange(team, match(mainpos, c('GK', 'D', 'DMC', 'M', 'AM', 'FW'))) %>%
   lazy_left_join(playerDF, c('team', 'player'), 'eMin') %>%
+  mutate(eMin = round(eMin, 1)) %>%
   mutate(manualEMin = round(eMin)) %>%
   select(team, player, mainpos, manualEMin, eMin, everything())
 
