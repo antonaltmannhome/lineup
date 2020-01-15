@@ -8,7 +8,10 @@ playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 # NB this is a bit slow but you can get the game by game calculations this way:
 # gbgdf = CalculateHistoricExpectedMinute(gbgdf)
 
-ffModel:::UpdateManualActiveSpreadsheet(gbgdf, playerDF, seasoninfo, resultdf)
+# this is a bit dangerous: it'll overwrite manual changes, which would be very annoying - need to think about how we do that
+# ffModel:::UpdateManualActiveSpreadsheet(gbgdf, playerDF, seasoninfo, resultdf)
+
+playerDF = ffModel::ReadManualEMinFile(playerDF, resultdf)
 
 fixtdf = getfixturegoal(resultdf, fixtdf)
 

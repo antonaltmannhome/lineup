@@ -115,3 +115,31 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
   write_csv(x= horizSubGbgDF, path = activeFile)
   message('Have created file ', activeFile)
 }
+
+ReadManualEMinFile = function(playerDF, resultdf) {
+  currentGameweek = with(resultdf, max(gameweek[season == currentseason]))
+  activeFile = paste0(DATAPATH, 'active_player/active-player-', currentseason, '-', currentGameweek, '.csv')
+
+  activePlayerDF = read_csv(activeFile,
+                               col_types = list(
+                                 team = col_character(),
+                                 player = col_character(),
+                                 mainpos = col_character(),
+                                 manualEMin = col_double(),
+                                 eMin = col_double(),
+                                 `0` = col_character(),
+                                 `1` = col_character(),
+                                 `2` = col_character(),
+                                 `3` = col_character(),
+                                 `4` = col_character(),
+                                 `5` = col_character()
+                               ))
+  
+  playerDF = lazy_left_join(playerDF, activePlayerDF, c('team', 'player'), 'manualEMin')
+  
+  playerDF = within(playerDF, rm(eMin))
+  playerDF = playerDF %>%
+    rename(eMin = manualEMin)
+  
+  return(playerDF)
+}
