@@ -3,6 +3,7 @@ source('c:/research/general_startup.r')
 suppressWarnings(library(dplyr))
 suppressWarnings(library(tidyr))
 suppressWarnings(library(lubridate))
+suppressWarnings(library(readr))
 
 # SQLPATH='c:/temp/sqlscript/'
 AHKPATH='c:/research/utils/autohotkeys/'

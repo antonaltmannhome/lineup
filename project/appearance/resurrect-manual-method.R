@@ -57,19 +57,68 @@ mainposByPlayer = subgbgdf %>%
   slice(1)
 
 horizSubGbgDF = subgbgdf %>%
+  semi_join(playerDF %>% filter(!hasleft), c('team', 'player')) %>%
   select(team, player, gameBack, gameInfo) %>%
   spread(key = gameBack, value = gameInfo) %>%
   lazy_left_join(mainposByPlayer, c('team', 'player'), 'mainpos') %>%
-  arrange(team, match(mainpos, c('GK', 'D', 'DMC', 'M', 'AM', 'FW'))) %>%
   lazy_left_join(playerDF, c('team', 'player'), 'eMin') %>%
+  arrange(team, match(mainpos, c('GK', 'D', 'DMC', 'M', 'AM', 'FW')), desc(eMin)) %>%
   mutate(eMin = round(eMin, 1)) %>%
-  mutate(manualEMin = round(eMin)) %>%
+  # mutate(manualEMin = round(eMin)) %>% only do that when initialising the thing
+  mutate(manualEMin = NA) %>%
   select(team, player, mainpos, manualEMin, eMin, everything())
 
 ## but then we want the mean played/mean available prior to that
+totalGameForTeamByPlayer = gbgdf %>%
+  group_by(team, player) %>%
+  summarise(totalGameForTeamByPlayer = max(gameForTeamNumber))
+gbgdf = left_join(gbgdf, totalGameForTeamByPlayer, c('team', 'player'))
+gbgdf = indicate_overlapping_combination(gbgdf,
+                                         playerDF %>% filter(!hasleft),
+                                         c('team', 'player'),
+                                         'isWithCurrentTeam')
+gbgdf$isInPriorSample = with(gbgdf, gameForTeamNumber > totalGameForTeamByPlayer - 10 - lookBack &
+                               gameForTeamNumber <= totalGameForTeamByPlayer - lookBack &
+                               isWithCurrentTeam)
+
+priorInfo = gbgdf %>%
+  filter(isInPriorSample) %>%
+  group_by(player, team) %>%
+  summarise(sumAvailable = sum(available),
+            meanPlayed = 94 * sum(minute/94)/sum(available))
+
+horizSubGbgDF = left_join(horizSubGbgDF,
+                          priorInfo,
+                          c('team', 'player'))
+
 ## but can't be arsed right now, let's just write that out
 # also need to do the admin bit, reading in previous file, writing to latest update dir.
 # but will copy that acrosss from existing code. let's just get the actual correct minutes for now
 # why is hause for aston villa NA?
 
-write.csv(file = paste0(DATAPATH, 'active-player.csv'), horizSubGbgDF, row.names = FALSE)
+## let's store by season and gameweek number. think it's quite rare you'd want to update not at the end of a gameweek
+
+currentGameweek = with(resultdf, max(gameweek[season == currentseason]))
+activeFile = paste0(DATAPATH, 'active_player/active-player-', currentseason, '-', currentGameweek, '.csv')
+previousActiveFile = paste0(DATAPATH, 'active_player/active-player-', currentseason, '-', currentGameweek - 1, '.csv')
+# let's insert the previous week's manual values
+
+prevHorizSubGbgDF = read_csv(previousActiveFile,
+                       col_types = list(
+                         team = col_character(),
+                         player = col_character(),
+                         mainpos = col_character(),
+                         manualEMin = col_double(),
+                         eMin = col_double(),
+                         `0` = col_character(),
+                         `1` = col_character(),
+                         `2` = col_character(),
+                         `3` = col_character(),
+                         `4` = col_character(),
+                         `5` = col_character()
+                       ))
+horizSubGbgDF = join_on_overlap(horizSubGbgDF,
+                          prevHorizSubGbgDF %>%
+                            select(team, player, manualEMin),
+                          c('team', 'player'))
+write_csv(x= horizSubGbgDF, path = activeFile)
