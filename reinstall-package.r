@@ -1,3 +1,4 @@
+source('c:/git/lineup/ff_startup.r')
 ffPath = c(paste0(USERPATH, 'ffDataLoading'),
             paste0(USERPATH, 'ffDataJoining'),
             paste0(USERPATH, 'ffModel'))
