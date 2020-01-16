@@ -5,6 +5,7 @@ source('c:/research/general_startup.r')
 suppressWarnings(library(dplyr))
 suppressWarnings(library(tidyr))
 suppressWarnings(library(lubridate))
+suppressWarnings(library(readr))
 suppressWarnings(library('Rglpk'))
 
 USERPATH='c:/git/lineup/'
