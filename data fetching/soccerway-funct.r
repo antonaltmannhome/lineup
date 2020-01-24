@@ -1,29 +1,46 @@
 ### several massive functions that will be used when combining all the different data sources together, shove em all in here
 
-getwebaddressfordate = function(mydate) {
+getwebaddressfordate = function(mydate, resultdf) {
 	myday = gsub('([0-9]{4})([0-9]{2})([0-9]{2})', '\\1/\\2/\\3', mydate)
 	coverpageaddress = paste0('http://uk.soccerway.com/matches/', myday)
+	message('To investigate soccerway web page for ', mydate, ', see ', coverpageaddress)
 	b = scanrobust(coverpageaddress, '', sep = '\n', quiet = TRUE)
 	# get rid of lines that are just white space
 	allWhiteSpaceIndex = which(nchar(gsub(' ', '', b)) == 0)
 	if (length(allWhiteSpaceIndex) > 0) {
 		b = b[-allWhiteSpaceIndex]
 	}
-	mgreg=grep('matches/[0-9]{4}/[0-9]{2}/[0-9]{2}/england/premier\\-league.+View events', b)
-
+	mgreg=grep('matches/[0-9]{4}/[0-9]{2}/[0-9]{2}/england/premier\\-league.+More info', b)
+	
 	# but be careful, there are sometimes postponed matches listed, get rid of them
 	mgreg = setdiff(mgreg, mgreg[grep('Postponed', b[mgreg])])
 
-	if (length(mgreg)==0) {
+	numGameAccordingtoSoccerway = length(mgreg)
+	if (numGameAccordingtoSoccerway==0) {
 		stop('No matches on',mydate,'...\n')
+	}
+	
+	# also, number of matches for this date HAS to agree with resultdf, so check that
+	numGameAccordingToResultDF = with(resultdf, sum(date == mydate & isHome))
+	if (numGameAccordingtoSoccerway != numGameAccordingToResultDF) {
+	  stop('Aaargh, resultdf says there are ', sumGameAccordingToResultDF, ' games on ', mydate, ' but getwebaddressfordate says there are ', length(mgreg), '\n')
 	}
 
 	cat('About to pick up',length(mgreg),'matches on',mydate,'\n')
 	matchAddress = paste0('http://uk.soccerway.com',
-									gsub('(^.+href=\")(.+)(#events.+$)','\\2',b[mgreg]))
+	                      gsub('(.+a href=\")(/matches[^\"]+)(\".+$)', '\\2', b[mgreg]))
 	### also want to grab team and score though
-	hteam = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', b[mgreg-15])))
-	ateam = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', b[mgreg-5])))
+	
+	hteam = ateam = rep(NA, numGameAccordingtoSoccerway)
+	longhteam = gsub('(^.+premier-league/)([^/]+)(/.+$)','\\2',matchAddress)
+	longateam = gsub('(^.+premier-league/[^/]+/)([^/]+)(/.+$)','\\2',matchAddress)
+	for (j in 1:numGameAccordingtoSoccerway) {
+	  homeTeamNameLineIndex = grep(paste0('teams/(england|wales)/', longhteam[j], '.+title='), b)[1]
+	  hteam[j] = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', b[homeTeamNameLineIndex])))
+	  awayTeamNameLineIndex = grep(paste0('teams/(england|wales)/', longateam[j], '.+title='), b)[1]
+	  ateam[j] = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', b[awayTeamNameLineIndex])))
+	}
+	
 	## but want nice team abbreviations
 	hteam = cleanteam(hteam, 'soccerway')
 	ateam = cleanteam(ateam, 'soccerway')
@@ -34,9 +51,9 @@ getwebaddressfordate = function(mydate) {
 	return(myDF)
 }
 
-getappearanceinfofordate = function(mydate) {
+getappearanceinfofordate = function(mydate, resultdf) {
 
-	addressinfo = getwebaddressfordate(mydate)
+	addressinfo = getwebaddressfordate(mydate, resultdf)
 
 	myAppearanceList = list(NULL)
 	for (i in 1:nrow(addressinfo)) {

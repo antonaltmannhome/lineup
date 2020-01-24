@@ -8,7 +8,7 @@ dateToDo = FindDateToDo(resultdf)
 message('If you are starting a new season, PLEASE make sure you add any necessary team name adjustments to team_abbn.dat')
 
 for (di in 1:length(dateToDo)) {
-	appearanceDF = getappearanceinfofordate(dateToDo[di])
+	appearanceDF = getappearanceinfofordate(dateToDo[di], resultdf)
 	appearanceFileOut = paste0(DATAPATH, 'soccerway_saved/appearance-info-', dateToDo[di],'.csv')
 	write.csv(x = appearanceDF, file = appearanceFileOut, row.names = FALSE)
 }
