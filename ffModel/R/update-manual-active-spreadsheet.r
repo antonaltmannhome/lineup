@@ -112,6 +112,29 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
                                     select(team, player, manualEMin),
                                   c('team', 'player')) %>%
                     select(-isOverlapping)
+  
+  # final step, indicate which players we don't have to bother checking
+  # ie if we have 85 mins for an outfield player and they played 94 mins, obviously we should still say 85 mins
+  # unfortunately we've created a bastard of a column to actually use, so join previous manualEMin to laste game data separately
+  previousManualEMinPlusLatestGameDF = left_join(prevHorizSubGbgDF %>%
+                                                   select(team, player, mainpos, manualEMin),
+                                                 gbgdf %>%
+                                                   filter(season == currentseason & totalGameForTeamByPlayer == gameForTeamNumber) %>%
+                                                   select(player, team, minute),
+                                                 c('player', 'team')) %>%
+                                        mutate(ignore = case_when(
+                                          mainpos == 'GK' & near(manualEMin, 90) & near(minute, 94) ~ '*',
+                                          mainpos == 'GK' & manualEMin < 50.1 & minute < 50 ~ '*',
+                                          mainpos != 'GK' & near(manualEMin, 85) & minute > 85 ~ '*',
+                                          mainpos != 'GK' & manualEMin < 50.1 & minute < 50 ~ '*',
+                                          TRUE ~ ''))
+  # awesome, now join that column in
+  horizSubGbgDF = lazy_left_join(horizSubGbgDF,
+                                 previousManualEMinPlusLatestGameDF,
+                                 c('team', 'player'),
+                                 'ignore') %>%
+                  select(team, player, mainpos, ignore, everything())
+  
   write_csv(x= horizSubGbgDF, path = activeFile)
   message('Have created file ', activeFile)
 }

@@ -91,7 +91,7 @@ RunKnapsack = function(playerDF, forcedInclusionExclusion, currentmoney) {
 	return(idealteam)
 }
 
-calculateexpectedpoint = function(playerfixtdf, myteam) {
+calculateexpectedpoint = function(playerfixtdf, myteam, warnAboutMissingPlayer = TRUE) {
 
 	myteamfixtdf = inner_join(playerfixtdf %>%
 								filter(gwweight > 0),
@@ -115,10 +115,12 @@ calculateexpectedpoint = function(playerfixtdf, myteam) {
 									select(team, player),
 									by = c('team', 'player'))
 		if (nrow(missingplayer) > 0) {
-			message('Warning, for gameweek ', mygameweek,', I have the following players with no fixture:')
-			print(missingplayer)
-			message('Press ENTER to continue')
-			dum = askcond(FALSE, TRUE)
+		  if (warnAboutMissingPlayer) {
+  			message('Warning, for gameweek ', mygameweek,', I have the following players with no fixture:')
+	  		print(missingplayer)
+		  	message('Press ENTER to continue')
+			  dum = askcond(FALSE, TRUE)
+		  }
 			missinginfo = missingplayer %>%
 							mutate(expectedpoint = 0)
 			missinginfo = lazy_left_join(missinginfo, playerDF, c('team', 'player'), 'ffPosition')
