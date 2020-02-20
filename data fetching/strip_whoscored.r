@@ -14,8 +14,8 @@ ahkfile=paste(TEMPPATH,'temp.ahk',sep='')
 
 teamwaittime=6 # how long it takes (in seconds) to load initial page for team
 subcatwaittime=3000 # how long it waits (in milliseconds) for data to refresh on page when we click subcategories
-defaultnumgam = 7
-defaultnumtournament = 3
+defaultnumgam = 8
+defaultnumtournament = 4
 
 ### now let user decide which teams they want
 

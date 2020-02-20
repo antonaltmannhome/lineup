@@ -73,3 +73,5 @@ for (j in 1:totalNumPossible) {
   allPossiblePointGain[j] = alternativeTeam$pointGainFromTransfer
   allPossibleNewPlayer[j] = setdiff(alternativeTeam$idealteam$player, currentteam$player)
 }
+
+print(cbind(currentteam$player, allPossiblePointGain, allPossibleNewPlayer)[order(-allPossiblePointGain),][1:10,])

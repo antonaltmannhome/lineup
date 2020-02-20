@@ -61,7 +61,7 @@ adjustlinkdf=function(linkdf, numgam, numtournament, noupcomingmatchesfound, thi
 
 	numtournamentlist = c(1, 2, 3, 4, 5, 6, 7, 8)
 	if (thiscomputer == 'NOVATECHLAPTOP') {
-		tournadjlist = c(0, 0, 0, 10, 40, 70, 100, 130)
+		tournadjlist = c(0, 0, 0, 10, 30, 55, 82, 100)
 	}
 	if (thiscomputer == 'ANTONDESKTOP') {
 		tournadjlist = c(0, 0, 0, 10, 25, 55, 85)
