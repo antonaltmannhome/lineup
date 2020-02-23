@@ -49,7 +49,9 @@ oosDF = gbgdf %>%
 # restrict to players who've played at least 10 games in the season, and get rid of gks
 subOosDF = oosDF %>%
   filter(oosMinute > 900 &
-           mainpos %in% c('AM', 'D', 'DMC', 'FW', 'M'))
+           mainpos %in% c('AM', 'D', 'DMC', 'FW', 'M')) %>%
+  mutate(gameProp = minute / 94,
+         oosSumGameProp = oosMinute / 94)
 
 # i think the idea of having two estimates, one for shot zone and another for accuracy, from the phil file, is good
 
@@ -59,12 +61,14 @@ mod = glm(nonPenaltyGoal ~ oosNonPenaltyGoal + oosOffTargetNotBar,
           data = subOosDF)
 # but how do i factor in minutes played? think i need my own like funct. which is very easy of course
 AccuracyLikFunct = function(theta) {
-  nonPenaltyGoalValue = theta[1]
-  onTargetNotGoalValue = theta[2]
-  barValue = theta[3]
-  offTargetNotBarValue = theta[4]
-  blockValue = theta[5]
+  doingNothingIntercept = theta[1]
+  nonPenaltyGoalValue = theta[2]
+  onTargetNotGoalValue = theta[3]
+  barValue = theta[4]
+  offTargetNotBarValue = theta[5]
+  blockValue = theta[6]
   subOosDF$eGoal = with(subOosDF, minute / 96 * (
+    doingNothingIntercept + 
     nonPenaltyGoalValue * nonPenaltyGoal +
     onTargetNotGoalValue * onTargetNotGoal +
     barValue * bar +
@@ -78,6 +82,73 @@ AccuracyLikFunct = function(theta) {
 }
 
 maxInfo = nlm(AccuracyLikFunct, p = rep(0.1, 5))
+
+# let's back it right up, do just predicting goals from goals, check we get value of about 1
+
+AccuracyLikFunct1 = function(theta) {
+  overallMeanRate = exp(theta[1])
+  overallPriorStrength = exp(theta[2])
+  nonPenaltyGoalValue = exp(theta[3])
+  subOosDF$postTopLine = with(subOosDF, overallMeanRate * overallPriorStrength + nonPenaltyGoalValue * oosNonPenaltyGoal)
+  subOosDF$postBottomLine = with(subOosDF, overallPriorStrength + oosSumGameProp)
+  subOosDF$eGoal = with(subOosDF, gameProp * postTopLine / postBottomLine)
+  subOosDF$logLik = with(subOosDF, log(dpois(nonPenaltyGoal, eGoal)))
+  sumLogLik = sum(subOosDF$logLik)
+  
+  return(-sumLogLik)
+}
+
+maxInfo1 = nlm(AccuracyLikFunct1, p = c(log(0.05), log(10), 0), stepmax = 2)
+
+# all looks solid, let's add shots on target
+
+AccuracyLikFunct2 = function(theta) {
+  overallMeanRate = exp(theta[1])
+  overallPriorStrength = exp(theta[2])
+  nonPenaltyGoalValue = exp(theta[3])
+  onTargetNotGoalValue = exp(theta[4])
+  subOosDF$postTopLine = with(subOosDF, overallMeanRate * overallPriorStrength +
+                                nonPenaltyGoalValue * oosNonPenaltyGoal +
+                                onTargetNotGoalValue * oosOnTargetNotGoal)
+  subOosDF$postBottomLine = with(subOosDF, overallPriorStrength + 2 * oosSumGameProp)
+  subOosDF$eGoal = with(subOosDF, gameProp * postTopLine / postBottomLine)
+  subOosDF$logLik = with(subOosDF, log(dpois(nonPenaltyGoal, eGoal)))
+  sumLogLik = sum(subOosDF$logLik)
+  
+  return(-sumLogLik)
+}
+
+maxInfo2 = nlm(AccuracyLikFunct2, p = c(log(0.05), log(10), 0, 0), stepmax = 2)
+
+AccuracyLikFunct3 = function(theta) {
+  overallMeanRate = exp(theta[1])
+  overallPriorStrength = exp(theta[2])
+  nonPenaltyGoalValue = exp(theta[3])
+  onTargetNotGoalValue = exp(theta[4])
+  offTargetNotBarValue = exp(theta[5])
+  barValue = exp(theta[6])
+  blockValue = exp(theta[7])
+  subOosDF$postTopLine = with(subOosDF, overallMeanRate * overallPriorStrength +
+                                nonPenaltyGoalValue * oosNonPenaltyGoal +
+                                onTargetNotGoalValue * oosOnTargetNotGoal +
+                                offTargetNotBarValue * oosOffTargetNotBar +
+                                barValue * oosBar +
+                                blockValue * oosBlock)
+  subOosDF$postBottomLine = with(subOosDF, overallPriorStrength + 5 * oosSumGameProp)
+  subOosDF$eGoal = with(subOosDF, gameProp * postTopLine / postBottomLine)
+  subOosDF$logLik = with(subOosDF, log(dpois(nonPenaltyGoal, eGoal)))
+  sumLogLik = sum(subOosDF$logLik)
+  
+  return(-sumLogLik)
+}
+
+maxInfo3 = nlm(AccuracyLikFunct3, p = c(log(0.05), log(10), rep(0, 5)), stepmax = 2)
+# this isn't doing quite what i expected though, the overallMeanRate should not be dropping, the way I've thought about it
+# but how can it not? i'm adding more things in, the only way the non-attacking players mean can change is to bring it down.
+# i've not thought it through. it's a bit of a weird thing i'm doing, trying to use the bayesian prior but adding in unrelated events. maybe you need to add in sumGameProp for every extra stat you add or something like that
+# ok, so i've done that, doesn't fix it
+# thing is, let's say the event was really rare, eg a shot that hits both posts. it'll bollox it right up if you add a whole oosGameProp for that. so it's just wrong
+
 
 source('ff_startup.r')
 
