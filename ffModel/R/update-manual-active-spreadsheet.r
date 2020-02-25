@@ -49,6 +49,7 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
   horizSubGbgDF = subgbgdf %>%
     semi_join(playerDF %>% filter(!hasleft), c('team', 'player')) %>%
     select(team, player, gameBack, gameInfo) %>%
+    mutate(gameBack = paste0('b', gameBack)) %>%
     spread(key = gameBack, value = gameInfo) %>%
     lazy_left_join(mainposByPlayer, c('team', 'player'), 'mainpos') %>%
     lazy_left_join(playerDF, c('team', 'player'), 'eMin') %>%
@@ -100,12 +101,12 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
                                  mainpos = col_character(),
                                  manualEMin = col_double(),
                                  eMin = col_double(),
-                                 `0` = col_character(),
-                                 `1` = col_character(),
-                                 `2` = col_character(),
-                                 `3` = col_character(),
-                                 `4` = col_character(),
-                                 `5` = col_character()
+                                 b0 = col_character(),
+                                 b1 = col_character(),
+                                 b2 = col_character(),
+                                 b3 = col_character(),
+                                 b4 = col_character(),
+                                 b5 = col_character()
                                ))
   horizSubGbgDF = join_on_overlap(horizSubGbgDF,
                                   prevHorizSubGbgDF %>%
@@ -119,7 +120,8 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
   previousManualEMinPlusLatestGameDF = left_join(prevHorizSubGbgDF %>%
                                                    select(team, player, mainpos, manualEMin),
                                                  gbgdf %>%
-                                                   filter(season == currentseason & totalGameForTeamByPlayer == gameForTeamNumber) %>%
+                                                   filter(season == currentseason &
+                                                            totalGameForTeamByPlayer == gameForTeamNumber) %>%
                                                    select(player, team, minute),
                                                  c('player', 'team')) %>%
                                         mutate(ignore = case_when(
@@ -128,12 +130,22 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
                                           mainpos != 'GK' & near(manualEMin, 85) & minute > 85 ~ '*',
                                           mainpos != 'GK' & manualEMin < 50.1 & minute < 50 ~ '*',
                                           TRUE ~ ''))
+  
   # awesome, now join that column in
   horizSubGbgDF = lazy_left_join(horizSubGbgDF,
                                  previousManualEMinPlusLatestGameDF,
                                  c('team', 'player'),
                                  'ignore') %>%
                   select(team, player, mainpos, ignore, everything())
+
+  # also, players who've been injured for the entire set of games, they can be ignored
+  allInjured = horizSubGbgDF %>%
+    select(team, player, matches('^b[0-5]+$')) %>%
+    gather(lookback, appData, - c(team, player)) %>% group_by(team, player) %>%
+    summarise(allInjured = all(!is.na(appData) & appData == 'injury'))
+  horizSubGbgDF$ignore[with(horizSubGbgDF, paste(team, player)) %in%
+                         with(allInjured, paste(team, player)[allInjured])] = '*'
+  # actually do we just want to extend this to anyone who was injured in the most recent game...?
   
   write_csv(x= horizSubGbgDF, path = activeFile)
   message('Have created file ', activeFile)
