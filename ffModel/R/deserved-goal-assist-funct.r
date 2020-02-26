@@ -100,7 +100,9 @@ ImputeMissingMatchOdds = function(playerGameDF, resultDF) {
 	sax=which(is.na(playerGameDF$teamoddsescored))
 	playerGameDF$teamoddsescored[sax] = meanegoalbyteam$meanegoal[match(with(playerGameDF[sax,],paste(season,team)),
 															with(meanegoalbyteam, paste(season,team)))]
-
+	playerGameDF$teamoddseconceded[sax] = meanegoalbyteam$meanegoal[match(with(playerGameDF[sax,],paste(season,oppteam)),
+	                                                                    with(meanegoalbyteam, paste(season,team)))]
+	
 	return(playerGameDF)
 }
 
