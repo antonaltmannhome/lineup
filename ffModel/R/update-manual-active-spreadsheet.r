@@ -162,12 +162,12 @@ ReadManualEMinFile = function(playerDF, resultdf) {
                                  mainpos = col_character(),
                                  manualEMin = col_double(),
                                  eMin = col_double(),
-                                 `0` = col_character(),
-                                 `1` = col_character(),
-                                 `2` = col_character(),
-                                 `3` = col_character(),
-                                 `4` = col_character(),
-                                 `5` = col_character()
+                                 b0 = col_character(),
+                                 b1 = col_character(),
+                                 b2 = col_character(),
+                                 b3 = col_character(),
+                                 b4 = col_character(),
+                                 b5 = col_character()
                                ))
   
   playerDF = lazy_left_join(playerDF, activePlayerDF, c('team', 'player'), 'manualEMin')
