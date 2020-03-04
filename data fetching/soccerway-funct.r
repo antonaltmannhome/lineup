@@ -4,18 +4,39 @@ getwebaddressfordate = function(mydate, resultdf) {
 	myday = gsub('([0-9]{4})([0-9]{2})([0-9]{2})', '\\1/\\2/\\3', mydate)
 	coverpageaddress = paste0('http://uk.soccerway.com/matches/', myday)
 	message('To investigate soccerway web page for ', mydate, ', see ', coverpageaddress)
-	b = scanrobust(coverpageaddress, '', sep = '\n', quiet = TRUE)
+	covshHtml = scanrobust(coverpageaddress, '', sep = '\n', quiet = TRUE)
 	# get rid of lines that are just white space
-	allWhiteSpaceIndex = which(nchar(gsub(' ', '', b)) == 0)
+	allWhiteSpaceIndex = which(nchar(gsub(' ', '', covshHtml)) == 0)
 	if (length(allWhiteSpaceIndex) > 0) {
-		b = b[-allWhiteSpaceIndex]
+		covshHtml = covshHtml[-allWhiteSpaceIndex]
 	}
-	mgreg=grep('matches/[0-9]{4}/[0-9]{2}/[0-9]{2}/england/premier\\-league.+More info', b)
 	
-	# but be careful, there are sometimes postponed matches listed, get rid of them
-	mgreg = setdiff(mgreg, mgreg[grep('Postponed', b[mgreg])])
-
-	numGameAccordingtoSoccerway = length(mgreg)
+	## need to do this to check for postponed games
+	allMatchIndex = grep('team team-a', covshHtml)
+	allMatchLink = covshHtml[grep('team team-a', covshHtml)+6]
+	GetMatchVectorFromMatchLink = function(myMatchLink) {
+	  splitMatchLink = strsplit(myMatchLink, split = '/')[[1]]
+	  matchVector = c(splitMatchLink[c(6, 7)])
+	  names(matchVector) = c('country', 'league')
+	  return(matchVector)
+	}
+	matchMatrix = t(sapply(allMatchLink, GetMatchVectorFromMatchLink))
+	rownames(matchMatrix) = NULL
+	matchDF = as.data.frame(matchMatrix)
+	# then we want th long team names (not to be confused with web address team names)
+	matchDF$longHTeam = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', covshHtml[allMatchIndex + 2])))
+	matchDF$longATeam = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', covshHtml[allMatchIndex + 12])))
+	# let's also tack on the score to that
+	matchDF$score = gsub('(^ *)(.+)( *$)', '\\2', covshHtml[allMatchIndex + 7])
+	# and of course the web address
+	matchDF$address = paste0('http://uk.soccerway.com',
+	                              gsub('(.+a href=\")(/matches[^\"]+)(\".+$)', '\\2', allMatchLink))
+	
+	# want to whittle down to those that are just premier league and not postponed
+	matchDF = matchDF %>%
+	  filter(league == 'premier-league' & !score %in% c('PSTP', 'Postponed'))
+	
+	numGameAccordingtoSoccerway = nrow(matchDF)
 	if (numGameAccordingtoSoccerway==0) {
 		stop('No matches on',mydate,'...\n')
 	}
@@ -23,32 +44,18 @@ getwebaddressfordate = function(mydate, resultdf) {
 	# also, number of matches for this date HAS to agree with resultdf, so check that
 	numGameAccordingToResultDF = with(resultdf, sum(date == mydate & isHome))
 	if (numGameAccordingtoSoccerway != numGameAccordingToResultDF) {
-	  stop('Aaargh, resultdf says there are ', sumGameAccordingToResultDF, ' games on ', mydate, ' but getwebaddressfordate says there are ', length(mgreg), '\n')
+	  stop('Aaargh, resultdf says there are ', numGameAccordingToResultDF, ' games on ', mydate, ' but getwebaddressfordate says there are ', nrow(matchDF), '\n')
 	}
 
-	cat('About to pick up',length(mgreg),'matches on',mydate,'\n')
-	matchAddress = paste0('http://uk.soccerway.com',
-	                      gsub('(.+a href=\")(/matches[^\"]+)(\".+$)', '\\2', b[mgreg]))
-	### also want to grab team and score though
-	
-	hteam = ateam = rep(NA, numGameAccordingtoSoccerway)
-	longhteam = gsub('(^.+premier-league/)([^/]+)(/.+$)','\\2',matchAddress)
-	longateam = gsub('(^.+premier-league/[^/]+/)([^/]+)(/.+$)','\\2',matchAddress)
-	for (j in 1:numGameAccordingtoSoccerway) {
-	  homeTeamNameLineIndex = grep(paste0('teams/(england|wales)/', longhteam[j], '.+title='), b)[1]
-	  hteam[j] = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', b[homeTeamNameLineIndex])))
-	  awayTeamNameLineIndex = grep(paste0('teams/(england|wales)/', longateam[j], '.+title='), b)[1]
-	  ateam[j] = tolower(gsub('[^a-zA-Z]', '', gsub('(^.+title=\")(.+)', '\\2', b[awayTeamNameLineIndex])))
-	}
-	
-	## but want nice team abbreviations
-	hteam = cleanteam(hteam, 'soccerway')
-	ateam = cleanteam(ateam, 'soccerway')
+	cat('About to pick up',nrow(matchDF),'matches on',mydate,'\n')
 
-	matchKey = paste0(mydate, hteam)
+	# can now reduce to the tidy team names
+	matchDF$hteam = cleanteam(matchDF$longHTeam, 'soccerway')
+	matchDF$ateam = cleanteam(matchDF$longHTeam, 'soccerway')
 
-	myDF = tibble(key = matchKey, address = matchAddress)
-	return(myDF)
+	matchDF$key = paste0(mydate, matchDF$hteam)
+
+	return(matchDF[,c('key', 'address')])
 }
 
 getappearanceinfofordate = function(mydate, resultdf) {
