@@ -66,12 +66,20 @@ getplayerfixture=function(fixtdf, playerDF, gbgdf) {
 	### want a data frame of future player/fixture combos, along with expected points in each match and the weight
 
 	### now merge in the players data
-	playerfixtdf=inner_join(playerDF, fixtdf, by = 'team') %>%
+
+  playerfixtdf=inner_join(playerDF,
+                          fixtdf %>%
+                            select(date, team, oppteam, isHome,
+                                   teamgamenumber, gameweek, gwweight,
+                                   escored, econceded), by = 'team') %>%
 					dplyr::rename(eteamscored = escored,
 									eteamconceded = econceded)
+	
+	
+	
 	### now calculate expected goals and assists
 	playerfixtdf = playerfixtdf %>%
-					arrange(team,player,gameweek) %>%
+					arrange(team,player,gameweek, date) %>%
 					mutate(egoal = chnormgoalrate * eteamscored,
 							eassist = chnormassistrate * eteamscored)
 

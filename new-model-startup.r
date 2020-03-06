@@ -27,7 +27,7 @@ seasoninfo = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
 currentseason = 1920
 
 resultdf = ffDataLoading:::GetResultDF()
-fixtdf = ffDataLoading:::GetFixtDF()
+fixtdf = ffDataLoading:::GetFixtDF(resultdf)
 
 resultdf = ffDataLoading:::AlignGameweekAndSeasonWithResultDF(resultdf)
 
