@@ -10,7 +10,7 @@ getwebaddressfordate = function(mydate, resultdf) {
 	if (length(allWhiteSpaceIndex) > 0) {
 		covshHtml = covshHtml[-allWhiteSpaceIndex]
 	}
-	
+
 	## need to do this to check for postponed games
 	allMatchIndex = grep('team team-a', covshHtml)
 	allMatchLink = covshHtml[grep('team team-a', covshHtml)+6]
@@ -31,16 +31,16 @@ getwebaddressfordate = function(mydate, resultdf) {
 	# and of course the web address
 	matchDF$address = paste0('http://uk.soccerway.com',
 	                              gsub('(.+a href=\")(/matches[^\"]+)(\".+$)', '\\2', allMatchLink))
-	
+
 	# want to whittle down to those that are just premier league and not postponed
 	matchDF = matchDF %>%
-	  filter(league == 'premier-league' & !score %in% c('PSTP', 'Postponed'))
-	
+	  filter(country == 'england' & league == 'premier-league' & !score %in% c('PSTP', 'Postponed'))
+
 	numGameAccordingtoSoccerway = nrow(matchDF)
 	if (numGameAccordingtoSoccerway==0) {
 		stop('No matches on',mydate,'...\n')
 	}
-	
+
 	# also, number of matches for this date HAS to agree with resultdf, so check that
 	numGameAccordingToResultDF = with(resultdf, sum(date == mydate & isHome))
 	if (numGameAccordingtoSoccerway != numGameAccordingToResultDF) {

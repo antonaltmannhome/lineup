@@ -3,7 +3,7 @@
 ## firstly scan in what's already been done (at start of season, this won't exist so you have to make it)
 
 resultdf = ffDataLoading:::GetResultDF()
-fixtdf = ffDataLoading:::GetFixtDF()
+fixtdf = ffDataLoading:::GetFixtDF(resultdf)
 spreadexfile = paste0(DATAPATH, 'spreadex_',currentseason,'.csv')
 
 if (FALSE) {
@@ -57,7 +57,7 @@ horizFixtDF = fixtdf %>%
 				dplyr::rename(ht = team, at = oppteam)
 
 horizDF = bind_rows(horizResultDF, horizFixtDF)
-				
+
 horizDF = left_join(horizDF, existingodds, c('date', 'ht', 'at'))
 
 write.csv(file = spreadexfile, horizDF, row.names = FALSE)
