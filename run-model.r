@@ -43,3 +43,4 @@ forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion
 # first issue is to sort out the minutes though
 currentmoney = 99.1
 source('get-optimal-team.r')
+

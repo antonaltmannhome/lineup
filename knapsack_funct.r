@@ -91,7 +91,7 @@ RunKnapsack = function(playerDF, forcedInclusionExclusion, currentmoney) {
 	return(idealteam)
 }
 
-calculateexpectedpoint = function(playerfixtdf, myteam, warnAboutMissingPlayer = TRUE) {
+calculateexpectedpoint = function(playerfixtdf, myteam, benchBoostWeek = 1000, warnAboutMissingPlayer = TRUE) {
 
 	myteamfixtdf = inner_join(playerfixtdf %>%
 								filter(gwweight > 0),
@@ -131,23 +131,28 @@ calculateexpectedpoint = function(playerfixtdf, myteam, warnAboutMissingPlayer =
 			stop('Have NAs within calculateexpectedpoint for gameweek ', mygameweek,', investigate!\n')
 		}
 
-		mynumplayer=nrow(myteam)
-		#var.types <- c(rep("B", nsubplayer),'C')
-		obj=gwtotaldf$expectedpoint
-		var.types <- c(rep("B", mynumplayer),'I','I','I','C')
-		mat10=matrix(0,nrow=mynumplayer,ncol=mynumplayer)
-		diag(mat10)=1
-		conmat=rbind(
-			mat10,
-			as.numeric(gwtotaldf$ffPosition == 'g'),
-			as.numeric(gwtotaldf$ffPosition == 'd'),
-			as.numeric(gwtotaldf$ffPosition == 'f'),
-			rep(1,mynumplayer)
-			)
-		direction=c(rep('<=',mynumplayer),'==',rep('>=',2),'==')
-		rhs=c(rep(1,mynumplayer),1,3,1,11)
-		sol=Rglpk_solve_LP(obj=obj,mat=conmat,dir=direction,rhs=rhs,types=var.types,max=T)
-		gwtotaldf$selected = sol$solution
+		if (mygameweek != benchBoostWeek) {
+		  mynumplayer=nrow(myteam)
+		  #var.types <- c(rep("B", nsubplayer),'C')
+		  obj=gwtotaldf$expectedpoint
+		  var.types <- c(rep("B", mynumplayer),'I','I','I','C')
+		  mat10=matrix(0,nrow=mynumplayer,ncol=mynumplayer)
+		  diag(mat10)=1
+		  conmat=rbind(
+		    mat10,
+		    as.numeric(gwtotaldf$ffPosition == 'g'),
+		    as.numeric(gwtotaldf$ffPosition == 'd'),
+		    as.numeric(gwtotaldf$ffPosition == 'f'),
+		    rep(1,mynumplayer)
+		  )
+		  direction=c(rep('<=',mynumplayer),'==',rep('>=',2),'==')
+		  rhs=c(rep(1,mynumplayer),1,3,1,11)
+		  sol=Rglpk_solve_LP(obj=obj,mat=conmat,dir=direction,rhs=rhs,types=var.types,max=T)
+		  gwtotaldf$selected = sol$solution
+		}
+		if (mygameweek == benchBoostWeek) {
+		  gwtotaldf$selected = 1
+		}
 		gwtotaldf$captain = gwtotaldf$expectedpoint == max(gwtotaldf$expectedpoint)
 		sax = with(myteamfixtdf, which(gameweek == mygameweek))
 		mdum = match(with(myteamfixtdf[sax,], paste(team, player, gameweek)),

@@ -4,7 +4,7 @@
 source('knapsack_funct.r')
 
 
-GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, FHForcedInclusionExclusion, forcedInclusionExclusion) {
+GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInclusionExclusion, forcedInclusionExclusion) {
 	
 	# step 1, calculate expected points in the weeks prior to the wild card
 	nextGW = min(fixtdf$gameweek)
@@ -13,40 +13,36 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, FHForcedInclusionEx
 	}
 	if (WCWeek > nextGW) {
 		preWCNotFHWeek = setdiff(nextGW:(WCWeek - 1), FHWeek)
-		subFixtDF = fixtdf %>%
-					filter(gameweek %in% preWCNotFHWeek) %>%
-					mutate(gwweight = 1) # we want total points absolutely, not relative to other potential teams (as with usual optimisation)
-		subPlayerFixtDF = getfixtureexpectedpoint(subFixtDF, playerdf, summarydf, gbgdf)
+		subPlayerFixtDF = playerfixtdf %>%
+		  filter(gameweek %in% preWCNotFHWeek) %>%
+		  mutate(gwweight = 1)
 
-		dum = calculateexpectedpoint(subPlayerFixtDF, currentteam)
+		dum = calculateexpectedpoint(subPlayerFixtDF, currentteam, BBWeek, warnAboutMissingPlayer = FALSE)
 		preWCNotFHPlayerPointDF = dum$pointsummarydf
 		preWCNotFHTotalPoint = dum$totalexpectedpoint
 	}
 	
 	# then the free hit
-	subFixtDF = fixtdf %>%
+	subPlayerFixtDF = playerfixtdf %>%
 				filter(gameweek == FHWeek) %>%
 				mutate(gwweight = 1)
-	subPlayerValue=getplayervalue(subFixtDF, playerdf, summarydf, gbgdf)
-
-	subPlayerFixtDF = getfixtureexpectedpoint(subFixtDF, playerdf, summarydf, gbgdf)
+	subPlayerValue=getplayervalue(playerDF, subPlayerFixtDF)
 
 	FHTeam = RunKnapsack(subPlayerValue, FHForcedInclusionExclusion, currentmoney)
 		
-	dum = calculateexpectedpoint(subPlayerFixtDF, FHTeam)
+	dum = calculateexpectedpoint(subPlayerFixtDF, FHTeam, warnAboutMissingPlayer = FALSE)
 	FHPlayerPointDF = dum$pointsummarydf
 	FHTotalPoint = dum$totalexpectedpoint
 
 	postWCNotFHWeek = setdiff(WCWeek:38, FHWeek)
-	subFixtDF = fixtdf %>% filter(gameweek %in% postWCNotFHWeek) %>%
-					mutate(gwweight = 1)
-	subPlayerValue=getplayervalue(subFixtDF, playerdf, summarydf, gbgdf)
-
-	subPlayerFixtDF = getfixtureexpectedpoint(subFixtDF, playerdf, summarydf, gbgdf)
+	subPlayerFixtDF = playerfixtdf %>%
+	  filter(gameweek %in% postWCNotFHWeek) %>%
+		mutate(gwweight = 1)
+	subPlayerValue=getplayervalue(playerDF, subPlayerFixtDF)
 
 	postWCNotFHTeam = RunKnapsack(subPlayerValue, forcedInclusionExclusion, currentmoney)
 		
-	dum = calculateexpectedpoint(subPlayerFixtDF, postWCNotFHTeam)
+	dum = calculateexpectedpoint(subPlayerFixtDF, postWCNotFHTeam, BBWeek, warnAboutMissingPlayer = FALSE)
 	postWCNotFHPlayerPointDF = dum$pointsummarydf
 	postWCNotFHTotalPoint = dum$totalexpectedpoint
 	
@@ -67,32 +63,20 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, FHForcedInclusionEx
 
 FHForcedInclusionExclusion = read.csv(paste0(DATAPATH, 'free-hit-forced-inclusion-exclusion.csv'))
 
-### so in 1819 season, do FH33, WC34 (rubbish idea but let's just try it:
+### so in 1920 season, do FH33, WC34 (rubbish idea but let's just try it):
+
 GetWCFHExpectedPoint(currentteam, 34, 33, FHForcedInclusionExclusion, forcedInclusionExclusion)
-pre-wild-card points: 82.9108867999734
-free hit points: 59.2580383862963
-post-wild-card points: 347.735353090156
-total points: 489.904278276426
+pre-wild-card points: 152.477098540508
+free hit points: 66.3594194591453
+post-wild-card points: 396.795686043531
+total points: 615.632204043184
 
-## or, FH 32, WC34:
-GetWCFHExpectedPoint(currentteam, 34, 32, FHForcedInclusionExclusion, forcedInclusionExclusion)
-pre-wild-card points: 54.8251381929024
-free hit points: 115.974346854238
-post-wild-card points: 347.735353090156
-total points: 518.534838137296
-# forcibly include aguero in the free hit:
-total points: 522.541249499098
-# forcibly include kane in the free hit:
-total points: 517.321920014683
-# forcibly include sterling in the free hit:
-total points: 518.171111231521
+## or, FH 31, WC34:
+GetWCFHExpectedPoint(currentteam, 34, 31, FHForcedInclusionExclusion, forcedInclusionExclusion)
+pre-wild-card points: 166.849691223368
+free hit points: 60.7208693947299
+post-wild-card points: 396.795686043531
+total points: 624.36624666163
 
-## or, WC32, FH33:
-GetWCFHExpectedPoint(currentteam, 32, 33, FHForcedInclusionExclusion, forcedInclusionExclusion)
-pre-wild-card points: 0
-free hit points: 59.2580383862963
-post-wild-card points: 452.507623700725
-total points: 511.765662087021
-# so don't do that
-
-### NB ought to add bench boost to this but there's no flexibility about when to use it this year, so leave that til next season
+# all nonsense for now, need to wait til fixtures are decided.
+# but need to add bench boost possibility - not sure how easy that actually is though - think it might be possible to do if you don't try to optimise with it, just add in afterwards
