@@ -1,9 +1,14 @@
+# let's find optimal team to set up for once games are playing again
+
+# to do that, we need to have all the remaining fixtures in place, then put equal weight on all and find optimal team
+
 source('c:/git/lineup/new-model-startup.r')
 source(paste0(USERPATH, 'team_funct.r'))
 source(paste0(USERPATH, 'player_funct.r'))
 
 # might be worth updating the prices? not completely convneient to do that right now though, so do manually
 
+fixtdf$gwweight = 1
 playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 # NB this is a bit slow but you can get the game by game calculations this way:
 # gbgdf = ffModel::CalculateHistoricExpectedMinute(gbgdf)
@@ -42,4 +47,5 @@ forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion
 ## hmm, it seems by adding heavy hitters, you don't actually lose anything like the number of points you might expect
 # first issue is to sort out the minutes though
 currentmoney = 99.3
+
 source('get-optimal-team.r')
