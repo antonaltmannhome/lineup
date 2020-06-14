@@ -41,5 +41,5 @@ forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion
 
 ## hmm, it seems by adding heavy hitters, you don't actually lose anything like the number of points you might expect
 # first issue is to sort out the minutes though
-currentmoney = 99.3
+currentmoney = 99.1
 source('get-optimal-team.r')
