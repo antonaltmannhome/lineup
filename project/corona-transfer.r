@@ -49,3 +49,6 @@ forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion
 currentmoney = 99.3
 
 source('get-optimal-team.r')
+
+### it's all changed. now we want a single team for the restart week, including bench boost i'd say.
+

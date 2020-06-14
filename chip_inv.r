@@ -1,8 +1,49 @@
 # chip_inv.r is a messy little file, let's try to get something that isn't separate from everything else and uses knapsack-funct.r
 
 # the idea is it lets you try various combinations of which week to WC, which week to free hit
+source('c:/git/lineup/new-model-startup.r')
+source(paste0(USERPATH, 'team_funct.r'))
+source(paste0(USERPATH, 'player_funct.r'))
+
+# might be worth updating the prices? not completely convneient to do that right now though, so do manually
+
+playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
+# NB this is a bit slow but you can get the game by game calculations this way:
+# gbgdf = ffModel::CalculateHistoricExpectedMinute(gbgdf)
+
+# this is a bit dangerous: it'll overwrite manual changes, which would be very annoying - need to think about how we do that
+# ffModel:::UpdateManualActiveSpreadsheet(gbgdf, playerDF, seasoninfo, resultdf)
+
+playerDF = ffModel::ReadManualEMinFile(playerDF, resultdf)
+
+fixtdf = getfixturegoal(resultdf, fixtdf)
+
+# who's got a kind and tricky schedule to come:
+fixtdf %>%
+  filter(gameweek <= min(gameweek) + 9) %>%
+  group_by(team) %>%
+  summarise(sumEScored = sum(gwweight * escored),
+            sumEConceded = sum(gwweight * econceded)) %>%
+  arrange(desc(sumEScored - sumEConceded))
+
+gbgdf = processdeserved(gbgdf)
+summarydf=processdeserved(summarydf)
+
+playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summarydf, resultDF)
+
+# might want to do this:
+# source(paste0(USERPATH, 'data fetching/strip_ffprice.r')); StripFFPrice()
+playerDF = ffDataJoining:::MatchFFPlayerData(playerDF)
+
+playerfixtdf = getplayerfixture(fixtdf, playerDF, gbgdf)
+playerfixtdf = getfixtureexpectedpoint(playerfixtdf)
 source('knapsack_funct.r')
 
+currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
+forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion.csv'))
+
+FHForcedInclusionExclusion = read.csv(paste0(DATAPATH, 'free-hit-forced-inclusion-exclusion.csv'))
+currentmoney = 99.1
 
 GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInclusionExclusion, forcedInclusionExclusion) {
 	
@@ -60,12 +101,10 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 	message('total points: ', preWCNotFHTotalPoint + FHTotalPoint + postWCNotFHTotalPoint)
 }
 
+### post corona, have DGW in first week, plus free wild card. so bench boost it and WC on the next week
+GetWCFHExpectedPoint(currentteam, 31, 30, 30, FHForcedInclusionExclusion, forcedInclusionExclusion)
 
-FHForcedInclusionExclusion = read.csv(paste0(DATAPATH, 'free-hit-forced-inclusion-exclusion.csv'))
-
-### so in 1920 season, do FH33, WC34 (rubbish idea but let's just try it):
-
-GetWCFHExpectedPoint(currentteam, 34, 33, FHForcedInclusionExclusion, forcedInclusionExclusion)
+GetWCFHExpectedPoint(currentteam, 34, 33, 35, FHForcedInclusionExclusion, forcedInclusionExclusion)
 pre-wild-card points: 152.477098540508
 free hit points: 66.3594194591453
 post-wild-card points: 396.795686043531
