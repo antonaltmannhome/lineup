@@ -43,7 +43,7 @@ currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
 forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion.csv'))
 
 FHForcedInclusionExclusion = read.csv(paste0(DATAPATH, 'free-hit-forced-inclusion-exclusion.csv'))
-currentmoney = 99.1
+currentmoney = 97.7
 
 GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInclusionExclusion, forcedInclusionExclusion) {
 	
