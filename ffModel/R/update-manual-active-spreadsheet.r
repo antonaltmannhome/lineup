@@ -56,7 +56,7 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
     arrange(team, match(mainpos, c('GK', 'D', 'DMC', 'M', 'AM', 'FW')), desc(eMin)) %>%
     mutate(eMin = round(eMin, 1)) %>%
     # mutate(manualEMin = round(eMin)) %>% only do that when initialising the thing
-    mutate(manualEMin = NA) %>%
+    mutate(manualEMin = NA_real_) %>%
     select(team, player, mainpos, manualEMin, eMin, everything())
   
   ## but then we want the mean played/mean available prior to that
