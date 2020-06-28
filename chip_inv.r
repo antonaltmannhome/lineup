@@ -49,10 +49,10 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 	
 	# step 1, calculate expected points in the weeks prior to the wild card
 	nextGW = min(fixtdf$gameweek)
-	if (WCWeek == nextGW) {
+	if (WCWeek == nextGW | WCWeek > 38) {
 		preWCNotFHTotalPoint = 0
 	}
-	if (WCWeek > nextGW) {
+	if (WCWeek > nextGW & WCWeek <= 38) {
 		preWCNotFHWeek = setdiff(nextGW:(WCWeek - 1), FHWeek)
 		subPlayerFixtDF = playerfixtdf %>%
 		  filter(gameweek %in% preWCNotFHWeek) %>%
@@ -63,19 +63,29 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 		preWCNotFHTotalPoint = dum$totalexpectedpoint
 	}
 	
-	# then the free hit
-	subPlayerFixtDF = playerfixtdf %>%
-				filter(gameweek == FHWeek) %>%
-				mutate(gwweight = 1)
-	subPlayerValue=getplayervalue(playerDF, subPlayerFixtDF)
-
-	FHTeam = RunKnapsack(subPlayerValue, FHForcedInclusionExclusion, currentmoney)
-		
-	dum = calculateexpectedpoint(subPlayerFixtDF, FHTeam, warnAboutMissingPlayer = FALSE)
-	FHPlayerPointDF = dum$pointsummarydf
-	FHTotalPoint = dum$totalexpectedpoint
-
-	postWCNotFHWeek = setdiff(WCWeek:38, FHWeek)
+	if (FHWeek > 38) {
+	  FHTotalPoint = 0
+	}
+	if (FHWeek <=38) {
+	  # then the free hit
+	  subPlayerFixtDF = playerfixtdf %>%
+	    filter(gameweek == FHWeek) %>%
+	    mutate(gwweight = 1)
+	  subPlayerValue=getplayervalue(playerDF, subPlayerFixtDF)
+	  
+	  FHTeam = RunKnapsack(subPlayerValue, FHForcedInclusionExclusion, currentmoney)
+	  
+	  dum = calculateexpectedpoint(subPlayerFixtDF, FHTeam, warnAboutMissingPlayer = FALSE)
+	  FHPlayerPointDF = dum$pointsummarydf
+	  FHTotalPoint = dum$totalexpectedpoint
+	}
+	
+	if (WCWeek > 38) {
+	  postWCNotFHWeek = setdiff(nextGW:38, FHWeek)
+	}
+	if (WCWeek <=38) {
+  	postWCNotFHWeek = setdiff(WCWeek:38, FHWeek)
+	}
 	subPlayerFixtDF = playerfixtdf %>%
 	  filter(gameweek %in% postWCNotFHWeek) %>%
 		mutate(gwweight = 1)
@@ -98,7 +108,9 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 	message('free hit points: ', FHTotalPoint)
 	message('post-wild-card points: ', postWCNotFHTotalPoint)
 	
-	message('total points: ', preWCNotFHTotalPoint + FHTotalPoint + postWCNotFHTotalPoint)
+	totalPoint = preWCNotFHTotalPoint + FHTotalPoint + postWCNotFHTotalPoint
+	message('total points: ', totalPoint)
+	return(totalPoint)
 }
 
 ### post corona, have DGW in first week, plus free wild card. so bench boost it and WC on the next week
@@ -119,3 +131,17 @@ total points: 624.36624666163
 
 # all nonsense for now, need to wait til fixtures are decided.
 # but need to add bench boost possibility - not sure how easy that actually is though - think it might be possible to do if you don't try to optimise with it, just add in afterwards
+
+# try everything out in remainder of season:
+
+remainingCombo = expand_grid(WCWeek = 39, # already played it
+                             FHWeek = min(fixtdf$gameweek):38,
+                             BBWeek = min(fixtdf$gameweek):38) %>%
+  filter(FHWeek != BBWeek) %>%
+  mutate(totalPoint = NA)
+
+for (j in 1:nrow(remainingCombo)) {
+  remainingCombo$totalPoint[j] = with(remainingCombo[j,], 
+    GetWCFHExpectedPoint(currentteam, WCWeek = WCWeek, FHWeek = FHWeek, BBWeek = BBWeek,
+                         FHForcedInclusionExclusion, forcedInclusionExclusion))
+}
