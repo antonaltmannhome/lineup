@@ -1,5 +1,5 @@
 
-source('c:/research/lineup/new-model-startup.r')
+source('new-model-startup.r')
 source(paste0(USERPATH, 'team_funct.r'))
 source(paste0(USERPATH, 'player_funct.r'))
 
