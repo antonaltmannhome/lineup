@@ -1,7 +1,7 @@
 
 #ok the problem is files are stored vertically, but some functions want it horizontal. need to make a decision here. storing horizontally seems fine to me, just have to have easy way of transferring the objects from vertical to horizontal and back
 
-processdeserved=function(mydf, getffpoint = FALSE) {
+ProcessDeserved=function(mydf, getffpoint = FALSE) {
 
 	### check all necessary columns are there
 	if (getffpoint) {
@@ -56,13 +56,13 @@ processdeserved=function(mydf, getffpoint = FALSE) {
 	return(mydf)
 }
 
-modelexpectedsave = function(gbgdf) {
+ModelExpectedSave = function(gbgdf) {
 	isGoalkeeperIndex = with(gbgdf, mainpos == 'GK' & minute>89)
 	mod = glm(gksave ~ teamoddseconceded, data = gbgdf[isGoalkeeperIndex,], family = 'poisson')
 	return(coef(mod))
 }
 
-getplayerfixture=function(fixtDF, playerDF, gbgdf) {
+GetPlayerFixture=function(fixtDF, playerDF, gbgdf) {
 	### want a data frame of future player/fixture combos, along with expected points in each match and the weight
 
 	### now merge in the players data
@@ -84,7 +84,7 @@ getplayerfixture=function(fixtDF, playerDF, gbgdf) {
 							eassist = chnormassistrate * eteamscored)
 
 	### then we need the goalkeeper predictions
-	gksavecoef = modelexpectedsave(gbgdf)
+	gksavecoef = ModelExpectedSave(gbgdf)
 	playerFixtDF = playerFixtDF %>%
 					mutate(egksave = if_else(mainpos == 'GK',
 											exp(gksavecoef[[1]] + gksavecoef[[2]] * eteamconceded),
@@ -93,7 +93,7 @@ getplayerfixture=function(fixtDF, playerDF, gbgdf) {
 	return(playerFixtDF)
 }
 
-getfixtureexpectedpoint=function(playerFixtDF) {
+GetFixtureExpectedPoint=function(playerFixtDF) {
 
 	playerFixtDF = playerFixtDF %>%
 			mutate(
@@ -122,7 +122,7 @@ getfixtureexpectedpoint=function(playerFixtDF) {
 	return(playerFixtDF)
 }
 
-getlongtermplayerpoint=function(playerFixtDF) {
+GetLongTermPlayerPoint=function(playerFixtDF) {
 
 	## make a player by player summary
 	playersummary=playerFixtDF %>%
@@ -133,7 +133,7 @@ getlongtermplayerpoint=function(playerFixtDF) {
 	return(playersummary)
 }
 
-getplayervalue=function(playerDF, playerFixtDF) {
+GetPlayerValue=function(playerDF, playerFixtDF) {
 	### firstly get expected points scord by each active player
 	playerDF = left_join(playerDF,
 												playerFixtDF %>%
@@ -158,7 +158,7 @@ getplayervalue=function(playerDF, playerFixtDF) {
 	return(playerDF)
 }
 
-getcurrentplayervalue=function(playervalue) {
+GetCurrentPlayerValue=function(playervalue) {
 	currentteam=read.csv(paste(DATAPATH,'currentteam.csv',sep=''))
 	mdum=match(with(currentteam,paste(team,player)),with(playervalue,paste(team,player)))
 	coltocopy=c('epoint90min','active','epoint','price','value','valuerank')
@@ -166,7 +166,7 @@ getcurrentplayervalue=function(playervalue) {
 	return(currentteam)
 }
 
-getcurrentexpectedpoint=function(playerFixtDF, mysquad) {
+GetCurrentExpectedPoint=function(playerFixtDF, mysquad) {
 	currentplayerfixtepoint = playerFixtDF %>%
 							filter(!is.na(player)) %>%
 							filter(gameweek == min(gameweek)) %>%
@@ -187,9 +187,9 @@ getcurrentexpectedpoint=function(playerFixtDF, mysquad) {
 	return(currentsquadepoint)
 }
 
-makeseasondeservedsummary = function(summaryDF, gbgdf) {
-	### check that processdeserved has been done
-	if (!'deservedgoal' %in% names(summaryDF)) stop('need to run processdeserved')
+MakeSeasonDeservedSummary = function(summaryDF, gbgdf) {
+	### check that ProcessDeserved has been done
+	if (!'deservedgoal' %in% names(summaryDF)) stop('need to run ProcessDeserved')
 	seasonplayersummary=NULL
 	seasonteamsummary=NULL
 	for (si in 1:nrow(seasonInfoDF)) {

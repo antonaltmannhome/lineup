@@ -1,7 +1,7 @@
 ### let's try the knapsack approach to ff
 ### but now let's force a certain player e.g aguero into the squad and see what happens to overall actual expected points
 
-source('knapsack_funct.r')
+source('knapsack-funct.r')
 
 if (FALSE) {
 	playerFixtDF = getfixtureexpectedpoint(fixtDF, playerdf, summaryDF, gbgdf)
@@ -15,11 +15,11 @@ if (FALSE) {
 
 idealteam = RunKnapsack(playerDF, forcedInclusionExclusion, currentmoney)
 
-currentteamgameweekexpectedpoint = getcurrentexpectedpoint(playerFixtDF, currentteam)
-idealteamgameweekexpectedpoint = getcurrentexpectedpoint(playerFixtDF, idealteam)
+currentteamgameweekexpectedpoint = GetCurrentExpectedPoint(playerFixtDF, currentteam)
+idealteamgameweekexpectedpoint = GetCurrentExpectedPoint(playerFixtDF, idealteam)
 
-currentteamfullinfo = calculateexpectedpoint(playerFixtDF, currentteam)
-idealteamfullinfo = calculateexpectedpoint(playerFixtDF, idealteam)
+currentteamfullinfo = CalculateExpectedPoint(playerFixtDF, currentteam)
+idealteamfullinfo = CalculateExpectedPoint(playerFixtDF, idealteam)
 
 if (FALSE) {
 ### then calculate the info for the rival teams as well
@@ -45,11 +45,11 @@ for (j in 1:length(rivalteamname)) {
 	names(rivalteaminfo[[j]]) = rivalteamname[j]
 }
 }
-currentteampointsummarydf = addextrainfo(
+currentteampointsummarydf = AddExtraInfo(
 								currentteamfullinfo$pointsummarydf,
 								currentteamgameweekexpectedpoint,
 								playerDF)
-idealteampointsummarydf = addextrainfo(
+idealteampointsummarydf = AddExtraInfo(
 								idealteamfullinfo$pointsummarydf,
 								idealteamgameweekexpectedpoint,
 								playerDF)

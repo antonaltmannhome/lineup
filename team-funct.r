@@ -1,5 +1,5 @@
 
-getteamstrength = function(resultDF, fixtDF) {
+GetTeamStrength = function(resultDF, fixtDF) {
 
 	### want to include all relevant odds, to actually need odds for games that haven't happened yet
 	### ie the first week of fixtdf
@@ -50,10 +50,10 @@ getteamstrength = function(resultDF, fixtDF) {
 	return(list(teamability = teamability, homeeffect = homeeffect))
 }
 
-getfixturegoal=function(resultDF, fixtDF) {
+GetFixtureGoal=function(resultDF, fixtDF) {
 	### so get list of upcoming fixtures and current team abilities according to spreadex, then get expected goals scored and conceded by each team
 
-	dum = getteamstrength(resultDF, fixtDF)
+	dum = GetTeamStrength(resultDF, fixtDF)
 	teamability = dum$teamability
 	homeeffect = dum$homeeffect
 

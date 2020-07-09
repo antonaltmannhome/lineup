@@ -1,6 +1,6 @@
 source('c:/git/lineup/new-model-startup.r')
-source(paste0(USERPATH, 'team_funct.r'))
-source(paste0(USERPATH, 'player_funct.r'))
+source(paste0(USERPATH, 'team-funct.r'))
+source(paste0(USERPATH, 'player-funct.r'))
 
 # might be worth updating the prices? not completely convneient to do that right now though, so do manually
 
@@ -13,7 +13,7 @@ playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 
 playerDF = ffModel::ReadManualEMinFile(playerDF, resultDF)
 
-fixtDF = getfixturegoal(resultDF, fixtDF)
+fixtDF = GetFixtureGoal(resultDF, fixtDF)
 
 # who's got a kind and tricky schedule to come:
 fixtDF %>%
@@ -23,8 +23,8 @@ fixtDF %>%
             sumEConceded = sum(gwweight * econceded)) %>%
   arrange(desc(sumEScored - sumEConceded))
 
-gbgdf = processdeserved(gbgdf)
-summaryDF = processdeserved(summaryDF)
+gbgdf = ProcessDeserved(gbgdf)
+summaryDF = ProcessDeserved(summaryDF)
 
 playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summaryDF, resultDF)
 
@@ -32,9 +32,9 @@ playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summaryDF, r
 # source(paste0(USERPATH, 'data fetching/strip_ffprice.r')); StripFFPrice()
 playerDF = ffDataJoining:::MatchFFPlayerData(playerDF)
 
-playerFixtDF = getplayerfixture(fixtDF, playerDF, gbgdf)
-playerFixtDF = getfixtureexpectedpoint(playerFixtDF)
-playerDF = getplayervalue(playerDF, playerFixtDF)
+playerFixtDF = GetPlayerFixture(fixtDF, playerDF, gbgdf)
+playerFixtDF = GetFixtureExpectedPoint(playerFixtDF)
+playerDF = GetPlayerValue(playerDF, playerFixtDF)
 
 currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
 forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion.csv'))

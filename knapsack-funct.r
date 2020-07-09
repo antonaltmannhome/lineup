@@ -91,7 +91,7 @@ RunKnapsack = function(playerDF, forcedInclusionExclusion, currentmoney) {
 	return(idealteam)
 }
 
-calculateexpectedpoint = function(playerplayerFixtDF, myteam, benchBoostWeek = 1000, warnAboutMissingPlayer = TRUE) {
+CalculateExpectedPoint = function(playerFixtDF, myteam, benchBoostWeek = 1000, warnAboutMissingPlayer = TRUE) {
 
 	myteamfixtdf = inner_join(playerFixtDF %>%
 								filter(gwweight > 0),
@@ -180,7 +180,7 @@ calculateexpectedpoint = function(playerplayerFixtDF, myteam, benchBoostWeek = 1
 				totalexpectedpoint = totalexpectedpoint))
 }
 
-addextrainfo = function(fullexpectedpoint, gameweekexpectedpoint, playerDF) {
+AddExtraInfo = function(fullexpectedpoint, gameweekexpectedpoint, playerDF) {
 
 	fullexpectedpoint = left_join(fullexpectedpoint,
 											gameweekexpectedpoint %>%
