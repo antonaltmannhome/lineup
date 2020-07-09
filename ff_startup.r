@@ -13,8 +13,8 @@ DATAPATH='d:/whoscored_data/'
 TEMPPATH='c:/temp/'
 setwd(USERPATH)
 source('admin_funct.r')
-source('team_funct.r')
-source('player_funct.r')
+source('team-funct.r')
+source('player-funct.r')
 thiscomputer = Sys.info()[['nodename']]
 
 seasoninfo = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
