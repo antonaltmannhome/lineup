@@ -21,29 +21,29 @@ ffDataLoadingPath = paste0(USERPATH, 'ffDataLoading')
 devtools::install(ffDataLoadingPath)
 }
 
-seasoninfo = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
+seasonInfoDF = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
 ##### aaarghhh, want to define seasonNumber at this point but it starts with 1516, whereas appearanceDF starts with 1617, and uses 1 for 1617.
-### the solution: appearanceDF should use seasoninfo as its guide for season numbers. 
+### the solution: appearanceDF should use seasonInfoDF as its guide for season numbers. 
 currentseason = 1920
 
-resultdf = ffDataLoading:::GetResultDF()
-fixtdf = ffDataLoading:::GetFixtDF(resultdf)
+resultDF = ffDataLoading:::GetResultDF()
+fixtDF = ffDataLoading:::GetFixtDF(resultDF)
 
-resultdf = ffDataLoading:::AlignGameweekAndSeasonWithResultDF(resultdf)
+resultDF = ffDataLoading:::AlignGameweekAndSeasonWithResultDF(resultDF)
 
-dum = ffDataLoading:::AlignOddsWithResultsAndFixtures(resultdf, fixtdf)
-resultdf = dum$resultDF
-fixtdf = dum$fixtDF
+dum = ffDataLoading:::AlignOddsWithResultsAndFixtures(resultDF, fixtDF)
+resultDF = dum$resultDF
+fixtDF = dum$fixtDF
 
-resultdf = ffDataLoading:::CreateDaynum(resultdf)
+resultDF = ffDataLoading:::CreateDaynum(resultDF)
 
 gbgdf = ffDataLoading::ReadGbgDF()
-gbgdf = ffDataLoading::BolsterGbgDF(gbgdf, resultdf)
+gbgdf = ffDataLoading::BolsterGbgDF(gbgdf, resultDF)
 # i think the chances are, we will not be wanting the players who are unidentified any time soon
 gbgdf = gbgdf %>%
         filter(!is.na(player))
 
-summarydf = ffDataLoading::GetSummaryDF(gbgdf)
+summaryDF = ffDataLoading::GetSummaryDF(gbgdf)
 playerDF = ffDataLoading:::ReadCurrentSeasonPlayerDF() %>%
               rename(player = whoscoredPlayer)
 

@@ -51,7 +51,7 @@ ReadGbgDF = function() {
   return(gbgdf)
 }
 
-BolsterGbgDF = function(gbgdf, resultdf) {
+BolsterGbgDF = function(gbgdf, resultDF) {
   gbgdf$played = with(gbgdf, !grepl('[^0-9]', startTime))
   gbgdf$minute = 0
   gbgdf$minute[gbgdf$played] = with(gbgdf, as.numeric(endTime[played]) - as.numeric(startTime[played]))
@@ -125,17 +125,17 @@ BolsterGbgDF = function(gbgdf, resultdf) {
 			group_by(season, teamgamenumber, team) %>%
 			summarise(shotont = sum(ont))
 
-	resultdf = left_join(resultdf,
+	resultDF = left_join(resultDF,
 							shotinfo %>%
 							dplyr::rename(oppteam = team,
 											shotontconceded = shotont),
 							by = c('season', 'teamgamenumber', 'oppteam'))
 
-	resultdf = resultdf %>%
+	resultDF = resultDF %>%
 					mutate(gksave = shotontconceded - conceded)
 
 	gbgdf = left_join(gbgdf,
-						resultdf %>%
+						resultDF %>%
 						select(date, daynum, team, oddsescored, oppteam, conceded, oddseconceded, gksave) %>%
 						dplyr::rename(teamconceded = conceded,
 										teamoddsescored = oddsescored,
@@ -153,7 +153,7 @@ BolsterGbgDF = function(gbgdf, resultdf) {
 }
 
 GetSummaryDF = function(gbgdf, beforeseason=F) {
-	summarydf = gbgdf %>%
+	summaryDF = gbgdf %>%
 				group_by(season, team, player) %>%
 				summarise(minute = sum(minute),
 							goal = sum(goal),
@@ -177,14 +177,14 @@ GetSummaryDF = function(gbgdf, beforeseason=F) {
 		### won't have any of the current squad, so need to tack that on
 		currentsquad = getcurrentsquad()
 		currentsquad$season=currentseason
-		missingcol = setdiff(names(summarydf),names(currentsquad))
+		missingcol = setdiff(names(summaryDF),names(currentsquad))
 		currentsquad[,missingcol]=NA
-		currentsquad = currentsquad[,names(summarydf)]
+		currentsquad = currentsquad[,names(summaryDF)]
 		currentsquad = as_tibble(currentsquad)
-		summarydf = bind_rows(summarydf, currentsquad)
+		summaryDF = bind_rows(summaryDF, currentsquad)
 	}
 	if (!beforeseason) {
-		print('probably a good idea to indicate which players have left in summarydf')
+		print('probably a good idea to indicate which players have left in summaryDF')
 	}
-	return(summarydf)
+	return(summaryDF)
 }

@@ -6,13 +6,13 @@ minuteInGame = 94
 playerGameDF = gbgdf %>%
 							filter(played)
 
-dum = makeseasondeservedsummary(summarydf, playerGameDF)
+dum = makeseasondeservedsummary(summaryDF, playerGameDF)
 seasondeservedsummary=dum$seasondeservedsummary
 playerGameDF=dum$gbgdf
 
 ### really annoying having those NAs for the missing ones, let's just put in average by team for those
 ### will replace with proper glm values later
-meanegoalbyteam = resultdf %>%
+meanegoalbyteam = resultDF %>%
 					group_by(season,team) %>%
 					summarise(meanegoal = mean(oddsescored,na.rm=T))
 sax=which(is.na(playerGameDF$teamoddsescored))

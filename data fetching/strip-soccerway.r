@@ -1,27 +1,27 @@
 source(paste0(USERPATH, 'data fetching/soccerway-funct.r'))
 
-resultdf = ffDataLoading:::GetResultDF()
+resultDF = ffDataLoading:::GetResultDF()
 
-dateToDo = FindDateToDo(resultdf)
+dateToDo = FindDateToDo(resultDF)
 # which one have we not yet got?
 
 message('If you are starting a new season, PLEASE make sure you add any necessary team name adjustments to team_abbn.dat')
 
 for (di in 1:length(dateToDo)) {
-	appearanceDF = getappearanceinfofordate(dateToDo[di], resultdf)
+	appearanceDF = getappearanceinfofordate(dateToDo[di], resultDF)
 	appearanceFileOut = paste0(DATAPATH, 'soccerway_saved/appearance-info-', dateToDo[di],'.csv')
 	write.csv(x = appearanceDF, file = appearanceFileOut, row.names = FALSE)
 }
 
 ### now loop through and make it a little friendlier to use
 
-undate = unique(resultdf$date)
+undate = unique(resultDF$date)
 startTimeRanking = c(as.character(0:94), 'U', 'injury', 'suspension')
 myList = NULL
 for (di in 1:length(undate)) {
 	appearanceFileOut = paste0(DATAPATH, 'soccerway_saved/appearance-info-', undate[di],'.csv')
 	myList[[di]] = read.csv(appearanceFileOut, as.is = TRUE)
-	myResultDF = resultdf %>%
+	myResultDF = resultDF %>%
 					filter(date == undate[di] & isHome) %>%
 					mutate(key = paste(date, team, sep = ''))
 	myList[[di]] = lazy_left_join(myList[[di]], myResultDF, 'key', c('date', 'team', 'oppteam')) %>%

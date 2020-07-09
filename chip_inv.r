@@ -14,12 +14,12 @@ playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 # this is a bit dangerous: it'll overwrite manual changes, which would be very annoying - need to think about how we do that
 # ffModel:::UpdateManualActiveSpreadsheet(gbgdf, playerDF, seasoninfo, resultdf)
 
-playerDF = ffModel::ReadManualEMinFile(playerDF, resultdf)
+playerDF = ffModel::ReadManualEMinFile(playerDF, resultDF)
 
-fixtdf = getfixturegoal(resultdf, fixtdf)
+fixtDF = getfixturegoal(resultDF, fixtDF)
 
 # who's got a kind and tricky schedule to come:
-fixtdf %>%
+fixtDF %>%
   filter(gameweek <= min(gameweek) + 9) %>%
   group_by(team) %>%
   summarise(sumEScored = sum(gwweight * escored),
@@ -27,16 +27,16 @@ fixtdf %>%
   arrange(desc(sumEScored - sumEConceded))
 
 gbgdf = processdeserved(gbgdf)
-summarydf=processdeserved(summarydf)
+summaryDF=processdeserved(summaryDF)
 
-playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summarydf, resultDF)
+playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summaryDF, resultDF)
 
 # might want to do this:
 # source(paste0(USERPATH, 'data fetching/strip_ffprice.r')); StripFFPrice()
 playerDF = ffDataJoining:::MatchFFPlayerData(playerDF)
 
-playerfixtdf = getplayerfixture(fixtdf, playerDF, gbgdf)
-playerfixtdf = getfixtureexpectedpoint(playerfixtdf)
+playerfixtDF = getplayerfixture(fixtDF, playerDF, gbgdf)
+playerfixtDF = getfixtureexpectedpoint(playerfixtDF)
 source('knapsack_funct.r')
 
 currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
@@ -48,17 +48,17 @@ currentmoney = 97.7
 GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInclusionExclusion, forcedInclusionExclusion) {
 	
 	# step 1, calculate expected points in the weeks prior to the wild card
-	nextGW = min(fixtdf$gameweek)
+	nextGW = min(fixtDF$gameweek)
 	if (WCWeek == nextGW | WCWeek > 38) {
 		preWCNotFHTotalPoint = 0
 	}
 	if (WCWeek > nextGW & WCWeek <= 38) {
 		preWCNotFHWeek = setdiff(nextGW:(WCWeek - 1), FHWeek)
-		subPlayerFixtDF = playerfixtdf %>%
+		subplayerfixtDF = playerfixtDF %>%
 		  filter(gameweek %in% preWCNotFHWeek) %>%
 		  mutate(gwweight = 1)
 
-		dum = calculateexpectedpoint(subPlayerFixtDF, currentteam, BBWeek, warnAboutMissingPlayer = FALSE)
+		dum = calculateexpectedpoint(subplayerfixtDF, currentteam, BBWeek, warnAboutMissingPlayer = FALSE)
 		preWCNotFHPlayerPointDF = dum$pointsummarydf
 		preWCNotFHTotalPoint = dum$totalexpectedpoint
 	}
@@ -68,14 +68,14 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 	}
 	if (FHWeek <=38) {
 	  # then the free hit
-	  subPlayerFixtDF = playerfixtdf %>%
+	  subplayerfixtDF = playerfixtDF %>%
 	    filter(gameweek == FHWeek) %>%
 	    mutate(gwweight = 1)
-	  subPlayerValue=getplayervalue(playerDF, subPlayerFixtDF)
+	  subPlayerValue=getplayervalue(playerDF, subplayerfixtDF)
 	  
 	  FHTeam = RunKnapsack(subPlayerValue, FHForcedInclusionExclusion, currentmoney)
 	  
-	  dum = calculateexpectedpoint(subPlayerFixtDF, FHTeam, warnAboutMissingPlayer = FALSE)
+	  dum = calculateexpectedpoint(subplayerfixtDF, FHTeam, warnAboutMissingPlayer = FALSE)
 	  FHPlayerPointDF = dum$pointsummarydf
 	  FHTotalPoint = dum$totalexpectedpoint
 	}
@@ -86,14 +86,14 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 	if (WCWeek <=38) {
   	postWCNotFHWeek = setdiff(WCWeek:38, FHWeek)
 	}
-	subPlayerFixtDF = playerfixtdf %>%
+	subplayerfixtDF = playerfixtDF %>%
 	  filter(gameweek %in% postWCNotFHWeek) %>%
 		mutate(gwweight = 1)
-	subPlayerValue=getplayervalue(playerDF, subPlayerFixtDF)
+	subPlayerValue=getplayervalue(playerDF, subplayerfixtDF)
 
 	postWCNotFHTeam = RunKnapsack(subPlayerValue, forcedInclusionExclusion, currentmoney)
 		
-	dum = calculateexpectedpoint(subPlayerFixtDF, postWCNotFHTeam, BBWeek, warnAboutMissingPlayer = FALSE)
+	dum = calculateexpectedpoint(subplayerfixtDF, postWCNotFHTeam, BBWeek, warnAboutMissingPlayer = FALSE)
 	postWCNotFHPlayerPointDF = dum$pointsummarydf
 	postWCNotFHTotalPoint = dum$totalexpectedpoint
 	
@@ -135,8 +135,8 @@ total points: 624.36624666163
 # try everything out in remainder of season:
 
 remainingCombo = expand_grid(WCWeek = 39, # already played it
-                             FHWeek = min(fixtdf$gameweek):38,
-                             BBWeek = min(fixtdf$gameweek):38) %>%
+                             FHWeek = min(fixtDF$gameweek):38,
+                             BBWeek = min(fixtDF$gameweek):38) %>%
   filter(FHWeek != BBWeek) %>%
   mutate(totalPoint = NA)
 

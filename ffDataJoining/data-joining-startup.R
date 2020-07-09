@@ -13,4 +13,4 @@ currentseason = 1920
 
 options(warn=2, dplyr.print_max = 1e9)
 
-seasoninfo = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
+seasonInfoDF = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))

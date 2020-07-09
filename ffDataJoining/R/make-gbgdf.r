@@ -1,12 +1,12 @@
-.MakeInitialGbgDF = function(myseason, seasoninfo) {
+.MakeInitialGbgDF = function(myseason, seasonInfoDF) {
   alldate = getalldate()
-  alldateseason = seasoninfo$season[cut(alldate, c(seasoninfo$start, tail(seasoninfo$end, 1)), label = FALSE) + 1]
+  alldateseason = seasonInfoDF$season[cut(alldate, c(seasonInfoDF$start, tail(seasonInfoDF$end, 1)), label = FALSE) + 1]
 
   myalldate = alldate[alldateseason == myseason]
 
-  resultdf = ffDataLoading:::GetResultDF()
+  resultDF = ffDataLoading:::GetResultDF()
 
-  myresultdf = resultdf %>% filter(season == myseason)
+  myResultDF = resultDF %>% filter(season == myseason)
 
 	### scan them all in
 	tempbigdf=NULL
@@ -22,10 +22,10 @@
 	for (ti in 1:length(teamlist)) {
 		sax=which(combineddata$team==teamlist[ti])
 		currentteamfiledate=unique(combineddata$filedate[sax])
-		currentteamresultdate=with(myresultdf,sort(date[team==teamlist[ti]]))
+		currentteamresultdate=with(myResultDF,sort(date[team==teamlist[ti]]))
 
 		if (length(currentteamfiledate) != length(currentteamresultdate)) {
-			message('For ', teamlist[ti],', I have ', length(currentteamresultdate), ' matches in resultdf but ', length(currentteamfiledate), ' matches in the whoscored data')
+			message('For ', teamlist[ti],', I have ', length(currentteamresultdate), ' matches in resultDF but ', length(currentteamfiledate), ' matches in the whoscored data')
 			message('Cannot match date to matches, check what is happening in makegbgdf, in player_funct.r')
 			stop()
 		}
@@ -41,7 +41,7 @@
 	gbgdf = combineddata %>%
             select(-filedate) %>%
             rename(date = matchdate) %>%
-            lazy_left_join(resultdf, c('date', 'team'), 'teamgamenumber')
+            lazy_left_join(resultDF, c('date', 'team'), 'teamgamenumber')
 
 	# now fix broken names
 	gbgdf = ffDataJoining:::.FixWhoscoredPlayerName(gbgdf)
@@ -154,17 +154,17 @@
 }
 
 .ArchivePreviousSeason = function(currentseason) {
-  seasoninfo = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
-  seasoninfo$toarchive = with(seasoninfo, season != currentseason & havegbg)
+  seasonInfoDF = read.csv(paste(DATAPATH,'seasonInfoDF.csv',sep=''))
+  seasonInfoDF$toarchive = with(seasonInfoDF, season != currentseason & havegbg)
 
-  for (si in which(seasoninfo$toarchive)) {
-    ffDataJoining:::CombineWhoscoredGameByGameDataForSeason(seasoninfo$season[si])
-    message('Have archived all game by game data for ', seasoninfo$season[si])
+  for (si in which(seasonInfoDF$toarchive)) {
+    ffDataJoining:::CombineWhoscoredGameByGameDataForSeason(seasonInfoDF$season[si])
+    message('Have archived all game by game data for ', seasonInfoDF$season[si])
   }
 }
 
 CombineWhoscoredGameByGameDataForSeason = function(myseason) {
-  initialgbgdf = ffDataJoining:::.MakeInitialGbgDF(myseason, seasoninfo)
+  initialgbgdf = ffDataJoining:::.MakeInitialGbgDF(myseason, seasonInfoDF)
   gbgdf = ffDataJoining:::.RemoveObviousLeavingPlayer(initialgbgdf)$gbgdf
   # don't think we need playerteamdf there, but can always change if it turns out we do
 
@@ -173,9 +173,9 @@ CombineWhoscoredGameByGameDataForSeason = function(myseason) {
 }
 
 LoadGbgWithoutAppearanceDF = function() {
-  gbgdflist = vector('list', nrow(seasoninfo))
-  for (si in which(seasoninfo$havegbg)) {
-    filein = paste0(DATAPATH, 'gamebygame/gamebygame', seasoninfo$season[si], '.csv')
+  gbgdflist = vector('list', nrow(seasonInfoDF))
+  for (si in which(seasonInfoDF$havegbg)) {
+    filein = paste0(DATAPATH, 'gamebygame/gamebygame', seasonInfoDF$season[si], '.csv')
     gbgdflist[[si]] = readr::read_csv(filein, col_types = list(
                                                   team = readr::col_character(),
                                                   whoscoredplayer = readr::col_character(),
@@ -201,7 +201,7 @@ LoadGbgWithoutAppearanceDF = function() {
                                                   season = readr::col_integer(),
                                                   teamgamenumber = readr::col_integer()
                                                 ))
-    gbgdflist[[si]]$season = seasoninfo$season[si]
+    gbgdflist[[si]]$season = seasonInfoDF$season[si]
   }
   gbgdf = bind_rows(gbgdflist)
 
@@ -209,8 +209,8 @@ LoadGbgWithoutAppearanceDF = function() {
 }
 
 MakeCurrentPlayerFile = function(currentseason) {
-  seasoninfo = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
-  initialgbgdf = ffDataJoining:::.MakeInitialGbgDF(currentseason, seasoninfo)
+  seasonInfoDF = read.csv(paste(DATAPATH,'seasonInfoDF.csv',sep=''))
+  initialgbgdf = ffDataJoining:::.MakeInitialGbgDF(currentseason, seasonInfoDF)
   dum = ffDataJoining:::.RemoveObviousLeavingPlayer(initialgbgdf)
   gbgdf = dum$gbgdf
   playerteamdf = dum$playerteamdf

@@ -4,19 +4,19 @@ LoadSoccerwayData = function() {
 	fileIn = paste0(DATAPATH, 'soccerway_saved/appearance.csv')
 	appearanceDF = read.csv(fileIn, as.is = TRUE)
 
-	resultdf = ffDataLoading:::GetResultDF()
+	resultDF = ffDataLoading:::GetResultDF()
 	## for some reason i don't know right now, soccerway code need seasonNumber, not season, let's make that
-	seasondf = resultdf %>%
+	seasondf = resultDF %>%
 	            distinct(season) %>%
 	            arrange(season) %>%
 	            mutate(seasonNumber = 1:n())
-	resultdf = left_join(resultdf, seasondf, 'season')
+	resultDF = left_join(resultDF, seasondf, 'season')
 
 	appearanceDF = lazy_left_join(appearanceDF,
-									resultdf,
+									resultDF,
 									c('date', 'team'),
 									c('season', 'seasonNumber', 'teamgamenumber'))
-	appearanceDF = ffDataJoining:::.FillMissingAppearanceDF(appearanceDF, resultdf)
+	appearanceDF = ffDataJoining:::.FillMissingAppearanceDF(appearanceDF, resultDF)
 	appearanceDF = lazy_left_join(appearanceDF, seasondf, 'seasonNumber', 'season')
 
 	return(appearanceDF)
@@ -43,12 +43,12 @@ LoadSoccerwayData = function() {
 	return(myMissingDF)
 }
 
-.FillMissingAppearanceDF = function(appearanceDF, resultdf) {
+.FillMissingAppearanceDF = function(appearanceDF, resultDF) {
 	missingDF = appearanceDF %>%
 				group_by(seasonNumber, team, player) %>%
 				do(ffDataJoining:::.FindMissingGameDF(.$seasonNumber, .$team, .$player, .$playerid, .$teamgamenumber))
 	# but now we need to join it to appearanceDF with its extra columns
-	missingDF = lazy_left_join(missingDF, resultdf, c('seasonNumber', 'teamgamenumber', 'team'), 'date')
+	missingDF = lazy_left_join(missingDF, resultDF, c('seasonNumber', 'teamgamenumber', 'team'), 'date')
 	missingDF$endTime = NA
 	appearanceDF = bind_rows(appearanceDF, missingDF) %>%
 					arrange(seasonNumber, team, player, teamgamenumber)

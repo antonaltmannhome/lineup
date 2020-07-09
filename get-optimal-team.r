@@ -4,22 +4,22 @@
 source('knapsack_funct.r')
 
 if (FALSE) {
-	playerfixtdf = getfixtureexpectedpoint(fixtdf, playerdf, summarydf, gbgdf)
-	mdum = match(with(playerfixtdf,paste(team,player)), with(summarydf,paste(team,player)))
-	playerfixtdf$price = summarydf$price[mdum]
+	playerFixtDF = getfixtureexpectedpoint(fixtDF, playerdf, summaryDF, gbgdf)
+	mdum = match(with(playerFixtDF,paste(team,player)), with(summaryDF,paste(team,player)))
+	playerFixtDF$price = summaryDF$price[mdum]
 	### filter out players who have no active position or are goalies
-	playerfixtdf = playerfixtdf %>%
+	playerFixtDF = playerFixtDF %>%
 				filter(!is.na(expectedpoint))
 }
 ### ok, let's try doing defenders and midfielders together
 
 idealteam = RunKnapsack(playerDF, forcedInclusionExclusion, currentmoney)
 
-currentteamgameweekexpectedpoint = getcurrentexpectedpoint(playerfixtdf, currentteam)
-idealteamgameweekexpectedpoint = getcurrentexpectedpoint(playerfixtdf, idealteam)
+currentteamgameweekexpectedpoint = getcurrentexpectedpoint(playerFixtDF, currentteam)
+idealteamgameweekexpectedpoint = getcurrentexpectedpoint(playerFixtDF, idealteam)
 
-currentteamfullinfo = calculateexpectedpoint(playerfixtdf, currentteam)
-idealteamfullinfo = calculateexpectedpoint(playerfixtdf, idealteam)
+currentteamfullinfo = calculateexpectedpoint(playerFixtDF, currentteam)
+idealteamfullinfo = calculateexpectedpoint(playerFixtDF, idealteam)
 
 if (FALSE) {
 ### then calculate the info for the rival teams as well
@@ -37,8 +37,8 @@ for (j in 1:length(rivalteamname)) {
 		print(myrivalteam[sax,])
 		stop('Cannot find these players in playervalue, please correct:\n')
 	}
-	rivalteaminfo[[j]] = calculateexpectedpoint(playerfixtdf, myrivalteam)
-	myrivalteamgameweekexpectedpoint = getcurrentexpectedpoint(playerfixtdf, myrivalteam)
+	rivalteaminfo[[j]] = calculateexpectedpoint(playerFixtDF, myrivalteam)
+	myrivalteamgameweekexpectedpoint = getcurrentexpectedpoint(playerFixtDF, myrivalteam)
 	rivalteaminfo[[j]]$pointsummarydf = addextrainfo(rivalteaminfo[[j]]$pointsummarydf,
 										myrivalteamgameweekexpectedpoint,
 										playervalue)

@@ -1,13 +1,13 @@
 
-getteamstrength = function(resultdf, fixtdf) {
+getteamstrength = function(resultDF, fixtDF) {
 
 	### want to include all relevant odds, to actually need odds for games that haven't happened yet
 	### ie the first week of fixtdf
 
-	teamoddsdf = bind_rows(resultdf %>%
+	teamoddsdf = bind_rows(resultDF %>%
 								filter(isHome) %>%
 								select(date, team, oppteam, oddsescored, oddseconceded),
-							fixtdf %>%
+							fixtDF %>%
 								filter(isHome) %>%
 								select(date, team, oppteam, oddsescored, oddseconceded))
 
@@ -50,24 +50,24 @@ getteamstrength = function(resultdf, fixtdf) {
 	return(list(teamability = teamability, homeeffect = homeeffect))
 }
 
-getfixturegoal=function(resultdf, fixtdf) {
+getfixturegoal=function(resultDF, fixtDF) {
 	### so get list of upcoming fixtures and current team abilities according to spreadex, then get expected goals scored and conceded by each team
 
-	dum = getteamstrength(resultdf, fixtdf)
+	dum = getteamstrength(resultDF, fixtDF)
 	teamability = dum$teamability
 	homeeffect = dum$homeeffect
 
 	### now get expected goals for and against for each match
-	fixtdf$offtheta=with(teamability,offtheta[match(fixtdf$team,team)])
-	fixtdf$oppofftheta=with(teamability,offtheta[match(fixtdf$oppteam,team)])
-	fixtdf$deftheta=with(teamability,deftheta[match(fixtdf$team,team)])
-	fixtdf$oppdeftheta=with(teamability,deftheta[match(fixtdf$oppteam,team)])
-	fixtdf$homeeffect = with(fixtdf, ifelse(isHome, homeeffect, 0))
+	fixtDF$offtheta=with(teamability,offtheta[match(fixtDF$team,team)])
+	fixtDF$oppofftheta=with(teamability,offtheta[match(fixtDF$oppteam,team)])
+	fixtDF$deftheta=with(teamability,deftheta[match(fixtDF$team,team)])
+	fixtDF$oppdeftheta=with(teamability,deftheta[match(fixtDF$oppteam,team)])
+	fixtDF$homeeffect = with(fixtDF, ifelse(isHome, homeeffect, 0))
 
-	fixtdf$escored=with(fixtdf,exp(offtheta+oppdeftheta+homeeffect))
-	fixtdf$econceded=with(fixtdf,exp(oppofftheta+deftheta))
+	fixtDF$escored=with(fixtDF,exp(offtheta+oppdeftheta+homeeffect))
+	fixtDF$econceded=with(fixtDF,exp(oppofftheta+deftheta))
 
-	fixtdf = within(fixtdf, rm(offtheta, oppofftheta, deftheta, oppdeftheta, homeeffect))
+	fixtDF = within(fixtDF, rm(offtheta, oppofftheta, deftheta, oppdeftheta, homeeffect))
 
-	return(fixtdf)
+	return(fixtDF)
 }

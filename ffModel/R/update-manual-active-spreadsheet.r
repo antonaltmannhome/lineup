@@ -1,14 +1,14 @@
-UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) {
+UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasonInfoDF, resultDF) {
   
   lookBack = 5
   
-  seasoninfo = left_join(seasoninfo, gbgdf %>% distinct(season, seasonNumber), 'season')
-  resultdf = lazy_left_join(resultdf, seasoninfo, 'season', 'seasonNumber')
-  allCurrentTeam = resultdf %>% filter(season == currentseason) %>% distinct(team)
-  currentSeasonNumber = with(seasoninfo, seasonNumber[which(season == currentseason)])
-  allTimeTeamNumGame = resultdf %>%
+  seasonInfoDF = left_join(seasonInfoDF, gbgdf %>% distinct(season, seasonNumber), 'season')
+  resultDF = lazy_left_join(resultDF, seasonInfoDF, 'season', 'seasonNumber')
+  allCurrentTeam = resultDF %>% filter(season == currentseason) %>% distinct(team)
+  currentSeasonNumber = with(seasonInfoDF, seasonNumber[which(season == currentseason)])
+  allTimeTeamNumGame = resultDF %>%
     semi_join(allCurrentTeam, 'team') %>%
-    lazy_left_join(seasoninfo, 'season', 'seasonNumber') %>%
+    lazy_left_join(seasonInfoDF, 'season', 'seasonNumber') %>%
     filter(seasonNumber >= currentSeasonNumber - 1) %>%
     group_by(team) %>%
     arrange(date) %>%
@@ -20,7 +20,7 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
     summarise(maxTeamNumGame = max(allTimeTeamGameNumber))
   
   subgbgdf = gbgdf %>%
-    lazy_left_join(seasoninfo, 'season', 'seasonNumber') %>%
+    lazy_left_join(seasonInfoDF, 'season', 'seasonNumber') %>%
     filter(seasonNumber >= currentSeasonNumber - 1) %>%
     semi_join(allCurrentTeam, 'team') %>%
     lazy_left_join(allTimeTeamNumGame, c('date', 'team'), 'allTimeTeamGameNumber') %>%
@@ -89,7 +89,7 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
   
   ## let's store by season and gameweek number. think it's quite rare you'd want to update not at the end of a gameweek
   
-  currentGameweek = with(resultdf, max(gameweek[season == currentseason]))
+  currentGameweek = with(resultDF, max(gameweek[season == currentseason]))
   activeFile = paste0(DATAPATH, 'active_player/active-player-', currentseason, '-', currentGameweek, '.csv')
   previousActiveFile = paste0(DATAPATH, 'active_player/active-player-', currentseason, '-', currentGameweek - 1, '.csv')
   # let's insert the previous week's manual values
@@ -151,8 +151,8 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasoninfo, resultdf) 
   message('Have created file ', activeFile)
 }
 
-ReadManualEMinFile = function(playerDF, resultdf) {
-  currentGameweek = with(resultdf, max(gameweek[season == currentseason]))
+ReadManualEMinFile = function(playerDF, resultDF) {
+  currentGameweek = with(resultDF, max(gameweek[season == currentseason]))
   activeFile = paste0(DATAPATH, 'active_player/active-player-', currentseason, '-', currentGameweek, '.csv')
 
   activePlayerDF = read_csv(activeFile,

@@ -62,13 +62,13 @@ modelexpectedsave = function(gbgdf) {
 	return(coef(mod))
 }
 
-getplayerfixture=function(fixtdf, playerDF, gbgdf) {
+getplayerfixture=function(fixtDF, playerDF, gbgdf) {
 	### want a data frame of future player/fixture combos, along with expected points in each match and the weight
 
 	### now merge in the players data
 
-  playerfixtdf=inner_join(playerDF,
-                          fixtdf %>%
+  playerFixtDF=inner_join(playerDF,
+                          fixtDF %>%
                             select(date, team, oppteam, isHome,
                                    teamgamenumber, gameweek, gwweight,
                                    escored, econceded), by = 'team') %>%
@@ -78,24 +78,24 @@ getplayerfixture=function(fixtdf, playerDF, gbgdf) {
 	
 	
 	### now calculate expected goals and assists
-	playerfixtdf = playerfixtdf %>%
+	playerFixtDF = playerFixtDF %>%
 					arrange(team,player,gameweek, date) %>%
 					mutate(egoal = chnormgoalrate * eteamscored,
 							eassist = chnormassistrate * eteamscored)
 
 	### then we need the goalkeeper predictions
 	gksavecoef = modelexpectedsave(gbgdf)
-	playerfixtdf = playerfixtdf %>%
+	playerFixtDF = playerFixtDF %>%
 					mutate(egksave = if_else(mainpos == 'GK',
 											exp(gksavecoef[[1]] + gksavecoef[[2]] * eteamconceded),
 											0))
 
-	return(playerfixtdf)
+	return(playerFixtDF)
 }
 
-getfixtureexpectedpoint=function(playerfixtdf) {
+getfixtureexpectedpoint=function(playerFixtDF) {
 
-	playerfixtdf = playerfixtdf %>%
+	playerFixtDF = playerFixtDF %>%
 			mutate(
 			appearancepoint = 2,
 			goalpoint = case_when(
@@ -119,13 +119,13 @@ getfixtureexpectedpoint=function(playerfixtdf) {
 			expectedpoint = eMin/94 * expectedpoint90min) %>%
 			select(-c(goalpoint, assistpoint, goalconcededpoint, cleansheetpoint, savepoint))
 
-	return(playerfixtdf)
+	return(playerFixtDF)
 }
 
-getlongtermplayerpoint=function(playerfixtdf) {
+getlongtermplayerpoint=function(playerFixtDF) {
 
 	## make a player by player summary
-	playersummary=playerfixtdf %>%
+	playersummary=playerFixtDF %>%
 					group_by(team, player, ffPosition) %>%
 					summarise(epoint=sum(expectedpoint * gwweight)) %>%
 					ungroup()
@@ -133,10 +133,10 @@ getlongtermplayerpoint=function(playerfixtdf) {
 	return(playersummary)
 }
 
-getplayervalue=function(playerDF, playerfixtdf) {
+getplayervalue=function(playerDF, playerFixtDF) {
 	### firstly get expected points scord by each active player
 	playerDF = left_join(playerDF,
-												playerfixtdf %>%
+												playerFixtDF %>%
 													group_by(team, player) %>%
 													summarise(epoint = sum(expectedpoint * gwweight)) %>%
 													ungroup(),
@@ -166,8 +166,8 @@ getcurrentplayervalue=function(playervalue) {
 	return(currentteam)
 }
 
-getcurrentexpectedpoint=function(playerfixtdf, mysquad) {
-	currentplayerfixtepoint = playerfixtdf %>%
+getcurrentexpectedpoint=function(playerFixtDF, mysquad) {
+	currentplayerfixtepoint = playerFixtDF %>%
 							filter(!is.na(player)) %>%
 							filter(gameweek == min(gameweek)) %>%
 							filter(paste(team, player) %in% with(mysquad, paste(team, player))) %>%
@@ -187,36 +187,36 @@ getcurrentexpectedpoint=function(playerfixtdf, mysquad) {
 	return(currentsquadepoint)
 }
 
-makeseasondeservedsummary = function(summarydf, gbgdf) {
+makeseasondeservedsummary = function(summaryDF, gbgdf) {
 	### check that processdeserved has been done
-	if (!'deservedgoal' %in% names(summarydf)) stop('need to run processdeserved')
+	if (!'deservedgoal' %in% names(summaryDF)) stop('need to run processdeserved')
 	seasonplayersummary=NULL
 	seasonteamsummary=NULL
-	for (si in 1:nrow(seasoninfo)) {
-		if (!seasoninfo$havegbg[si]) {
+	for (si in 1:nrow(seasonInfoDF)) {
+		if (!seasonInfoDF$havegbg[si]) {
 			### need to load summary
-			tempsummary = read.csv(paste(DATAPATH,seasoninfo$season[si],'/model.csv',sep=''),as.is=T)
+			tempsummary = read.csv(paste(DATAPATH,seasonInfoDF$season[si],'/model.csv',sep=''),as.is=T)
 			### only want the necessary columns
 			tempdeservedsummary = tempsummary %>% select(team, player, minute, deservedgoal ,deservedassist)
-			tempdeservedsummary$season=seasoninfo$season[si]
+			tempdeservedsummary$season=seasonInfoDF$season[si]
 			# but also want total goals by the team
 			tempteamsummary = tempsummary %>%
 								group_by(team) %>%
 								summarise(goal = sum(goal))
 		}
-		if (seasoninfo$havegbg[si]) {
-			tempdeservedsummary = summarydf %>%
-							filter(season == seasoninfo$season[si]) %>%
+		if (seasonInfoDF$havegbg[si]) {
+			tempdeservedsummary = summaryDF %>%
+							filter(season == seasonInfoDF$season[si]) %>%
 							select(season, team, player, minute, deservedgoal ,deservedassist)
-			tempteamsummary = summarydf %>%
-								filter(season == seasoninfo$season[si]) %>%
+			tempteamsummary = summaryDF %>%
+								filter(season == seasonInfoDF$season[si]) %>%
 								group_by(team) %>%
 								summarise(goal = sum(goal))
 			# but we also want to acquire the info for the promoted teams
-			if (seasoninfo$season[si] != currentseason) {
-				promotedtempsummary = read.csv(paste(DATAPATH,seasoninfo$season[si],'/model.csv',sep=''),as.is=T)
+			if (seasonInfoDF$season[si] != currentseason) {
+				promotedtempsummary = read.csv(paste(DATAPATH,seasonInfoDF$season[si],'/model.csv',sep=''),as.is=T)
 				promoteddeservedsummary = promotedtempsummary %>%
-										mutate(season = seasoninfo$season[si]) %>%
+										mutate(season = seasonInfoDF$season[si]) %>%
 										select(season, team, player, minute, deservedgoal ,deservedassist)
 				promotedteamsummary = promotedtempsummary %>%
 										group_by(team) %>%
@@ -227,7 +227,7 @@ makeseasondeservedsummary = function(summarydf, gbgdf) {
 			}
 		}
 		seasonplayersummary[[si]]=tempdeservedsummary
-		tempteamsummary$season=seasoninfo$season[si]
+		tempteamsummary$season=seasonInfoDF$season[si]
 		seasonteamsummary[[si]] = tempteamsummary
 	}
 	seasondeservedsummary = as_tibble(bind_rows(seasonplayersummary))
@@ -237,8 +237,8 @@ makeseasondeservedsummary = function(summarydf, gbgdf) {
 										by = c('team', 'season'))
 
 	# but then we want that joined to gbgdf in almost any situation i would have thought
-	seasoninfo$previousseason = c(NA,seasoninfo$season[1:(nrow(seasoninfo)-1)])
-	gbgdf$previousseason = seasoninfo$previousseason[match(gbgdf$season, seasoninfo$season)]
+	seasonInfoDF$previousseason = c(NA,seasonInfoDF$season[1:(nrow(seasonInfoDF)-1)])
+	gbgdf$previousseason = seasonInfoDF$previousseason[match(gbgdf$season, seasonInfoDF$season)]
 	# NB this only uses one previous season, a bit crap but it'll do for now
 	gbgdftoseasondeservedsummarymap = match(
 									with(gbgdf, paste(previousseason, player)),

@@ -2,17 +2,17 @@
 
 ## firstly scan in what's already been done (at start of season, this won't exist so you have to make it)
 
-resultdf = ffDataLoading:::GetResultDF()
-fixtdf = ffDataLoading:::GetFixtDF(resultdf)
+resultDF = ffDataLoading:::GetResultDF()
+fixtDF = ffDataLoading:::GetFixtDF(resultDF)
 spreadexfile = paste0(DATAPATH, 'spreadex_',currentseason,'.csv')
 
 if (FALSE) {
-horizResultDF = resultdf %>%
+horizResultDF = resultDF %>%
 				filter(season==1819 & gameweek<=2 & isHome) %>%
 				select(date, team, oppteam) %>%
 				dplyr::rename(ht = team, at = oppteam)
 
-horizFixtDF = fixtdf %>%
+horizFixtDF = fixtDF %>%
 				filter(isHome) %>%
 				select(date, team, oppteam) %>%
 				dplyr::rename(ht = team, at = oppteam)
@@ -23,7 +23,7 @@ horizFixtDF = bind_rows(horizResultDF, horizFixtDF) %>%
 write.csv(file = spreadexfile, horizFixtDF, row.names = FALSE)
 
 write.csv(file = 'd:/whoscored_data/spreadex_1617.csv',
-			resultdf %>%
+			resultDF %>%
 				filter(season==1617 & isHome) %>%
 				select(date, team, oppteam, oddsescored, oddseconceded) %>%
 				dplyr::rename(ht = team, at = oppteam) %>%
@@ -33,7 +33,7 @@ write.csv(file = 'd:/whoscored_data/spreadex_1617.csv',
 			row.names = FALSE)
 
 write.csv(file = 'd:/whoscored_data/spreadex_1718.csv',
-			resultdf %>%
+			resultDF %>%
 				filter(season==1718 & isHome) %>%
 				select(date, team, oppteam, oddsescored, oddseconceded) %>%
 				dplyr::rename(ht = team, at = oppteam) %>%
@@ -46,12 +46,12 @@ write.csv(file = 'd:/whoscored_data/spreadex_1718.csv',
 existingodds = read.csv(spreadexfile, as.is = TRUE)
 # fixtures might have changed since it was made, so join in new stuff
 
-horizResultDF = resultdf %>%
+horizResultDF = resultDF %>%
 				filter(season== currentseason & isHome) %>%
 				select(date, team, oppteam) %>%
 				dplyr::rename(ht = team, at = oppteam)
 
-horizFixtDF = fixtdf %>%
+horizFixtDF = fixtDF %>%
 				filter(isHome) %>%
 				select(date, team, oppteam) %>%
 				dplyr::rename(ht = team, at = oppteam)

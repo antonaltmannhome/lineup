@@ -62,8 +62,8 @@ if (!haveJustFinishedSeason) {
 	fixtdate=alldate[findInterval(qvgrep,allgrep)]
 
 	### now bind em together and write em out
-	fixtdf=data.frame(date=fixtdate, ht=fixtht, at=fixtat)
-	write.csv(file=paste(DATAPATH,'fixture_result/fixture',currentseason,'.csv',sep=''),fixtdf,row.names=F)
+	fixtDF=data.frame(date=fixtdate, ht=fixtht, at=fixtat)
+	write.csv(file=paste(DATAPATH,'fixture_result/fixture',currentseason,'.csv',sep=''),fixtDF,row.names=F)
 }
 ### next, get hold of results
 

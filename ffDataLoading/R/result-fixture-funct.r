@@ -1,10 +1,10 @@
 
 GetResultDF = function() {
 	resultlist = NULL
-	for (si in 1:nrow(seasoninfo)) {
-		if (seasoninfo$havegbg[si]) {
-			resultlist[[si]] = read.csv(paste(DATAPATH,'fixture_result/result',seasoninfo$season[si],'.csv',sep=''),as.is=TRUE)
-			resultlist[[si]]$season = seasoninfo$season[si]
+	for (si in 1:nrow(seasonInfoDF)) {
+		if (seasonInfoDF$havegbg[si]) {
+			resultlist[[si]] = read.csv(paste(DATAPATH,'fixture_result/result',seasonInfoDF$season[si],'.csv',sep=''),as.is=TRUE)
+			resultlist[[si]]$season = seasonInfoDF$season[si]
 		}
 	}
 	flatresultdf = bind_rows(resultlist)
@@ -16,21 +16,21 @@ GetResultDF = function() {
 	awayvertresult = flatresultdf %>%
 						dplyr::rename(team = at, scored = asc, oppteam = ht, conceded = hsc) %>%
 						mutate(isHome = FALSE)
-	resultdf = bind_rows(homevertresult, awayvertresult)
+	resultDF = bind_rows(homevertresult, awayvertresult)
 
-	resultdf = resultdf %>%
+	resultDF = resultDF %>%
 				arrange(date)
 
-	resultdf = resultdf %>%
+	resultDF = resultDF %>%
 				group_by(season, team) %>%
 				arrange(date) %>%
 				mutate(teamgamenumber = 1:n()) %>%
 				ungroup()
 
-	return(resultdf = resultdf)
+	return(resultDF = resultDF)
 }
 
-GetFixtDF = function(resultdf) {
+GetFixtDF = function(resultDF) {
 
 	### then get the fixtures
 	flatfixtdf=read.csv(paste(DATAPATH,'fixture_result/fixture',currentseason,'.csv',sep=''))
@@ -55,16 +55,16 @@ GetFixtDF = function(resultdf) {
 	awayvertfixt = flatfixtdf %>%
 						dplyr::rename(team = at, oppteam = ht) %>%
 						mutate(isHome = FALSE)
-	fixtdf = bind_rows(homevertfixt, awayvertfixt)
+	fixtDF = bind_rows(homevertfixt, awayvertfixt)
 
-	fixtdf = fixtdf %>%
+	fixtDF = fixtDF %>%
 				arrange(date)
 
 	# need team game number, because can have two games in a gameweek which is bloody irritating
-	totalTeamGameSoFar = resultdf %>%
+	totalTeamGameSoFar = resultDF %>%
 	  filter(season == currentseason) %>%
 	  count(team)
-	fixtdf = fixtdf %>%
+	fixtDF = fixtDF %>%
 	  left_join(totalTeamGameSoFar,
 	            'team') %>%
 	  group_by(team) %>%
@@ -73,7 +73,7 @@ GetFixtDF = function(resultdf) {
 	  select(-n) %>%
 	  ungroup()
 
-	return(fixtdf)
+	return(fixtDF)
 }
 
 CheckSpreadexUpToDate = function(fixtDF) {
@@ -131,11 +131,11 @@ AlignOddsWithResultsAndFixtures = function(resultDF, fixtDF) {
 AlignGameweekAndSeasonWithResultDF = function(resultDF) {
 	### then declare teh gameweek for each game
 	resultDF[,c('season','gameweek')] = NA
-	for (si in which(seasoninfo$havegbg)) {
-		gameweekdf=read.csv(paste(DATAPATH,'gameweek_deadline_',seasoninfo$season[si],'.csv',sep=''),as.is=T)
-		sax=with(resultdf, which(between(date, seasoninfo$start[si], seasoninfo$end[si])))
-		resultDF$season[sax]=seasoninfo$season[si]
-		resultDF$gameweek[sax]=gameweekdf$gameweek[findInterval(resultdf$date[sax],gameweekdf$deadline)]
+	for (si in which(seasonInfoDF$havegbg)) {
+		gameweekdf=read.csv(paste(DATAPATH,'gameweek_deadline_',seasonInfoDF$season[si],'.csv',sep=''),as.is=T)
+		sax=with(resultDF, which(between(date, seasonInfoDF$start[si], seasonInfoDF$end[si])))
+		resultDF$season[sax]=seasonInfoDF$season[si]
+		resultDF$gameweek[sax]=gameweekdf$gameweek[findInterval(resultDF$date[sax],gameweekdf$deadline)]
 	}
 
 	return(resultDF = resultDF)

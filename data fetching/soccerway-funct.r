@@ -1,6 +1,6 @@
 ### several massive functions that will be used when combining all the different data sources together, shove em all in here
 
-getwebaddressfordate = function(mydate, resultdf) {
+getwebaddressfordate = function(mydate, resultDF) {
 	myday = gsub('([0-9]{4})([0-9]{2})([0-9]{2})', '\\1/\\2/\\3', mydate)
 	coverpageaddress = paste0('http://uk.soccerway.com/matches/', myday)
 	message('To investigate soccerway web page for ', mydate, ', see ', coverpageaddress)
@@ -41,10 +41,10 @@ getwebaddressfordate = function(mydate, resultdf) {
 		stop('No matches on',mydate,'...\n')
 	}
 
-	# also, number of matches for this date HAS to agree with resultdf, so check that
-	numGameAccordingToResultDF = with(resultdf, sum(date == mydate & isHome))
+	# also, number of matches for this date HAS to agree with resultDF, so check that
+	numGameAccordingToResultDF = with(resultDF, sum(date == mydate & isHome))
 	if (numGameAccordingtoSoccerway != numGameAccordingToResultDF) {
-	  stop('Aaargh, resultdf says there are ', numGameAccordingToResultDF, ' games on ', mydate, ' but getwebaddressfordate says there are ', nrow(matchDF), '\n')
+	  stop('Aaargh, resultDF says there are ', numGameAccordingToResultDF, ' games on ', mydate, ' but getwebaddressfordate says there are ', nrow(matchDF), '\n')
 	}
 
 	cat('About to pick up',nrow(matchDF),'matches on',mydate,'\n')
@@ -58,9 +58,9 @@ getwebaddressfordate = function(mydate, resultdf) {
 	return(matchDF[,c('key', 'address')])
 }
 
-getappearanceinfofordate = function(mydate, resultdf) {
+getappearanceinfofordate = function(mydate, resultDF) {
 
-	addressinfo = getwebaddressfordate(mydate, resultdf)
+	addressinfo = getwebaddressfordate(mydate, resultDF)
 
 	myAppearanceList = list(NULL)
 	for (i in 1:nrow(addressinfo)) {
@@ -300,8 +300,8 @@ getappearanceinfo = function(webadd, mykey) {
 	return(appearanceDF)
 }
 
-FindDateToDo = function(resultdf) {
-	undate = unique(resultdf$date)
+FindDateToDo = function(resultDF) {
+	undate = unique(resultDF$date)
 
 	allFile = list.files(paste0(DATAPATH, 'soccerway_saved/'))
 	allFile = allFile[grep('appearance-info-[0-9]{8}.csv', allFile)]

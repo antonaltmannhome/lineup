@@ -35,19 +35,19 @@ CalculateDeservedGoalAssist = function(mydf) {
 	return(mydf)
 }
 
-CalculateSeasonDeservedGoalAssist = function(summarydf, gbgdf) {
+CalculateSeasonDeservedGoalAssist = function(summaryDF, gbgdf) {
 	### check that processdeserved has been done
-	if (!'deservedgoal' %in% names(summarydf)) stop('need to run processdeserved')
+	if (!'deservedgoal' %in% names(summaryDF)) stop('need to run processdeserved')
 
 	summary1516 = read.csv(paste(DATAPATH,'1516/model.csv',sep=''),as.is=T) %>%
 	              mutate(season = 1516)
 
-	dum = vector('list', nrow(seasoninfo))
-	for (si in 1:nrow(seasoninfo)) {
-	  if (seasoninfo$havegbg[si] & seasoninfo$season[si] != currentseason) {
-	    promotedtempsummary = read.csv(paste(DATAPATH,seasoninfo$season[si],'/model.csv',sep=''),as.is=T)
+	dum = vector('list', nrow(seasonInfoDF))
+	for (si in 1:nrow(seasonInfoDF)) {
+	  if (seasonInfoDF$havegbg[si] & seasonInfoDF$season[si] != currentseason) {
+	    promotedtempsummary = read.csv(paste(DATAPATH,seasonInfoDF$season[si],'/model.csv',sep=''),as.is=T)
 	    promoteddeservedsummary = promotedtempsummary %>%
-	      mutate(season = seasoninfo$season[si]) %>%
+	      mutate(season = seasonInfoDF$season[si]) %>%
 	      select(season, team, player, minute, deservedgoal ,deservedassist, goal, assist)
 
 	    dum[[si]] = promoteddeservedsummary
@@ -55,7 +55,7 @@ CalculateSeasonDeservedGoalAssist = function(summarydf, gbgdf) {
 	}
 	promotedTeamSummary = bind_rows(dum)
 
-	combinedSummaryDF = bind_rows(summary1516, summarydf, promotedTeamSummary)
+	combinedSummaryDF = bind_rows(summary1516, summaryDF, promotedTeamSummary)
 	seasonteamsummary = combinedSummaryDF %>%
 	  group_by(team, season) %>%
 	  summarise(teamgoal = sum(goal),
@@ -69,10 +69,10 @@ CalculateSeasonDeservedGoalAssist = function(summarydf, gbgdf) {
 	# but then we want that joined to gbgdf in almost any situation i would have thought
 	# and we want to line up previous season information
 	# which is a bit of a hssle to set up, remember a player can change teams mid season, so we need to find the info from the preceding season, so doing arrange(season) then lag won't work
-	seasoninfo = seasoninfo %>%
+	seasonInfoDF = seasonInfoDF %>%
 								arrange(season) %>%
 								mutate(previousseason = lag(season))
-	seasondeservedsummary = lazy_left_join(seasondeservedsummary, seasoninfo, 'season', 'previousseason')
+	seasondeservedsummary = lazy_left_join(seasondeservedsummary, seasonInfoDF, 'season', 'previousseason')
 	seasondeservedsummary$previousinfomap = with(seasondeservedsummary,
 															match(paste(previousseason, player), paste(season, player)))
 	seasondeservedsummary$previoustotalgame = with(seasondeservedsummary, minute[previousinfomap]/94)
@@ -94,7 +94,7 @@ ImputeMissingMatchOdds = function(playerGameDF, resultDF) {
 
 	### really annoying having those NAs for the missing ones, let's just put in average by team for those
 	### will replace with proper glm values later
-	meanegoalbyteam = resultdf %>%
+	meanegoalbyteam = resultDF %>%
 						group_by(season,team) %>%
 						summarise(meanegoal = mean(oddsescored,na.rm=T))
 	sax=which(is.na(playerGameDF$teamoddsescored))
@@ -278,14 +278,14 @@ OptimisePositionPlayerHistoricMix = function(playerGameDF) {
 }
 
 
-CalculateLatestGoalAssistRate = function(playerDF, gbgdf, summarydf, resultDF) {
+CalculateLatestGoalAssistRate = function(playerDF, gbgdf, summaryDF, resultDF) {
 	gbgdf = ffModel:::CalculateDeservedGoalAssist(gbgdf)
-	summarydf = ffModel::CalculateDeservedGoalAssist(summarydf)
+	summaryDF = ffModel::CalculateDeservedGoalAssist(summaryDF)
 
 	playerGameDF = gbgdf %>%
 								filter(played)
 
-	dum = ffModel:::CalculateSeasonDeservedGoalAssist(summarydf, playerGameDF)
+	dum = ffModel:::CalculateSeasonDeservedGoalAssist(summaryDF, playerGameDF)
 	seasondeservedsummary = dum$seasondeservedsummary
 	playerGameDF = dum$gbgdf
 

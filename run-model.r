@@ -9,14 +9,14 @@ playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 # gbgdf = ffModel::CalculateHistoricExpectedMinute(gbgdf)
 
 # this is a bit dangerous: it'll overwrite manual changes, which would be very annoying - need to think about how we do that
-# ffModel:::UpdateManualActiveSpreadsheet(gbgdf, playerDF, seasoninfo, resultdf)
+# ffModel:::UpdateManualActiveSpreadsheet(gbgdf, playerDF, seasoninfo, resultDF)
 
-playerDF = ffModel::ReadManualEMinFile(playerDF, resultdf)
+playerDF = ffModel::ReadManualEMinFile(playerDF, resultDF)
 
-fixtdf = getfixturegoal(resultdf, fixtdf)
+fixtDF = getfixturegoal(resultDF, fixtDF)
 
 # who's got a kind and tricky schedule to come:
-fixtdf %>%
+fixtDF %>%
   filter(gameweek <= min(gameweek) + 9) %>%
   group_by(team) %>%
   summarise(sumEScored = sum(gwweight * escored),
@@ -24,17 +24,17 @@ fixtdf %>%
   arrange(desc(sumEScored - sumEConceded))
 
 gbgdf = processdeserved(gbgdf)
-summarydf=processdeserved(summarydf)
+summaryDF = processdeserved(summaryDF)
 
-playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summarydf, resultDF)
+playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summaryDF, resultDF)
 
 # might want to do this:
 # source(paste0(USERPATH, 'data fetching/strip_ffprice.r')); StripFFPrice()
 playerDF = ffDataJoining:::MatchFFPlayerData(playerDF)
 
-playerfixtdf = getplayerfixture(fixtdf, playerDF, gbgdf)
-playerfixtdf = getfixtureexpectedpoint(playerfixtdf)
-playerDF = getplayervalue(playerDF, playerfixtdf)
+playerFixtDF = getplayerfixture(fixtDF, playerDF, gbgdf)
+playerFixtDF = getfixtureexpectedpoint(playerFixtDF)
+playerDF = getplayervalue(playerDF, playerFixtDF)
 
 currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
 forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion.csv'))
