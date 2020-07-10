@@ -2,8 +2,8 @@
 
 # the idea is it lets you try various combinations of which week to WC, which week to free hit
 source('c:/git/lineup/new-model-startup.r')
-source(paste0(USERPATH, 'team_funct.r'))
-source(paste0(USERPATH, 'player_funct.r'))
+source(paste0(USERPATH, 'team-funct.r'))
+source(paste0(USERPATH, 'player-funct.r'))
 
 # might be worth updating the prices? not completely convneient to do that right now though, so do manually
 

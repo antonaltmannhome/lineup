@@ -1,6 +1,4 @@
 source('c:/git/lineup/new-model-startup.r')
-source(paste0(USERPATH, 'team-funct.r'))
-source(paste0(USERPATH, 'player-funct.r'))
 
 # might be worth updating the prices? not completely convneient to do that right now though, so do manually
 

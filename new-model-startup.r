@@ -20,6 +20,8 @@ ffDataLoadingPath = paste0(USERPATH, 'ffDataLoading')
 #devtools::load_all(ffDataLoadingPath)
 devtools::install(ffDataLoadingPath)
 }
+source(paste0(USERPATH, 'team-funct.r'))
+source(paste0(USERPATH, 'player-funct.r'))
 
 seasonInfoDF = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
 ##### aaarghhh, want to define seasonNumber at this point but it starts with 1516, whereas appearanceDF starts with 1617, and uses 1 for 1617.
