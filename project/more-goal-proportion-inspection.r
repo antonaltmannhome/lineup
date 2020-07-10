@@ -56,22 +56,35 @@ gbgdfPlus = gbgdf %>%
 
 downWeight = 0.95
 windowWidth = 38
-chcumteamdeserved = gbgdfPlus %>%
+gbgdfPlus = gbgdfPlus %>%
   group_by(player) %>%
   arrange(season, teamgamenumber) %>%
-  mutate(rsTeamDeservedGoal = roll_sum(teamDeservedGoal * minute / 94,
+  mutate(rsTeamDeservedGoal = roll::roll_sum(teamDeservedGoal * minute / 94,
                                        windowWidth,
                                        weights = downWeight^(windowWidth:1)),
-         rsPlayerDeservedGoal = roll_sum(deservedgoal,
+         rsPlayerDeservedGoal = roll::roll_sum(deservedgoal,
                                          windowWidth,
                                          weights = downWeight^(windowWidth:1)),
-         playerGoalProp = rsPlayerDeservedGoal / rsTeamDeservedGoal) %>%
+         playerGoalProp = rsPlayerDeservedGoal / rsTeamDeservedGoal,
+         legalPlayerGoalProp = lag(playerGoalProp, 1)) %>%
   ungroup()
 
-chcumteamdeserved %>% filter(team == 'manutd' & grepl('rashford', player) & season == 1920) %>% select(minute, teamgamenumber, teamDeservedGoal, rsTeamDeservedGoal, deservedgoal, rsPlayerDeservedGoal, playerGoalProp) %>% View
+ViewPlayer = function(myTeam, myPlayer, mySeason = 1920) {
+  gbgdfPlus %>%
+    filter(team == myTeam & grepl(myPlayer, player) & season == mySeason) %>%
+    select(minute, teamgamenumber, teamDeservedGoal, rsTeamDeservedGoal,
+           deservedgoal, rsPlayerDeservedGoal, playerGoalProp) %>%
+    View()
+}
 # almost exactly what the InspectPlayer says, why is it slightly different
 # still, looks pretty good, no horrible loop, hooray
 # but we won't be able to downweight extra between seasons, hopefully won't matter too much
 
 # next step is to predict opgoal.
 # although sum deserved goal is much bigger than sum goal, oh shit
+# not necessarily a problem right now, because we only look at proportion
+
+gbgdfPlus = gbgdfPlus %>%
+  mutate(expectedGoal = legalPlayerGoalProp * minute / 94 * teamoddsescored)
+
+# doesn't seem to be an easy way of comparing to previous method
