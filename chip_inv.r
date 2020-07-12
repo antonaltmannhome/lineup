@@ -2,8 +2,6 @@
 
 # the idea is it lets you try various combinations of which week to WC, which week to free hit
 source('c:/git/lineup/new-model-startup.r')
-source(paste0(USERPATH, 'team-funct.r'))
-source(paste0(USERPATH, 'player-funct.r'))
 
 # might be worth updating the prices? not completely convneient to do that right now though, so do manually
 
@@ -16,7 +14,7 @@ playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 
 playerDF = ffModel::ReadManualEMinFile(playerDF, resultDF)
 
-fixtDF = getfixturegoal(resultDF, fixtDF)
+fixtDF = GetFixtureGoal(resultDF, fixtDF)
 
 # who's got a kind and tricky schedule to come:
 fixtDF %>%
@@ -26,8 +24,8 @@ fixtDF %>%
             sumEConceded = sum(gwweight * econceded)) %>%
   arrange(desc(sumEScored - sumEConceded))
 
-gbgdf = processdeserved(gbgdf)
-summaryDF=processdeserved(summaryDF)
+gbgdf = ProcessDeserved(gbgdf)
+summaryDF = ProcessDeserved(summaryDF)
 
 playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summaryDF, resultDF)
 
@@ -35,9 +33,9 @@ playerDF = ffModel:::CalculateLatestGoalAssistRate(playerDF, gbgdf, summaryDF, r
 # source(paste0(USERPATH, 'data fetching/strip_ffprice.r')); StripFFPrice()
 playerDF = ffDataJoining:::MatchFFPlayerData(playerDF)
 
-playerfixtDF = getplayerfixture(fixtDF, playerDF, gbgdf)
-playerfixtDF = getfixtureexpectedpoint(playerfixtDF)
-source('knapsack_funct.r')
+playerfixtDF = GetPlayerFixture(fixtDF, playerDF, gbgdf)
+playerfixtDF = GetFixtureExpectedPoint(playerfixtDF)
+source('knapsack-funct.r')
 
 currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
 forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion.csv'))
@@ -58,7 +56,7 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 		  filter(gameweek %in% preWCNotFHWeek) %>%
 		  mutate(gwweight = 1)
 
-		dum = calculateexpectedpoint(subplayerfixtDF, currentteam, BBWeek, warnAboutMissingPlayer = FALSE)
+		dum = CalculateExpectedPoint(subplayerfixtDF, currentteam, BBWeek, warnAboutMissingPlayer = FALSE)
 		preWCNotFHPlayerPointDF = dum$pointsummarydf
 		preWCNotFHTotalPoint = dum$totalexpectedpoint
 	}
@@ -71,11 +69,11 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 	  subplayerfixtDF = playerfixtDF %>%
 	    filter(gameweek == FHWeek) %>%
 	    mutate(gwweight = 1)
-	  subPlayerValue=getplayervalue(playerDF, subplayerfixtDF)
+	  subPlayerValue=GetPlayerValue(playerDF, subplayerfixtDF)
 	  
 	  FHTeam = RunKnapsack(subPlayerValue, FHForcedInclusionExclusion, currentmoney)
 	  
-	  dum = calculateexpectedpoint(subplayerfixtDF, FHTeam, warnAboutMissingPlayer = FALSE)
+	  dum = CalculateExpectedPoint(subplayerfixtDF, FHTeam, warnAboutMissingPlayer = FALSE)
 	  FHPlayerPointDF = dum$pointsummarydf
 	  FHTotalPoint = dum$totalexpectedpoint
 	}
@@ -89,11 +87,11 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 	subplayerfixtDF = playerfixtDF %>%
 	  filter(gameweek %in% postWCNotFHWeek) %>%
 		mutate(gwweight = 1)
-	subPlayerValue=getplayervalue(playerDF, subplayerfixtDF)
+	subPlayerValue=GetPlayerValue(playerDF, subplayerfixtDF)
 
 	postWCNotFHTeam = RunKnapsack(subPlayerValue, forcedInclusionExclusion, currentmoney)
 		
-	dum = calculateexpectedpoint(subplayerfixtDF, postWCNotFHTeam, BBWeek, warnAboutMissingPlayer = FALSE)
+	dum = CalculateExpectedPoint(subplayerfixtDF, postWCNotFHTeam, BBWeek, warnAboutMissingPlayer = FALSE)
 	postWCNotFHPlayerPointDF = dum$pointsummarydf
 	postWCNotFHTotalPoint = dum$totalexpectedpoint
 	
@@ -116,7 +114,7 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 ### post corona, have DGW in first week, plus free wild card. so bench boost it and WC on the next week
 GetWCFHExpectedPoint(currentteam, 31, 30, 30, FHForcedInclusionExclusion, forcedInclusionExclusion)
 
-GetWCFHExpectedPoint(currentteam, 34, 33, 35, FHForcedInclusionExclusion, forcedInclusionExclusion)
+GetWCFHExpectedPoint(currentteam, 39, 38, 36, FHForcedInclusionExclusion, forcedInclusionExclusion)
 pre-wild-card points: 152.477098540508
 free hit points: 66.3594194591453
 post-wild-card points: 396.795686043531
