@@ -1,7 +1,5 @@
 
-source('c:/research/lineup/new-model-startup.r')
-source(paste0(USERPATH, 'team_funct.r'))
-source(paste0(USERPATH, 'player_funct.r'))
+source('c:/git/lineup/new-model-startup.r')
 
 # let's fill in the gaps in mainpos
 
@@ -44,6 +42,27 @@ numPosByTG = gbgdf %>%
             numM = sum(minute * (mainpos %in% c('DMC', 'M')))/94,
             numF = sum(minute * (mainpos %in% c('AM', 'FW')))/94)
 
+# want to know the number of times a team has played within previous year
+# want to use roll library for this ie no loops
+# and want to do similar thing for players eventually
+# so let's try to get it right
+earliestDate = min(ymd(resultDF$date))
+latestDate = max(ymd(resultDF$date))
+daysDiff = as.integer(difftime(latestDate, earliestDate, units = 'days'))
+fullDateRange = .POSIXct(character(daysDiff + 1))
+fullDateRange[1:length(fullDateRange)] = earliestDate + days(0:(length(fullDateRange) - 1))
+fullDateRange = as.integer(gsub('-', '', gsub(' .+$', '', as.character(fullDateRange))))
+
+teamDayDF = expand_grid(date = fullDateRange, team = unique(resultDF$team))
+teamDayDF = indicate_overlapping_combination(teamDayDF, resultDF, c('team', 'date'), 'teamPlayed')
+
+teamDayDF = teamDayDF %>%
+  group_by(team) %>%
+  arrange(date) %>%
+  mutate(rollingSumGame = roll::roll_sum(teamPlayed, 365, min_obs = 1)) %>%
+  ungroup()
+
+resultDF = left_join(resultDF, teamDayDF, c('team', 'date'), 'rollingSumGame')
 
 ludat$predyn=rep(0,dim(ludat)[1])
 # home team
