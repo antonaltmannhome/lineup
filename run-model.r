@@ -7,7 +7,7 @@ playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 # gbgdf = ffModel::CalculateHistoricExpectedMinute(gbgdf)
 
 # this is a bit dangerous: it'll overwrite manual changes, which would be very annoying - need to think about how we do that
-# ffModel:::UpdateManualActiveSpreadsheet(gbgdf, playerDF, seasoninfo, resultDF)
+# ffModel:::UpdateManualActiveSpreadsheet(gbgdf, playerDF, seasonInfoDF, resultDF)
 
 playerDF = ffModel::ReadManualEMinFile(playerDF, resultDF)
 

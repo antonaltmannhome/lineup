@@ -127,7 +127,7 @@ UpdateManualActiveSpreadsheet = function(gbgdf, playerDF, seasonInfoDF, resultDF
                                         mutate(ignore = case_when(
                                           mainpos == 'GK' & near(manualEMin, 90) & near(minute, 94) ~ '*',
                                           mainpos == 'GK' & manualEMin < 50.1 & minute < 50 ~ '*',
-                                          mainpos != 'GK' & near(manualEMin, 85) & minute > 85 ~ '*',
+                                          mainpos != 'GK' & near(manualEMin, 75) & minute > 85 ~ '*',
                                           mainpos != 'GK' & manualEMin < 50.1 & minute < 50 ~ '*',
                                           TRUE ~ ''))
   
