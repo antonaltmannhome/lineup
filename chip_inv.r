@@ -114,7 +114,11 @@ GetWCFHExpectedPoint = function(currentteam, WCWeek, FHWeek, BBWeek, FHForcedInc
 ### post corona, have DGW in first week, plus free wild card. so bench boost it and WC on the next week
 GetWCFHExpectedPoint(currentteam, 31, 30, 30, FHForcedInclusionExclusion, forcedInclusionExclusion)
 
-GetWCFHExpectedPoint(currentteam, 39, 38, 36, FHForcedInclusionExclusion, forcedInclusionExclusion)
+GetWCFHExpectedPoint(currentteam,
+                     WCWeek = 39,
+                     FHWeek = 38,
+                     BBWeek = 36,
+                     FHForcedInclusionExclusion, forcedInclusionExclusion)
 pre-wild-card points: 152.477098540508
 free hit points: 66.3594194591453
 post-wild-card points: 396.795686043531
