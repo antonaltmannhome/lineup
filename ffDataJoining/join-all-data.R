@@ -47,6 +47,7 @@ playerDF = playerResultDF %>%
   distinct(playerid, season, team, player)
 # think we might still have a problem as a player moves from NA to non-NA
 playerDF = ffDataJoining:::MatchFFPlayerData(playerDF, interactive = TRUE)
+MatchPriceDataToCurrentTeam()
 
 ### next, odds
 ### actually, don't do this, because there's a fair chance you'll want to redo it more recently than the data stripping

@@ -63,10 +63,11 @@ GetCleanCurrentTeamPriceDF = function() {
   }
   playerPriceDF$ffPosition = rep(c('g', 'd', 'm', 'f'), c(2, 5, 5, 3))
   
-  write_csv(playerPriceDF, paste0(DATAPATH, 'current-team-value.csv'))
+  write_csv(playerPriceDF, paste0(DATAPATH, 'unmatched-player-price.csv'))
 }
 
 MatchPriceToCurrentTeam = function() {
   currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
   ## this should be a data joining function i think. wait til we've got some new data to work with
+  
 }
