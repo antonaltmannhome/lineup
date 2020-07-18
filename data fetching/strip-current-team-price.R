@@ -1,8 +1,8 @@
 
 NavigateAndSaveTransferPage = function() {
   
-  if (file.exists('c:/temp/temp-ff-team-value.dat')) {
-    file.remove('c:/temp/temp-ff-team-value.dat')
+  if (file.exists('c:/temp/ff-transfer-list-view.txt')) {
+    file.remove('c:/temp/ff-transfer-list-view.txt')
   }
   
   initfile()
@@ -18,7 +18,7 @@ NavigateAndSaveTransferPage = function() {
   
   initfile()
   insertselectwindow('Firefox')
-  selectalltonotepad('c:/temp/temp-ff-team-value.dat', deselectpoint=c(100, 500))
+  selectalltonotepad('c:/temp/ff-transfer-list-view.txt', deselectpoint=c(100, 500))
   
   insertabort()
   runscript()

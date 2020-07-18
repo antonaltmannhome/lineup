@@ -18,6 +18,10 @@ source(paste(USERPATH, 'data fetching/strip-soccerway.r',sep=''))
 source(paste0(USERPATH, 'data fetching/strip_ffprice.r'))
 StripFFPrice()
 
+source(paste0(USERPATH, 'data fetching/strip-current-team-price.r'))
+NavigateAndSaveTransferPage()
+GetCleanCurrentTeamPriceDF()
+
 ## finally fill in the odds
 source(paste0(USERPATH, 'data fetching/manual_strip_spreadex.r'))
 

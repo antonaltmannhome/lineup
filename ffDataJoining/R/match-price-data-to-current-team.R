@@ -44,6 +44,6 @@ MatchPriceDataToCurrentTeam = function() {
     }
   }
   
-  write_csv(file = paste0(DATAPATH, 'current-team-plus-value.csv'),
-            currentteam)
+  write_csv(path = paste0(DATAPATH, 'current-team-plus-value.csv'),
+            x = currentteam)
 }
