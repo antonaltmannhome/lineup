@@ -11,9 +11,9 @@ forcedInclusionExclusion = currentteam %>%
 
 CalculatePointGainFromTransfer = function(forcedInclusionExclusion) {
   idealteam = RunKnapsack(playerDF, forcedInclusionExclusion, currentmoney)
-  idealteamgameweekexpectedpoint = getcurrentexpectedpoint(playerfixtdf, idealteam)
+  idealteamgameweekexpectedpoint = GetCurrentExpectedPoint(playerFixtDF, idealteam)
 
-  idealteamfullinfo = calculateexpectedpoint(playerfixtdf, idealteam, warnAboutMissingPlayer = FALSE)
+  idealteamfullinfo = CalculateExpectedPoint(playerFixtDF, idealteam, warnAboutMissingPlayer = FALSE)
 
   pointGainFromTransfer = idealteamfullinfo$totalexpectedpoint - currentteamfullinfo$totalexpectedpoint
 
