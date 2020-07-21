@@ -34,7 +34,7 @@ playerFixtDF = GetPlayerFixture(fixtDF, playerDF, gbgdf)
 playerFixtDF = GetFixtureExpectedPoint(playerFixtDF)
 playerDF = GetPlayerValue(playerDF, playerFixtDF)
 
-currentteam = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
+currentTeamDF = read.csv(paste(DATAPATH, 'currentteam.csv', sep = ''))
 forcedInclusionExclusion = read.csv(paste0(DATAPATH, 'forced-inclusion-exclusion.csv'))
 
 ## hmm, it seems by adding heavy hitters, you don't actually lose anything like the number of points you might expect

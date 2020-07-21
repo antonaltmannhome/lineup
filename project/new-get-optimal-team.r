@@ -5,28 +5,34 @@
 
 source('knapsack-funct.r')
 
+currentTeamPlusPriceDF = read.csv('d:/whoscored_data/current-team-plus-value.csv')
+
+playerDFOverridePrice = playerDF %>%
+  join_on_overlap(currentTeamPlusPriceDF %>%
+                    select(team, player, ffPrice = sellingPrice),
+                  c('team', 'player'))
+
 CalculatePointGainFromTransfer = function(forcedInclusionExclusion) {
-  idealteam = RunKnapsack(playerDF, forcedInclusionExclusion, currentmoney)
-  idealteamgameweekexpectedpoint = GetCurrentExpectedPoint(playerFixtDF, idealteam)
+  idealTeamDF = RunKnapsack(playerDFOverridePrice, forcedInclusionExclusion, currentmoney)
+
+  idealTeamInfoDF = CalculateExpectedPoint(playerFixtDF, idealTeamDF, warnAboutMissingPlayer = FALSE)
   
-  idealteamfullinfo = CalculateExpectedPoint(playerFixtDF, idealteam, warnAboutMissingPlayer = FALSE)
+  pointGainFromTransfer = idealTeamInfoDF$totalexpectedpoint - currentTeamFullInfo$totalexpectedpoint
   
-  pointGainFromTransfer = idealteamfullinfo$totalexpectedpoint - currentteamfullinfo$totalexpectedpoint
-  
-  return(lst(idealteam, pointGainFromTransfer))
+  return(lst(idealTeamDF, pointGainFromTransfer))
 }
 
-CalculateExtraPointForOneTransfer = function(currentteam) {
+CalculateExtraPointForOneTransfer = function(currentTeamDF) {
   totalNumPossible = 15
   transferOutcomeDF = tibble(pointGain1 = rep(NA_real_, totalNumPossible))
   transferOutcomeDF$replacement1 = NA_character_
   for (j in 1:totalNumPossible) {
-    adjCurrentTeam = currentteam %>%
+    adjCurrentTeam = currentTeamDF %>%
       mutate(includeOrExclude = 'include')
     adjCurrentTeam$includeOrExclude[j] = 'exclude'
     alternativeTeam = CalculatePointGainFromTransfer(adjCurrentTeam)
     transferOutcomeDF$pointGain1[j] = alternativeTeam$pointGainFromTransfer
-    transferOutcomeDF$replacement1[j] = setdiff(alternativeTeam$idealteam$player, currentteam$player)
+    transferOutcomeDF$replacement1[j] = setdiff(alternativeTeam$idealTeamDF$player, currentTeamDF$player)
   }
   return(transferOutcomeDF)
 }
@@ -42,15 +48,15 @@ CalculateExtraPointForTwoTransfers = function(currentTeam) {
   transferOutcomeDF$replacement1 = NA_character_
   transferOutcomeDF$replacement2 = NA_character_
   for (j in 1:totalNumPossible) {
-    adjCurrentTeam = currentteam %>%
+    adjCurrentTeam = currentTeamDF %>%
       mutate(includeOrExclude = 'include')
     adjCurrentTeam$includeOrExclude[allPossibleTransfer[,j]] = 'exclude'
     alternativeTeam = CalculatePointGainFromTransfer(adjCurrentTeam)
     transferOutcomeDF$pointGain[j] = alternativeTeam$pointGainFromTransfer
-    droppedPlayer = currentteam$player[allPossibleTransfer[,j]]
+    droppedPlayer = currentTeamDF$player[allPossibleTransfer[,j]]
     transferOutcomeDF$drop1[j] = droppedPlayer[1]
     transferOutcomeDF$drop2[j] = droppedPlayer[2]
-    replacementPlayer = setdiff(alternativeTeam$idealteam$player, currentteam$player)
+    replacementPlayer = setdiff(alternativeTeam$idealTeamDF$player, currentTeamDF$player)
     transferOutcomeDF$replacement1[j] = replacementPlayer[1]
     transferOutcomeDF$replacement2[j] = replacementPlayer[2]
     if ( (j %% 10) == 0) {
@@ -61,28 +67,28 @@ CalculateExtraPointForTwoTransfers = function(currentTeam) {
   return(transferOutcomeDF)
 }
 
-CalculateBestTwoTransfersByPlayer = function(currentteam) {
+CalculateBestTwoTransfersByPlayer = function(currentTeamDF) {
   extraPointForTwoTransfers = CalculateExtraPointForTwoTransfers(currentTeam)
   bestPointGainDF = tibble(pointGain2 = rep(NA_real_, 15))
   bestPointGainDF$otherDroppedPlayer = NA_character_
-  bestPointGainDF$replacement2ab = NA_character_
-  bestPointGainDF$replacement2 = NA_character_
+  bestPointGainDF$replacement2a = NA_character_
+  bestPointGainDF$replacement2b = NA_character_
   for (j in 1:15) {
     currentPlayerIndex = with(extraPointForTwoTransfers,
-                              which(drop1 == currentteam$player[j] | drop2 == currentteam$player[j]))
+                              which(drop1 == currentTeamDF$player[j] | drop2 == currentTeamDF$player[j]))
     currentBestTransfersIndex = currentPlayerIndex[which.max(extraPointForTwoTransfers$pointGain[currentPlayerIndex])]
     bestPointGainDF[j,c('pointGain2', 'replacement2a', 'replacement2b')] =
       extraPointForTwoTransfers[currentBestTransfersIndex,c('pointGain', 'replacement1', 'replacement2')]
-    bestPointGainDF$otherDroppedPlayer[j] = setdiff(as.character(extraPointForTwoTransfers[currentBestTransfersIndex,c('drop1', 'drop2')]), currentteam$player[j])
+    bestPointGainDF$otherDroppedPlayer[j] = setdiff(as.character(extraPointForTwoTransfers[currentBestTransfersIndex,c('drop1', 'drop2')]), currentTeamDF$player[j])
   }
+  
+  return(bestPointGainDF)
 }
 
-idealteam = RunKnapsack(playerDF, forcedInclusionExclusion, currentmoney)
-idealteamfullinfo = CalculateExpectedPoint(playerFixtDF, idealteam)
+idealTeamDF = RunKnapsack(playerDFOverridePrice, forcedInclusionExclusion, currentmoney)
+idealTeamInfoDF = CalculateExpectedPoint(playerFixtDF, idealTeamDF)
 
-currentteamfullinfo = CalculateExpectedPoint(playerFixtDF, currentteam)
-
-currentteamgameweekexpectedpoint = GetCurrentExpectedPoint(playerFixtDF, currentteam)
+currentTeamFullInfo = CalculateExpectedPoint(playerFixtDF, currentTeamDF)
 
 # then, what happens if you forcibly exclude each player, how much better/worse is the total points?
 # i think the question is, what do you gain by forcibly including each suggested player
@@ -93,6 +99,14 @@ currentteamgameweekexpectedpoint = GetCurrentExpectedPoint(playerFixtDF, current
 
 # not sure how to do the thing with replacing your players and estimating curren team value, will come back to that
 
-dum = cbind(currentteam,
-            CalculateExtraPointForOneTransfer(currentteam),
-            CalculateBestTwoTransfersByPlayer(currentteam))
+overallTransferAdviceDF = bind_cols(currentTeamDF,
+            CalculateExtraPointForOneTransfer(currentTeamDF),
+            CalculateBestTwoTransfersByPlayer(currentTeamDF))
+
+print(overallTransferAdviceDF)
+
+message('Overall gain in points from switching from current team to ideal team:')
+print(idealTeamInfoDF$totalexpectedpoint - currentTeamFullInfo$totalexpectedpoint)
+
+# ok, this is really good, big missing thing is the transfer value thing. how much would each transfer deplete team value
+
