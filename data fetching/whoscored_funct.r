@@ -50,7 +50,7 @@ adjustlinkdf=function(linkdf, numgam, numtournament, noupcomingmatchesfound, thi
 		stop('Exiting now\n')
 	}
 	if (thiscomputer == 'NOVATECHLAPTOP') {
-		gamadjlist = c(-180, -150, -120, -90, -60, -30, 0)
+		gamadjlist = c(-180, -150, -120, -90, -60, -20, 0)
 		#gamadjlist = c(-30,0, 30, 60, 90, 120, 150)
 	}
 	if (thiscomputer == 'ANTONDESKTOP') {
@@ -76,11 +76,12 @@ adjustlinkdf=function(linkdf, numgam, numtournament, noupcomingmatchesfound, thi
 	}
 
 	isYCoordIndex = grep('\\_Y$', linkdf$scriptlabel)
-	### final step, move everything to account for number of games, ie is it differnt from number in locationinfo
-	linkdf$location[isYCoordIndex] = linkdf$location[isYCoordIndex] + gamadjlist[numgamlist==numgam] - gamadjlist[numgamlist==defaultnumgam] + noupcomingmatchesfoundadj
 
 	### final step, move everything to account for number of games, ie is it differnt from number in locationinfo
-	linkdf$location[isYCoordIndex] = linkdf$location[isYCoordIndex] + tournadjlist[numtournamentlist==numtournament] - tournadjlist[numtournamentlist==defaultnumtournament]
+	linkdf$location[isYCoordIndex] = linkdf$location[isYCoordIndex] +
+	  tournadjlist[numtournamentlist==numtournament] - tournadjlist[numtournamentlist==defaultnumtournament] +
+	  gamadjlist[numgamlist==numgam] - gamadjlist[numgamlist==defaultnumgam] +
+	  noupcomingmatchesfoundadj
 
 	return(linkdf)
 }
