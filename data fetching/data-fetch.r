@@ -1,7 +1,7 @@
 ### let's have a separate file to do the data update
 source('c:/git/lineup/ff_startup.r')
 
-seasoninfo = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
+seasonInfoDF = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
 currentseason = 1920
 
 ### firstly, get the latest player stats
