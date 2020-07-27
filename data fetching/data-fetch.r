@@ -7,7 +7,7 @@ currentseason = 1920
 ### firstly, get the latest player stats
 source(paste(USERPATH, 'data fetching/strip_whoscored.r',sep=''))
 
-### then get hold of overall results
+### then get hold of overall results - NB change 'haveJustFinishedSeason' from FALSE to TRUE after final day
 source(paste(USERPATH, 'data fetching/strip_fixture_result.r',sep=''))
 
 ### then get hold of overall results

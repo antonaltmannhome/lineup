@@ -50,7 +50,7 @@ adjustlinkdf=function(linkdf, numgam, numtournament, noupcomingmatchesfound, thi
 		stop('Exiting now\n')
 	}
 	if (thiscomputer == 'NOVATECHLAPTOP') {
-		gamadjlist = c(-180, -150, -120, -90, -60, -20, 0)
+		gamadjlist = c(-180, -150, -120, -90, -46, -23, 0)
 		#gamadjlist = c(-30,0, 30, 60, 90, 120, 150)
 	}
 	if (thiscomputer == 'ANTONDESKTOP') {
@@ -61,7 +61,7 @@ adjustlinkdf=function(linkdf, numgam, numtournament, noupcomingmatchesfound, thi
 
 	numtournamentlist = c(1, 2, 3, 4, 5, 6, 7, 8)
 	if (thiscomputer == 'NOVATECHLAPTOP') {
-		tournadjlist = c(0, 0, 0, 10, 30, 55, 82, 100)
+		tournadjlist = c(0, 0, 0, 10, 30, 52, 75, 98)
 	}
 	if (thiscomputer == 'ANTONDESKTOP') {
 		tournadjlist = c(0, 0, 0, 10, 25, 55, 85)
