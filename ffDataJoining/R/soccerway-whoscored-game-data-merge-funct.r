@@ -19,7 +19,7 @@ MergeSoccerwayWhoscoredGameData = function(appearanceDF, gbgdf) {
                       rename(player = whoscoredplayer)
 
   # there are always going to be players who aren't in gbgdf who are in appearanceDF, because appearanceDF helpfully tells us who was sidelined/on the bench etc
-  appearanceDF = FillInPlayedButNoStats(appearanceDF, gbgdf, playerMatchDF, playerStatColumn)
+  appearanceDF = ffDataJoining:::FillInPlayedButNoStats(appearanceDF, gbgdf, playerMatchDF, playerStatColumn)
   
   # a more common problem is eg a player is in appearanceDF at the start of the season via the bench. they won't appear in gbgdf yet so won't be in playermatch, but we can get rid of the NA player names and NA for match stat totals quite easily:
   appearanceDF = appearanceDF %>%
@@ -65,7 +65,8 @@ FillInPlayedButNoStats = function(appearanceDF, gbgdf, playerMatchDF, playerStat
     count() %>%
     ungroup() %>%
     group_by(season, team, playerid) %>%
-    filter(n == max(n)) %>%
+    arrange(desc(n)) %>%
+    slice(1) %>% 
     remove_column('n') %>%
     rename(player = whoscoredplayer)
   

@@ -1,9 +1,9 @@
 {
-    "path" : "C:/research/lineup/ffDataJoining",
-    "sortOrder" : [
+    "path": "C:/git/lineup/ffDataJoining/R",
+    "sortOrder": [
         {
-            "ascending" : true,
-            "columnIndex" : 2
+            "columnIndex": 2,
+            "ascending": true
         }
     ]
 }
