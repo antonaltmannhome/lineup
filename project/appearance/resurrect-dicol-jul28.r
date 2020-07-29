@@ -1,5 +1,6 @@
 
 source('c:/git/lineup/new-model-startup.r')
+library(BiasedUrn)
 
 # let's fill in the gaps in mainpos
 
@@ -82,7 +83,7 @@ gbgdf = gbgdf %>%
 gbgdf2 = gbgdf %>%
   filter(!grepl('(injury|suspension)', startTime)) %>%
   mutate(startTime2 = ifelse(!startTime %in% c('U', 'UU'), startTime, '95'),
-         endTime2 = ifelse(!endTime %in% c('U', 'UU'), endTime, '95')) %>%
+         endTime2 = ifelse(!startTime %in% c('U', 'UU'), endTime, '95')) %>%
   mutate(startTime2 = as.integer(startTime2),
          endTime2 = as.integer(endTime2))
 
@@ -100,47 +101,77 @@ SplitGame = function(myPlayer, myStartTime, myEndTime) {
                                   endTime = rep(myEndTime, numInterval),
                                   lhTimeCutoff = rep(head(unSubTime, -1), rep(length(myStartTime), numInterval)),
                                   rhTimeCutoff = rep(tail(unSubTime, -1), rep(length(myStartTime), numInterval)))
-  myRepeatedPlayedDF$played = with(myRepeatedPlayedDF, startTime <= lhTimeCutoff & endTime >= rhTimeCutoff)
+  myRepeatedPlayedDF$played = with(myRepeatedPlayedDF, as.integer(startTime <= lhTimeCutoff & endTime >= rhTimeCutoff))
   
   return(myRepeatedPlayedDF)
 }
 
 # can we get do to do this nicely
 
-subGbgdf2 = gbgdf2 %>%
-  filter(season == 1920 & team == 'mancity' & teamgamenumber <= 10 & mainpos %in% c('D', 'DMC'))
-splitTeamDF = subGbgdf2 %>%
-  group_by(season, team, teamgamenumber) %>%
-  do(SplitGame(.$player, .$startTime2, .$endTime2))
-
 # right, now we can do a little dicol on that i'd have thought
 # ah i've just understood what the previous thing did, it made up all the pairs of players for each section
 # which is a major code overhaul, let's not do that now
 
-rlikfunct=function(theta0, splitTeamDF) {
+# let's see how we get on with hypergeo these days though
+log(dMWNCHypergeo(x=playind[j,keeplist[[j]]],m=rep(1,length(keeplist[[j]])),n=numplay.tm[j],odds=exp(theta[keeplist[[j]]])))
+
+rlikfunct=function(theta0, splitTeamDF, unMatchSection) {
   theta = c(0, theta0)
+  print(theta)
   splitTeamDF$theta = theta[splitTeamDF$playerNumber]
-  splitTeamDF %>% group_by(teamgamenumber, matchSection) %>% summarise(totalTheta = sum(exp(theta)))
-  #print(round(theta,5),collapse=',')
-  # loglik=log(exp(theta[bigarr[,1]])/(exp(theta[bigarr[,1]])+exp(theta[bigarr[,2]])))
-  loglik=with(splitTeamDF, minDiff*(theta[dicoldf[,'y']] -log(exp(theta[dicoldf[,'y']])+exp(theta[dicoldf[,'n']])))
-              
-              priorlik=priorstr*sum(theta^2)
-              
-              totallik=mean(loglik)-priorlik
-              
-              return(-totallik)
+  
+  # ugh, seems we have to loop over each teamgamenumber-match
+  splitTeamDF$one = 1
+  for (j in 1:nrow(unMatchSection)) {
+    sax = with(splitTeamDF, which(teamgamenumber == unMatchSection$teamgamenumber[j] &
+                                    matchSection == unMatchSection$matchSection[j]))
+    unMatchSection$logLik[j] = unMatchSection$minDiff[j] *
+      with(splitTeamDF[sax, ], log(dMWNCHypergeo(x=played,
+                                                 m=one,
+                                                 n=unMatchSection$numWhoPlayed[j],
+                                                 odds=exp(theta))))
+  }
+  
+  sumLogLik = sum(unMatchSection$logLik)
+  return(-sumLogLik)
 }
 
-GetPlayerAppearanceMle = function(splitTeamDF) {
+GetPlayerAppearanceMle = function(myTeam, mySeason, myMainposVec) {
+  
+  subGbgdf2 = gbgdf2 %>%
+    filter(season == mySeason & team == myTeam & mainpos %in% myMainposVec)
+  splitTeamDF = subGbgdf2 %>%
+    group_by(season, team, teamgamenumber) %>%
+    do(SplitGame(.$player, .$startTime2, .$endTime2))
+  splitTeamDF = splitTeamDF %>%
+    left_join(splitTeamDF %>%
+                group_by(teamgamenumber, matchSection) %>%
+                summarise(numActivePlayer = sum(played)),
+              c('teamgamenumber', 'matchSection'))
+  unMatchSection = splitTeamDF %>%
+    group_by(teamgamenumber, matchSection, minDiff) %>%
+    summarise(numWhoPlayed = sum(played)) %>%
+    ungroup() %>%
+    mutate(logLik = NA)
+
   myUnPlayer = unique(splitTeamDF$player)
   # who has made the median number of appearances, they should have value zero
   myTotalMinutePlayed = splitTeamDF %>%
     group_by(player) %>%
-    summarise(totalMinutePlayed = sum(minDiff)) %>%
+    summarise(totalMinutePlayed = sum(endTime - startTime)) %>%
     arrange(totalMinutePlayed)
   referencePlayer = myTotalMinutePlayed$player[floor( (length(myUnPlayer)+1) / 2)]
   myUnPlayer = c(referencePlayer, setdiff(myUnPlayer, referencePlayer))
   splitTeamDF$playerNumber = match(splitTeamDF$player, myUnPlayer)
   theta0 = rep(0, length(myUnPlayer) - 1)
+  
+  maxInfo = nlm(rlikfunct, p = theta0, splitTeamDF = splitTeamDF, unMatchSection = unMatchSection, stepmax = 5)
+  dum = c(0, maxInfo$est)
+  myAppearanceMle = data.frame(player = myUnPlayer, appearanceMle = dum, appearanceOdds = exp(dum) / sum(exp(dum)))
+  
+  return(myAppearanceMle)
 }
+
+# seems roughly ok, a bit slow but not devastating
+# need to do the rolling thing, and with a time downweight. but in fact, if we want to check out the fatigue/schedule thing, we can probably get away with doing it once for the entire season
+# although i suppose players go in and out of the team, but we're really only interested in the ones who play all the time anyway
