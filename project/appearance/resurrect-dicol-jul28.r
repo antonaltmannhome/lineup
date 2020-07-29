@@ -113,11 +113,10 @@ SplitGame = function(myPlayer, myStartTime, myEndTime) {
 # which is a major code overhaul, let's not do that now
 
 # let's see how we get on with hypergeo these days though
-log(dMWNCHypergeo(x=playind[j,keeplist[[j]]],m=rep(1,length(keeplist[[j]])),n=numplay.tm[j],odds=exp(theta[keeplist[[j]]])))
 
 rlikfunct=function(theta0, splitTeamDF, unMatchSection) {
   theta = c(0, theta0)
-  print(theta)
+  #print(theta)
   splitTeamDF$theta = theta[splitTeamDF$playerNumber]
   
   # ugh, seems we have to loop over each teamgamenumber-match
@@ -133,13 +132,14 @@ rlikfunct=function(theta0, splitTeamDF, unMatchSection) {
   }
   
   sumLogLik = sum(unMatchSection$logLik)
+  #print(sumLogLik)
   return(-sumLogLik)
 }
 
-GetPlayerAppearanceMle = function(myTeam, mySeason, myMainposVec) {
+GetPlayerAppearanceMle = function(myTeam, mySeason, myMainpos) {
   
   subGbgdf2 = gbgdf2 %>%
-    filter(season == mySeason & team == myTeam & mainpos %in% myMainposVec)
+    filter(season == mySeason & team == myTeam & mainpos2 == myMainpos)
   splitTeamDF = subGbgdf2 %>%
     group_by(season, team, teamgamenumber) %>%
     do(SplitGame(.$player, .$startTime2, .$endTime2))
@@ -167,7 +167,7 @@ GetPlayerAppearanceMle = function(myTeam, mySeason, myMainposVec) {
   
   maxInfo = nlm(rlikfunct, p = theta0, splitTeamDF = splitTeamDF, unMatchSection = unMatchSection, stepmax = 5)
   dum = c(0, maxInfo$est)
-  myAppearanceMle = data.frame(player = myUnPlayer, appearanceMle = dum, appearanceOdds = exp(dum) / sum(exp(dum)))
+  myAppearanceMle = data.frame(team = myTeam, season = mySeason, player = myUnPlayer, appearanceMle = dum, appearanceOdds = exp(dum) / sum(exp(dum)))
   
   return(myAppearanceMle)
 }
@@ -175,3 +175,23 @@ GetPlayerAppearanceMle = function(myTeam, mySeason, myMainposVec) {
 # seems roughly ok, a bit slow but not devastating
 # need to do the rolling thing, and with a time downweight. but in fact, if we want to check out the fatigue/schedule thing, we can probably get away with doing it once for the entire season
 # although i suppose players go in and out of the team, but we're really only interested in the ones who play all the time anyway
+
+# so how about we run it for each team each season to build up our array
+gbgdf2$mainpos2 = with(gbgdf2, case_when(
+  mainpos %in% c('D', 'DMC') ~ 'def',
+  mainpos == 'M' ~ 'mid',
+  mainpos %in% c('AM', 'FW') ~ 'att',
+  TRUE ~ 'other'
+))
+unTeamSeasonPosition = gbgdf2 %>%
+  filter(mainpos2 != 'other') %>%
+  distinct(season, team, mainpos2)
+
+
+appearanceMleList = vector('list', nrow(unTeamSeasonPosition))
+for (tspi in 1:nrow(unTeamSeasonPosition)) {
+  appearanceMleList[[tspi]] = with(unTeamSeasonPosition[tspi,],
+                                   GetPlayerAppearanceMle(team, season, mainpos2))
+  with(unTeamSeasonPosition[tspi,],
+       message('Have processed ', season, ' / ', team, ' / ', mainpos2))
+}
