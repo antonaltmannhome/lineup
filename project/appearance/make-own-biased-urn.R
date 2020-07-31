@@ -83,3 +83,62 @@ CompareSpeed = function(success, weight) {
 }
   # hmm, it's still slow, how is hyper so fast? shame it occasionally breaks
 # although i can speed up AA in fact - lots of repeated calculations - we could work out how many unique topLine/BottomLines we actually hve to do and only do those
+### also we can calcualte first derivative and use optim. let's try that, see if it reduces numbers of iters
+
+# but we need some data to test it on
+mancity1920att = dget('c:/temp/mancity1920att.dat')
+splitTeamDF = mancity1920att$splitTeamDF
+theta0 = mancity1920att$theta0
+unMatchSection = mancity1920att$unMatchSection
+
+rlikfunct=function(theta0, splitTeamDF, unMatchSection) {
+  theta = c(0, theta0)
+  #print(theta)
+  splitTeamDF$theta = theta[splitTeamDF$playerNumber]
+  
+  # ugh, seems we have to loop over each teamgamenumber-match
+  splitTeamDF$one = 1
+  for (j in 1:nrow(unMatchSection)) {
+    sax = with(splitTeamDF, which(teamgamenumber == unMatchSection$teamgamenumber[j] &
+                                    matchSection == unMatchSection$matchSection[j]))
+    unMatchSection$logLik[j] = unMatchSection$minDiff[j] *
+      with(splitTeamDF[sax, ], log(dMWNCHypergeo(x=played,
+                                                 m=one,
+                                                 n=unMatchSection$numWhoPlayed[j],
+                                                 odds=exp(theta))))
+  }
+  
+  sumLogLik = sum(unMatchSection$logLik)
+  #print(sumLogLik)
+  return(-sumLogLik)
+}
+
+# run the same thing but with my function
+aalikfunct=function(theta0, splitTeamDF, unMatchSection) {
+  theta = c(0, theta0)
+  #print(theta)
+  splitTeamDF$theta = theta[splitTeamDF$playerNumber]
+  
+  # ugh, seems we have to loop over each teamgamenumber-match
+  splitTeamDF$one = 1
+  for (j in 1:nrow(unMatchSection)) {
+    print(j)
+    sax = with(splitTeamDF, which(teamgamenumber == unMatchSection$teamgamenumber[j] &
+                                    matchSection == unMatchSection$matchSection[j]))
+    permutationInfo = GetBiasedUrnPermutationInfo(splitTeamDF$played[sax])
+    unMatchSection$logLik[j] = unMatchSection$minDiff[j] *
+      with(splitTeamDF[sax, ], log(AaDHyperGeoJustProbabilityCalculation(success = played, weight = exp(theta), permutationInfo = permutationInfo)))
+  }
+  
+  sumLogLik = sum(unMatchSection$logLik)
+  #print(sumLogLik)
+  return(-sumLogLik)
+}
+
+
+# make theta a bit more realistic
+theta0 = runif(length(theta0), 0, 0.5)
+
+# right, what is first deriv of that
+rlikfunct(theta0, splitTeamDF, unMatchSection)
+aalikfunct(theta0, splitTeamDF, unMatchSection)
