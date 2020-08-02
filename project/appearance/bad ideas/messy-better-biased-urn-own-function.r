@@ -23,10 +23,14 @@ CalculateAllPermutation = function(x) {
   return(allPermutationMatrix)
 }
 
-CallCalculateAllPermutation = function(playedIndicator) {
+CallCalculateAllPermutation = function(playedIndicator, playerNumber) {
   x = which(playedIndicator == 1)
-  dum = CalculateAllPermutation(x)
-  return(dum)
+  allPermutationByIndex = CalculateAllPermutation(x)
+  allPermutationByPlayerNumber = matrix(playerNumber[allPermutationByIndex],
+                                        nrow = nrow(allPermutationByIndex),
+                                        ncol = ncol(allPermutationByIndex))
+  myList = list(allPermutationByPlayerNumber = allPermutationByPlayerNumber)
+  return(myList)
 }
 
 AaDHyperGeo = function(success, weight) {
@@ -127,24 +131,61 @@ mancity1920att = dget('project/appearance/man-city-attack.dat')
 splitTeamDF = mancity1920att$splitTeamDF
 myUnPlayer = mancity1920att$myUnPlayer
 unMatchSection = mancity1920att$unMatchSection
+splitTeamDF = splitTeamDF %>%
+  arrange(teamgamenumber, matchSection, playerNumber)
 
 # so firstly we need the permutations for all matches in advance
 
-allPermutationList = tapply(splitTeamDF$played,
+NewAAJustProb2 = function(allPermMatrix, activePlayerNumber, weight) {
+  bottomLineMatrix = matrix(sum(weight[activePlayerNumber]), ncol = 1, nrow = nrow(allPermMatrix))
+  for (j in 2:ncol(allPermMatrix)) {
+    bottomLineMatrix = cbind(bottomLineMatrix, bottomLineMatrix[,j-1] - weight[allPermMatrix[,j]])
+  }
+  topLineMatrix = matrix(weight[allPermMatrix], nrow = nrow(allPermMatrix), ncol = ncol(allPermMatrix))
+  prob = sum(apply(topLineMatrix / bottomLineMatrix, 1, prod))
+  return(prob)
+}
+
+allPermutationList = tapply(splitTeamDF,
                             paste(splitTeamDF$teamgamenumber, splitTeamDF$matchSection),
                             CallCalculateAllPermutation)
+allPermutationDF = splitTeamDF %>%
+  group_by(teamgamenumber, matchSection) %>%
+  summarise(allPermutationByPlayerNumber = CallCalculateAllPermutation(played, playerNumber),
+         activePlayerList = list(playerNumber),
+         minDiff = minDiff[1])
+
+theta = c(1, exp(theta0))
+allPermutationDF = allPermutationDF %>%
+  rowwise() %>%
+  mutate(byMatchSectionProb = NewAAJustProb2(allPermutationByPlayerNumber, activePlayerList, theta),
+         byMatchSectionLogLik = minDiff * log(byMatchSectionProb))
 
 # so let's do in R firstly
-CalculateAllMatchSectionLogLik = function(theta0, allPermutationList) {
+CalculateAllMatchSectionLogLik = function(theta0, allPermutationDF) {
   theta = c(1, exp(theta0))
-  byTeamMatchSectionProb = sapply(allPermutationList, NewAAJustProb, weight = theta)
-  totalLogLik = mean(log(byTeamMatchSectionProb))
+  allPermutationDF = allPermutationDF %>%
+    rowwise() %>%
+    mutate(byMatchSectionProb = NewAAJustProb2(allPermutationByPlayerNumber, activePlayerList, theta),
+           byMatchSectionLogLik = minDiff * log(byMatchSectionProb))
+  totalLogLik = sum(allPermutationDF$byMatchSectionLogLik)
   print(theta)
   print(totalLogLik)
   return(-totalLogLik)
 }
 
-## well it's fast but looks wrong sadly
-# i think firstly, i've not mulitplied by the number of minutes but also i've not accounted for who was actually available, and assumed everybody always was
+# but we need to back up with the BiasedUrn version too
+unMatchSection$biasedUrnProb = rep(NA, nrow(unMatchSection))
+for (j in 1:nrow(unMatchSection)) {
+  unMatchSection$biasedUrnProb[j] = with(splitTeamDF %>%
+                            filter(teamgamenumber == unMatchSection$teamgamenumber[j] &
+                                     matchSection == unMatchSection$matchSection[j]),
+                          dMWNCHypergeo(played, rep(1, length(played)), sum(played), theta[playerNumber]))
+}
+unMatchSection$biasedUrnLogLik = with(unMatchSection, minDiff * log(biasedUrnProb))
+
+
 theta0 = rep(0, length(myUnPlayer) - 1)
 # bit fiddly to sort that one, will come back to that
+maxInfo = nlm(CalculateAllMatchSectionLogLik, p = theta0, allPermutationDF = allPermutationDF, stepmax = 1)
+## woohoo, agrees with what we had before i think
