@@ -84,6 +84,19 @@ CalculateAllMatchSectionLogLik = function(theta0, allPermutationDF) {
   }
   return(-totalLogLik)
 }
+GradAllMatchSection = function(theta0, allPermutationDF) {
+  theta = c(1, exp(theta0))
+  allPermutationDF = allPermutationDF %>%
+    rowwise() %>%
+    mutate(byMatchSectionProb = AABiasedUrnProb(allPermutationByPlayerNumber, activePlayerList, theta),
+           byMatchSectionLogLik = minDiff * log(byMatchSectionProb))
+  totalLogLik = sum(allPermutationDF$byMatchSectionLogLik)
+  if (FALSE) {
+    print(theta)
+    print(totalLogLik)
+  }
+  return(-totalLogLik)
+}
 
 GetPlayerAppearanceMle = function(myTeam, mySeason, myMainpos) {
   
@@ -132,6 +145,7 @@ unTeamSeasonPosition = gbgdf2 %>%
 appearanceMleList = vector('list', nrow(unTeamSeasonPosition))
 for (tspi in 1:nrow(unTeamSeasonPosition)) {
   # mancity attack 1920 is tspi = 212
+  # tspi = 212; myTeam = unTeamSeasonPosition$team[tspi]; mySeason = unTeamSeasonPosition$season[tspi]; myMainpos = unTeamSeasonPosition$mainpos2[tspi]
   appearanceMleList[[tspi]] = with(unTeamSeasonPosition[tspi,],
                                    GetPlayerAppearanceMle(team, season, mainpos2))
   with(unTeamSeasonPosition[tspi,],
