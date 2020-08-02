@@ -18,17 +18,29 @@ SplitGame = function(myPlayer, myStartTime, myEndTime) {
   # for debugging:
   # subGbgdf = gbgdf2 %>% filter(team == 'mancity' & season == 1920 & teamgamenumber == 2 & mainpos %in% c('D', 'DMC')); myStartTime = subGbgdf %>% pull(startTime2); myEndTime = subGbgdf %>% pull(endTime2); myPlayer = subGbgdf %>% pull(player)
   unSubTime = sort(unique(c(myStartTime[myStartTime != 95L], myEndTime[!is.na(myEndTime) & myEndTime != 95L])))
-  minDiff = diff(unSubTime)
-  numInterval = length(unSubTime) - 1
-  myRepeatedPlayedDF = data.frame(player = rep(myPlayer, numInterval),
+  if (length(unSubTime) == 0) {
+    myRepeatedPlayedDF = data.frame(player = character(),
+                                    matchSection = integer(),
+                                    minDiff = integer(),
+                                    startTime = integer(),
+                                    endTime = integer(),
+                                    lhTimeCutoff = integer(),
+                                    rhTimeCutoff = integer(),
+                                    played = integer())
+  }
+  if (length(unSubTime) > 0) {
+    minDiff = diff(unSubTime)
+    numInterval = length(unSubTime) - 1
+    myRepeatedPlayedDF = data.frame(player = rep(myPlayer, numInterval),
                                   matchSection = rep(1:numInterval, rep(length(myStartTime), numInterval)),
                                   minDiff = rep(minDiff, rep(length(myStartTime), numInterval)),
                                   startTime = rep(myStartTime, numInterval),
                                   endTime = rep(myEndTime, numInterval),
                                   lhTimeCutoff = rep(head(unSubTime, -1), rep(length(myStartTime), numInterval)),
                                   rhTimeCutoff = rep(tail(unSubTime, -1), rep(length(myStartTime), numInterval)))
-  myRepeatedPlayedDF$played = with(myRepeatedPlayedDF, as.integer(startTime <= lhTimeCutoff & endTime >= rhTimeCutoff))
-  
+    myRepeatedPlayedDF$played = with(myRepeatedPlayedDF, as.integer(startTime <= lhTimeCutoff & endTime >= rhTimeCutoff))
+  }
+    
   return(myRepeatedPlayedDF)
 }
 
@@ -141,13 +153,19 @@ unTeamSeasonPosition = gbgdf2 %>%
   filter(mainpos2 != 'other') %>%
   distinct(season, team, mainpos2)
 # still takes a while sadly. think we should press on with 1st deriv
+# no, do not do that. it's just too complicated. better to look into situations where it's slow, maybe we can weed out obviously nonsense players
+# and there's one example of all arsenal players not playing, that is rubbish, we should filter things like that out
+
 
 appearanceMleList = vector('list', nrow(unTeamSeasonPosition))
+timestamp = rep(NA, length(unTeamSeasonPosition))
 for (tspi in 1:nrow(unTeamSeasonPosition)) {
   # mancity attack 1920 is tspi = 212
   # tspi = 212; myTeam = unTeamSeasonPosition$team[tspi]; mySeason = unTeamSeasonPosition$season[tspi]; myMainpos = unTeamSeasonPosition$mainpos2[tspi]
+  # 214 is a problem
   appearanceMleList[[tspi]] = with(unTeamSeasonPosition[tspi,],
                                    GetPlayerAppearanceMle(team, season, mainpos2))
   with(unTeamSeasonPosition[tspi,],
        message('Have processed ', season, ' / ', team, ' / ', mainpos2))
+  timestamp[tspi] = date()
 }
