@@ -86,6 +86,12 @@ gbgdf2 = gbgdf %>%
          endTime2 = ifelse(!startTime %in% c('U', 'UU'), endTime, '95')) %>%
   mutate(startTime2 = as.integer(startTime2),
          endTime2 = as.integer(endTime2))
+gbgdf2$mainpos2 = with(gbgdf2, case_when(
+  mainpos %in% c('D', 'DMC') ~ 'def',
+  mainpos == 'M' ~ 'mid',
+  mainpos %in% c('AM', 'FW') ~ 'att',
+  TRUE ~ 'other'
+))
 
 # argh, need to split the game up as subs get made
 SplitGame = function(myPlayer, myStartTime, myEndTime) {
@@ -177,12 +183,6 @@ GetPlayerAppearanceMle = function(myTeam, mySeason, myMainpos) {
 # although i suppose players go in and out of the team, but we're really only interested in the ones who play all the time anyway
 
 # so how about we run it for each team each season to build up our array
-gbgdf2$mainpos2 = with(gbgdf2, case_when(
-  mainpos %in% c('D', 'DMC') ~ 'def',
-  mainpos == 'M' ~ 'mid',
-  mainpos %in% c('AM', 'FW') ~ 'att',
-  TRUE ~ 'other'
-))
 unTeamSeasonPosition = gbgdf2 %>%
   filter(mainpos2 != 'other') %>%
   distinct(season, team, mainpos2)
@@ -190,6 +190,7 @@ unTeamSeasonPosition = gbgdf2 %>%
 
 appearanceMleList = vector('list', nrow(unTeamSeasonPosition))
 for (tspi in 1:nrow(unTeamSeasonPosition)) {
+  # mancity attack 1920 is tspi = 212
   appearanceMleList[[tspi]] = with(unTeamSeasonPosition[tspi,],
                                    GetPlayerAppearanceMle(team, season, mainpos2))
   with(unTeamSeasonPosition[tspi,],
