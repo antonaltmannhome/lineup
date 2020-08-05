@@ -1,12 +1,29 @@
 
 source('c:/git/lineup/new-model-startup.r')
 
+resultDF2 = resultDF %>%
+  mutate(matchKey = paste(date, ifelse(isHome, team, oppteam)))
+
+gbgdf2 = gbgdf %>%
+  lazy_left_join(resultDF2, c('season', 'team', 'teamgamenumber'), 'matchKey')
+maxTimeByMatch = gbgdf2 %>%
+  group_by(matchKey) %>%
+  mutate(endTime2 = ifelse( is.na(endTime) | (!is.na(endTime) & endTime == 'U'), '-100', endTime),
+         endTime2 = as.integer(endTime2)) %>%
+  summarise(maxEndTime = max(endTime2))
+# now override the times those who finished the match with this time
+# ought to fix the problem at source of course
+# that should be easier in fact
+
 gbgdf2 = gbgdf %>%
   filter(!grepl('(injury|suspension)', startTime)) %>%
   mutate(startTime2 = ifelse(!startTime %in% c('U', 'UU'), startTime, '95'),
          endTime2 = ifelse(!startTime %in% c('U', 'UU'), endTime, '95')) %>%
   mutate(startTime2 = as.integer(startTime2),
          endTime2 = as.integer(endTime2))
+# except we've got the problem that players sometimes officially start the match at eg 97 minutes.
+# let's ceiling the endTime to be the greater of 94 and the biggest startTime of the match
+
 gbgdf2$mainpos2 = with(gbgdf2, case_when(
   mainpos %in% c('D', 'DMC') ~ 'def',
   mainpos == 'M' ~ 'mid',
@@ -161,7 +178,7 @@ appearanceMleList = vector('list', nrow(unTeamSeasonPosition))
 timestamp = rep(NA, length(unTeamSeasonPosition))
 for (tspi in 1:nrow(unTeamSeasonPosition)) {
   # mancity attack 1920 is tspi = 212
-  # tspi = 212; myTeam = unTeamSeasonPosition$team[tspi]; mySeason = unTeamSeasonPosition$season[tspi]; myMainpos = unTeamSeasonPosition$mainpos2[tspi]
+  # tspi = 214; myTeam = unTeamSeasonPosition$team[tspi]; mySeason = unTeamSeasonPosition$season[tspi]; myMainpos = unTeamSeasonPosition$mainpos2[tspi]
   # 214 is a problem
   appearanceMleList[[tspi]] = with(unTeamSeasonPosition[tspi,],
                                    GetPlayerAppearanceMle(team, season, mainpos2))

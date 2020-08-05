@@ -236,8 +236,8 @@ getappearanceinfo = function(webadd, mykey) {
 	starttime=endtime=hastatus=rep('U',length(unplayerid))
 	starttime[startix]=0
 	starttime[subonix]=subtime[msubon]
-	endtime[subonix]=94
-	endtime[which(unplayerid %in% startplayerid & !unplayerid %in% subplayerid)]=94
+	endtime[subonix]='F'
+	endtime[which(unplayerid %in% startplayerid & !unplayerid %in% subplayerid)]='F'
 	endtime[suboffix]=subtime[msuboff]
 	starttime[subonoffix]=subtime[msubonoffon]
 	endtime[subonoffix]=subtime[msubonoffoff]
