@@ -1,10 +1,12 @@
 
 source('c:/git/lineup/new-model-startup.r')
 
+fakeMaxTime = 1000L
+
 gbgdf2 = gbgdf %>%
   filter(!grepl('(injury|suspension)', startTime)) %>%
-  mutate(startTime2 = ifelse(!startTime %in% c('U', 'UU'), startTime, '95'),
-         endTime2 = ifelse(!startTime %in% c('U', 'UU'), endTime, '95')) %>%
+  mutate(startTime2 = ifelse(!startTime %in% c('U', 'UU'), startTime, as.character(fakeMaxTime)),
+         endTime2 = ifelse(!startTime %in% c('U', 'UU'), endTime, as.character(fakeMaxTime))) %>%
   mutate(startTime2 = as.integer(startTime2),
          endTime2 = as.integer(endTime2))
 # except we've got the problem that players sometimes officially start the match at eg 97 minutes.
@@ -20,7 +22,8 @@ gbgdf2$mainpos2 = with(gbgdf2, case_when(
 SplitGame = function(myPlayer, myStartTime, myEndTime) {
   # for debugging:
   # subGbgdf = gbgdf2 %>% filter(team == 'mancity' & season == 1920 & teamgamenumber == 2 & mainpos %in% c('D', 'DMC')); myStartTime = subGbgdf %>% pull(startTime2); myEndTime = subGbgdf %>% pull(endTime2); myPlayer = subGbgdf %>% pull(player)
-  unSubTime = sort(unique(c(myStartTime[myStartTime != 95L], myEndTime[!is.na(myEndTime) & myEndTime != 95L])))
+  unSubTime = sort(unique(c(myStartTime[myStartTime != fakeMaxTime],
+                            myEndTime[!is.na(myEndTime) & myEndTime != fakeMaxTime])))
   if (length(unSubTime) == 0) {
     myRepeatedPlayedDF = data.frame(player = character(),
                                     matchSection = integer(),
@@ -120,11 +123,19 @@ GetPlayerAppearanceMle = function(myTeam, mySeason, myMainpos) {
   splitTeamDF = subGbgdf2 %>%
     group_by(season, team, teamgamenumber) %>%
     do(SplitGame(.$player, .$startTime2, .$endTime2))
+ 
   unMatchSection = splitTeamDF %>%
     group_by(teamgamenumber, matchSection, minDiff) %>%
     summarise(numWhoPlayed = sum(played)) %>%
     ungroup() %>%
     mutate(logLik = NA)
+  
+  # but this leaves us with some match sections where no players play
+  # which we don't want, so get rid
+  unMatchSection = unMatchSection %>%
+    filter(numWhoPlayed > 0)
+  splitTeamDF = splitTeamDF %>%
+    semi_join(unMatchSection, c('teamgamenumber', 'matchSection'))
   
   myUnPlayer = unique(splitTeamDF$player)
   # who has made the median number of appearances, they should have value zero
@@ -172,3 +183,6 @@ for (tspi in 1:nrow(unTeamSeasonPosition)) {
        message('Have processed ', season, ' / ', team, ' / ', mainpos2))
   timestamp[tspi] = date()
 }
+
+# takes 15 mins or so. so not massively practical for optimising a full run but not atrocious either. there's also that multi node thing to try
+saveRDS(file = 'project/appearance/appearanceMleList.rds', object = appearanceMleList)
