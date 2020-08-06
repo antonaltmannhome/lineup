@@ -169,7 +169,8 @@ unTeamSeasonPosition = gbgdf2 %>%
 # still takes a while sadly. think we should press on with 1st deriv
 # no, do not do that. it's just too complicated. better to look into situations where it's slow, maybe we can weed out obviously nonsense players
 # and there's one example of all arsenal players not playing, that is rubbish, we should filter things like that out
-
+# bah, some players appear twice, is that when they have two mainposes during a season?
+# yes, need to fix that
 
 appearanceMleList = vector('list', nrow(unTeamSeasonPosition))
 timestamp = rep(NA, length(unTeamSeasonPosition))
