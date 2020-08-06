@@ -44,3 +44,4 @@ write.csv(x = appearanceDF, file = fileOut, row.names = FALSE)
 
 fileOut = paste0(DATAPATH, 'soccerway_saved/playerid.csv')
 write.csv(x = appearanceDF %>% distinct(playerid, player), file = fileOut, row.names = FALSE)
+

@@ -293,7 +293,7 @@ getappearanceinfo = function(webadd, mykey) {
 	appearanceDF = bind_rows(playingDF,
 							sidelinedDF %>%
 							rename(startTime = injurySuspension) %>%
-							mutate(endTime = NA))
+							mutate(endTime = NA_character_))
 
 	appearanceDF = RemoveDoubleListedPlayer(appearanceDF)
 

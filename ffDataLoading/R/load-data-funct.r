@@ -51,7 +51,38 @@ ReadGbgDF = function() {
   return(gbgdf)
 }
 
+FillOutEndTimeColumn = function(gbgdf, resultDF) {
+  resultDF2 = resultDF %>%
+    mutate(matchKey = paste(date, ifelse(isHome, team, oppteam)))
+  
+  gbgdf2 = gbgdf %>%
+    lazy_left_join(resultDF2, c('season', 'team', 'teamgamenumber'), 'matchKey')
+  maxTimeByMatch = gbgdf2 %>%
+    mutate(endTime2 = case_when(
+      is.na(endTime) ~ '-100',
+      (!is.na(endTime) & endTime == 'U') ~ '-100',
+      (!is.na(endTime) & endTime == 'F') ~ '94',
+      TRUE ~ endTime)) %>%
+    mutate(endTime2 = as.integer(endTime2)) %>%
+    group_by(matchKey) %>%
+    summarise(maxEndTime = max(endTime2))
+  
+  gbgdf2 = gbgdf2 %>%
+    left_join(maxTimeByMatch,
+              'matchKey')
+  gbgdf2 = gbgdf2 %>%
+    mutate_cond(!is.na(endTime) & endTime == 'F',
+                endTime = as.character(maxEndTime))
+  
+  gbgdf2 = within(gbgdf2, rm(matchKey, maxEndTime))
+  
+  return(gbgdf2)
+}
+
 BolsterGbgDF = function(gbgdf, resultDF) {
+  
+  gbgdf = FillOutEndTimeColumn(gbgdf, resultDF)
+  
   gbgdf$played = with(gbgdf, !grepl('[^0-9]', startTime))
   gbgdf$minute = 0
   gbgdf$minute[gbgdf$played] = with(gbgdf, as.numeric(endTime[played]) - as.numeric(startTime[played]))

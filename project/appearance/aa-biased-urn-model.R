@@ -1,20 +1,6 @@
 
 source('c:/git/lineup/new-model-startup.r')
 
-resultDF2 = resultDF %>%
-  mutate(matchKey = paste(date, ifelse(isHome, team, oppteam)))
-
-gbgdf2 = gbgdf %>%
-  lazy_left_join(resultDF2, c('season', 'team', 'teamgamenumber'), 'matchKey')
-maxTimeByMatch = gbgdf2 %>%
-  group_by(matchKey) %>%
-  mutate(endTime2 = ifelse( is.na(endTime) | (!is.na(endTime) & endTime == 'U'), '-100', endTime),
-         endTime2 = as.integer(endTime2)) %>%
-  summarise(maxEndTime = max(endTime2))
-# now override the times those who finished the match with this time
-# ought to fix the problem at source of course
-# that should be easier in fact
-
 gbgdf2 = gbgdf %>%
   filter(!grepl('(injury|suspension)', startTime)) %>%
   mutate(startTime2 = ifelse(!startTime %in% c('U', 'UU'), startTime, '95'),
