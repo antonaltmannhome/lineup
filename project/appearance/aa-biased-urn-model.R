@@ -102,19 +102,6 @@ CalculateAllMatchSectionLogLik = function(theta0, allPermutationDF) {
   }
   return(-totalLogLik)
 }
-GradAllMatchSection = function(theta0, allPermutationDF) {
-  theta = c(1, exp(theta0))
-  allPermutationDF = allPermutationDF %>%
-    rowwise() %>%
-    mutate(byMatchSectionProb = AABiasedUrnProb(allPermutationByPlayerNumber, activePlayerList, theta),
-           byMatchSectionLogLik = minDiff * log(byMatchSectionProb))
-  totalLogLik = sum(allPermutationDF$byMatchSectionLogLik)
-  if (FALSE) {
-    print(theta)
-    print(totalLogLik)
-  }
-  return(-totalLogLik)
-}
 
 GetPlayerAppearanceMle = function(myTeam, mySeason, myMainpos) {
   
