@@ -90,12 +90,15 @@ AABiasedUrnProb = function(allPermMatrix, activePlayerNumber, weight) {
 }
 
 CalculateAllMatchSectionLogLik = function(theta0, allPermutationDF) {
-  theta = c(1, exp(theta0))
+  theta = exp(theta0)
   allPermutationDF = allPermutationDF %>%
     rowwise() %>%
     mutate(byMatchSectionProb = AABiasedUrnProb(allPermutationByPlayerNumber, activePlayerList, theta),
            byMatchSectionLogLik = minDiff * log(byMatchSectionProb))
-  totalLogLik = sum(allPermutationDF$byMatchSectionLogLik)
+  dataLogLik = sum(allPermutationDF$byMatchSectionLogLik)
+  
+  penaltyLik = 0.1 * sum( (theta - 1)^2)
+  totalLogLik = dataLogLik - penaltyLik
   if (FALSE) {
     print(theta)
     print(totalLogLik)
@@ -140,11 +143,11 @@ GetPlayerAppearanceMle = function(myTeam, mySeason, myMainpos) {
               activePlayerList = list(playerNumber),
               minDiff = minDiff[1])
   
-  theta0 = rep(0, length(myUnPlayer) - 1)
+  theta0 = rep(0, length(myUnPlayer))
   
   maxInfo = nlm(CalculateAllMatchSectionLogLik, p = theta0, allPermutationDF = allPermutationDF, stepmax = 5)
-  dum = c(0, maxInfo$est)
-  myAppearanceMle = data.frame(team = myTeam, season = mySeason, player = myUnPlayer, appearanceMle = dum, appearanceOdds = exp(dum) / sum(exp(dum)))
+  dum = maxInfo$est
+  myAppearanceMle = data.frame(team = myTeam, season = mySeason, mainpos = myMainpos, player = myUnPlayer, appearanceMle = dum, appearanceOdds = exp(dum) / sum(exp(dum)))
   
   return(myAppearanceMle)
 }
@@ -174,3 +177,20 @@ for (tspi in 1:nrow(unTeamSeasonPosition)) {
 
 # takes 15 mins or so. so not massively practical for optimising a full run but not atrocious either. there's also that multi node thing to try
 saveRDS(file = 'project/appearance/appearanceMleList.rds', object = appearanceMleList)
+
+# let's try the multinode thing
+library(doParallel)
+registerDoParallel()
+date()
+allTeamSeasonMainposEstimateDF = foreach (tspi=1:nrow(unTeamSeasonPosition),
+                                          .combine = rbind,
+                                          .packages=c("dplyr")) %dopar% {
+  # mancity attack 1920 is tspi = 212
+  # tspi = 214; myTeam = unTeamSeasonPosition$team[tspi]; mySeason = unTeamSeasonPosition$season[tspi]; myMainpos = unTeamSeasonPosition$mainpos2[tspi]
+  # 214 is a problem
+  with(unTeamSeasonPosition[tspi,],
+       GetPlayerAppearanceMle(team, season, mainpos2))
+}
+date()
+
+# 5 minutes, now we're talking. rcpp possibly a slightly help, but not necessaryily
