@@ -100,9 +100,9 @@ GetPlayerAppearanceMle = function(myTeam, myBlock, myMainpos, blockWindowSize) {
 # what formation do they tend to play?
 # this will surely become a function of its own in time
 
-GetPositionDataForTeamBlock = function(myTeam, myBlock) {
+GetPastFormationForTeamBlock = function(myTeam, myBlock) {
   numGameInBlock = with(resultDF, sum(team == myTeam & inBlock == myBlock))
-  totalByPositionDF = gbgdf2 %>%
+  pastFormationDF = gbgdf2 %>%
     lazy_left_join(resultDF,
                    c('season', 'team', 'teamgamenumber'),
                    'maxEndTime') %>%
@@ -112,47 +112,89 @@ GetPositionDataForTeamBlock = function(myTeam, myBlock) {
     mutate(floorNP = floor(numPlayerInPos),
            ceilingNP = ceiling(numPlayerInPos))
   # get rid of gk and sort the normal way
-  totalByPositionDF = totalByPositionDF %>%
+  pastFormationDF = pastFormationDF %>%
     filter(mainpos2 %in% c('def', 'mid', 'att')) %>%
     arrange(match(mainpos2, c('def', 'mid', 'att')))
   
-  return(totalByPositionDF)
+  return(pastFormationDF)
 }
 
-
-myTeam = 'mancity'
-myBlock = 12
-totalByPositionDF = GetPositionDataForTeamBlock(myTeam, myBlock)
-# so what I would like to do is then have a list of combos that average out to that
-
-maxCombo = with(totalByPositionDF,
-                expand.grid(def = c(floorNP[mainpos2 == 'def'], ceilingNP[mainpos2 == 'def']),
-                            mid = c(floorNP[mainpos2 == 'mid'], ceilingNP[mainpos2 == 'mid']),
-                            att = c(floorNP[mainpos2 == 'att'], ceilingNP[mainpos2 == 'att'])))
-validCombo = maxCombo[which(rowSums(maxCombo) == 10),]
-
-# but then we need to weighted combo that sums to the average
-FormationLikFunct = function(theta) {
+FormationLikFunct = function(theta, pastFormationDF, validFormationMatrix) {
   wgtVec = c(1, exp(theta))
-  calcFormation = colSums(validCombo * wgtVec)/sum(wgtVec)
-  sqDiff = sum( (totalByPositionDF$numPlayerInPos - calcFormation) ^ 2)
+  calcFormation = colSums(validFormationMatrix * wgtVec)/sum(wgtVec)
+  sqDiff = sum( (pastFormationDF$numPlayerInPos - calcFormation) ^ 2)
   return(sqDiff)
 }
-maxInfo = nlm(FormationLikFunct, p = c(0, 0), stepmax = 3)
-optVec = c(1, exp(maxInfo$est))
-# that went swimmingly for that example, nice
 
-# come back to that
-# let's make a guess for that and predict for it
-numPlayerInPosComboDF = tibble(mainpos2 = rep(c('def', 'mid', 'att'), 2),
-                               numPlayerInPos = c(2, 5, 3, 3, 4, 3))
-
-# loop for now of course
-myPlayerMle = GetPlayerAppearanceMle(myTeam, myBlock, myMainpos = 'def', blockWindowSize = 4)
-BiasedUrn::meanMWNCHypergeo(rep(1, nrow(myPlayerMle)), 3, myPlayerMle$appearanceOdds)
-# ok so that is nice - but we'd need to loop over every match i think and adjust first and last arguments according to who is available
-
-# which is pretty easy actually
-for (j in which(resultDF$team == myTeam & resultDF$inBlock == myBlock)) {
+GetFormationWeight = function(pastFormationDF) {
   
+  expandedPastFormationDF = with(pastFormationDF,
+                  expand.grid(def = c(floorNP[mainpos2 == 'def'], ceilingNP[mainpos2 == 'def']),
+                              mid = c(floorNP[mainpos2 == 'mid'], ceilingNP[mainpos2 == 'mid']),
+                              att = c(floorNP[mainpos2 == 'att'], ceilingNP[mainpos2 == 'att'])))
+  validFormationMatrix = expandedPastFormationDF[which(rowSums(expandedPastFormationDF) == 10),]
+  
+  # but then we need to weighted combo that sums to the average
+  maxInfo = nlm(FormationLikFunct, p = c(0, 0),
+                pastFormationDF = pastFormationDF,
+                validFormationMatrix = validFormationMatrix,
+                stepmax = 3)
+  formationWeightDF = tibble(formationIndex = 1:nrow(validFormationMatrix),
+                             formationWgt = c(1, exp(maxInfo$est)) / sum(c(1, exp(maxInfo$est))))
+  
+  formationDF = as_tibble(validFormationMatrix) %>%
+    mutate(formationIndex = 1:n()) %>%
+    select(formationIndex, everything()) %>%
+    left_join(formationWeightDF, 'formationIndex')
+  
+  return(formationDF)
 }
+
+
+GetExpectedNumGameByTeamBlock = function(myTeam, myBlock) {
+  
+  pastFormationDF = GetPastFormationForTeamBlock(myTeam, myBlock)
+  formationDF = GetFormationWeight(pastFormationDF)
+  numFormation = nrow(formationDF)
+  
+  # so what I would like to do is then have a list of combos that average out to that
+  # that went swimmingly for that example, nice
+  
+  # so for each match, we need to calculate the prob of each available player playing for each plausible formation
+  # loop for now of course
+  myList = vector('list', 3)
+  for (i in 1:3) {
+    myMainpos = c('def', 'mid', 'att')[i]
+    myPlayerMle = GetPlayerAppearanceMle(myTeam, myBlock, myMainpos = myMainpos, blockWindowSize = 4)
+    
+    subGbgDF = gbgdf2 %>%
+      filter(team == myTeam & inBlock == myBlock & available & mainpos2 == myMainpos) %>%
+      lazy_left_join(myPlayerMle, 'player', 'appearanceOdds')
+    
+    repSubGbgDF = subGbgDF %>%
+      lazy_left_join(myPlayerMle, 'player', 'appearanceOdds') %>%
+      replace_na(list(appearanceOdds = 0.0001)) %>%
+      slice(rep(1:n(), each = numFormation)) %>%
+      mutate(formationIndex = rep(1:numFormation, n()/numFormation)) %>%
+      left_join(formationDF %>%
+                  gather(mainpos2, numPlayerInPos, -c(formationIndex, formationWgt)),
+                c('formationIndex', 'mainpos2'))
+    
+    repSubGbgDF = repSubGbgDF %>%
+      group_by(teamgamenumber, formationIndex) %>%
+      mutate(probPlay = BiasedUrn::meanMWNCHypergeo(rep(1, n()), numPlayerInPos[1], appearanceOdds)) %>%
+      ungroup()
+    
+    myList[[i]] = repSubGbgDF %>%
+      group_by(player) %>%
+      summarise(expectedNumGame = sum(probPlay * formationWgt)) %>%
+      mutate(team = myTeam, mainpos2 = myMainpos, inBlock = myBlock)
+  }
+  
+  # ok so that all works, i believe we need to loop by team/block
+  expectedNumGameDF = bind_rows(myList)
+  
+  return(expectedNumGameDF)
+}
+
+# ok, now we need to get it looping, need to add these functions into biased-urn-funct
