@@ -40,7 +40,9 @@ fixtDF = dum$fixtDF
 resultDF = ffDataLoading:::CreateDaynum(resultDF)
 
 gbgdf = ffDataLoading::ReadGbgDF()
-gbgdf = ffDataLoading::BolsterGbgDF(gbgdf, resultDF)
+dum = ffDataLoading::BolsterGbgDF(gbgdf, resultDF)
+resultDF = dum$resultDF
+gbgdf = dum$gbgdf
 # i think the chances are, we will not be wanting the players who are unidentified any time soon
 gbgdf = gbgdf %>%
         filter(!is.na(player))

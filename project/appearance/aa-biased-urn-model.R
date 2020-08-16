@@ -90,7 +90,7 @@ AABiasedUrnProb = function(allPermMatrix, activePlayerNumber, weight) {
 }
 
 CalculateAllMatchSectionLogLik = function(theta0, allPermutationDF) {
-  theta = exp(theta0)
+  theta = c(1, exp(theta0))
   allPermutationDF = allPermutationDF %>%
     rowwise() %>%
     mutate(byMatchSectionProb = AABiasedUrnProb(allPermutationByPlayerNumber, activePlayerList, theta),
@@ -143,10 +143,10 @@ GetPlayerAppearanceMle = function(myTeam, mySeason, myMainpos) {
               activePlayerList = list(playerNumber),
               minDiff = minDiff[1])
   
-  theta0 = rep(0, length(myUnPlayer))
+  theta0 = rep(0, length(myUnPlayer) - 1)
   
   maxInfo = nlm(CalculateAllMatchSectionLogLik, p = theta0, allPermutationDF = allPermutationDF, stepmax = 5)
-  dum = maxInfo$est
+  dum = c(0, maxInfo$est)
   myAppearanceMle = data.frame(team = myTeam, season = mySeason, mainpos = myMainpos, player = myUnPlayer, appearanceMle = dum, appearanceOdds = exp(dum) / sum(exp(dum)))
   
   return(myAppearanceMle)
@@ -194,3 +194,6 @@ allTeamSeasonMainposEstimateDF = foreach (tspi=1:nrow(unTeamSeasonPosition),
 date()
 
 # 5 minutes, now we're talking. rcpp possibly a slightly help, but not necessaryily
+
+# what about putting more weight on more recent games, make sure we can do that next
+# which takes a slightly different form to this, so start new file

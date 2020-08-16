@@ -66,6 +66,9 @@ FillOutEndTimeColumn = function(gbgdf, resultDF) {
     mutate(endTime2 = as.integer(endTime2)) %>%
     group_by(matchKey) %>%
     summarise(maxEndTime = max(endTime2))
+  resultDF = left_join(resultDF2,
+                        maxTimeByMatch,
+                        'matchKey')
   
   gbgdf2 = gbgdf2 %>%
     left_join(maxTimeByMatch,
@@ -74,14 +77,16 @@ FillOutEndTimeColumn = function(gbgdf, resultDF) {
     mutate_cond(!is.na(endTime) & endTime == 'F',
                 endTime = as.character(maxEndTime))
   
-  gbgdf2 = within(gbgdf2, rm(matchKey, maxEndTime))
+  gbgdf = within(gbgdf2, rm(matchKey, maxEndTime))
   
-  return(gbgdf2)
+  return(lst(resultDF, gbgdf))
 }
 
 BolsterGbgDF = function(gbgdf, resultDF) {
   
-  gbgdf = FillOutEndTimeColumn(gbgdf, resultDF)
+  dum = FillOutEndTimeColumn(gbgdf, resultDF)
+  resultDF = dum$resultDF
+  gbgdf = dum$gbgdf
   
   gbgdf$played = with(gbgdf, !grepl('[^0-9]', startTime))
   gbgdf$minute = 0
@@ -156,17 +161,17 @@ BolsterGbgDF = function(gbgdf, resultDF) {
 			group_by(season, teamgamenumber, team) %>%
 			summarise(shotont = sum(ont))
 
-	resultDF = left_join(resultDF,
+	resultDF2 = left_join(resultDF,
 							shotinfo %>%
 							dplyr::rename(oppteam = team,
 											shotontconceded = shotont),
 							by = c('season', 'teamgamenumber', 'oppteam'))
 
-	resultDF = resultDF %>%
+	resultDF2 = resultDF2 %>%
 					mutate(gksave = shotontconceded - conceded)
 
 	gbgdf = left_join(gbgdf,
-						resultDF %>%
+						resultDF2 %>%
 						select(date, daynum, team, oddsescored, oppteam, conceded, oddseconceded, gksave) %>%
 						dplyr::rename(teamconceded = conceded,
 										teamoddsescored = oddsescored,
@@ -180,7 +185,7 @@ BolsterGbgDF = function(gbgdf, resultDF) {
     mutate(gameForTeamNumber = 1:n()) %>%
     ungroup()
 	  
-	return(gbgdf)
+	return(lst(resultDF, gbgdf))
 }
 
 GetSummaryDF = function(gbgdf, beforeseason=F) {
