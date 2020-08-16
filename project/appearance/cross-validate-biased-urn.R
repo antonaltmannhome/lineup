@@ -108,7 +108,13 @@ GetPositionDataForTeamBlock = function(myTeam, myBlock) {
                    'maxEndTime') %>%
     filter(team == myTeam & inBlock == myBlock) %>%
     group_by(mainpos2) %>%
-    summarise(numPlayerInPos = sum( (endTime2 - startTime2) / maxEndTime) / numGameInBlock)
+    summarise(numPlayerInPos = sum( (endTime2 - startTime2) / maxEndTime) / numGameInBlock) %>%
+    mutate(floorNP = floor(numPlayerInPos),
+           ceilingNP = ceiling(numPlayerInPos))
+  # get rid of gk and sort the normal way
+  totalByPositionDF = totalByPositionDF %>%
+    filter(mainpos2 %in% c('def', 'mid', 'att')) %>%
+    arrange(match(mainpos2, c('def', 'mid', 'att')))
   
   return(totalByPositionDF)
 }
@@ -116,8 +122,26 @@ GetPositionDataForTeamBlock = function(myTeam, myBlock) {
 
 myTeam = 'mancity'
 myBlock = 12
-GetPositionDataForTeamBlock = function(myTeam, myBlock)
+totalByPositionDF = GetPositionDataForTeamBlock(myTeam, myBlock)
 # so what I would like to do is then have a list of combos that average out to that
+
+maxCombo = with(totalByPositionDF,
+                expand.grid(def = c(floorNP[mainpos2 == 'def'], ceilingNP[mainpos2 == 'def']),
+                            mid = c(floorNP[mainpos2 == 'mid'], ceilingNP[mainpos2 == 'mid']),
+                            att = c(floorNP[mainpos2 == 'att'], ceilingNP[mainpos2 == 'att'])))
+validCombo = maxCombo[which(rowSums(maxCombo) == 10),]
+
+# but then we need to weighted combo that sums to the average
+FormationLikFunct = function(theta) {
+  wgtVec = c(1, exp(theta))
+  calcFormation = colSums(validCombo * wgtVec)/sum(wgtVec)
+  sqDiff = sum( (totalByPositionDF$numPlayerInPos - calcFormation) ^ 2)
+  return(sqDiff)
+}
+maxInfo = nlm(FormationLikFunct, p = c(0, 0), stepmax = 3)
+optVec = c(1, exp(maxInfo$est))
+# that went swimmingly for that example, nice
+
 # come back to that
 # let's make a guess for that and predict for it
 numPlayerInPosComboDF = tibble(mainpos2 = rep(c('def', 'mid', 'att'), 2),
