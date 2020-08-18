@@ -186,17 +186,51 @@ MakeMatchFormationDF = function(myTeam, myBlock, formationDF) {
   return(matchFormationDF)  
 }
 
-GetExpectedNumGameByTeamBlock = function(myTeam, myBlock, blockWindowSize, allTeamSeasonMainposEstimateDF) {
-  
+# let's look at another way of guessing formation
+myTeam = 'arsenal'
+myBlock = 5
+myPlayerMle = allTeamSeasonMainposEstimateDF %>%
+  filter(team == myTeam & inBlock == myBlock)
+
+subGbgDF = gbgdf2 %>%
+  filter(team == myTeam & inBlock == myBlock & available) %>%
+  lazy_left_join(myPlayerMle, 'player', 'appearanceOdds') %>%
+  replace_na(list(appearanceOdds = 0.0001))
+
+GetAveragePastAppearanceProb = function(myTeam, myBlock, blockWindowSize, allTeamSeasonMainposEstimateDF) {
   pastGbgDF = GetPastGbgDF(myTeam, myBlock, blockWindowSize)
   
   pastFormationDF = GetPastFormationForTeamBlock(pastGbgDF)
   formationDF = GetFormationWeight(pastFormationDF)
-  #numFormation = nrow(formationDF)
-  matchFormationDF = MakeMatchFormationDF(myTeam, myBlock, formationDF)
+  vertFormationDF = gather(formationDF,
+                           mainpos2, numPlayerToSelect,
+                           -c(formationIndex, formationWgt))
   
+  myPlayerMle = allTeamSeasonMainposEstimateDF %>%
+    filter(team == myTeam & inBlock == myBlock)
+  
+  playerFormationDF = full_join(myPlayerMle, vertFormationDF, 'mainpos2') %>%
+    arrange(mainpos2, formationIndex)
+
+  playerFormationDF = playerFormationDF %>%
+    group_by(mainpos2, formationIndex) %>%
+    mutate(formationAppearanceProb = BiasedUrn::meanMWNCHypergeo(rep(1, n()), numPlayerToSelect[1], appearanceOdds))
+  
+  # then sum by probability
+  playerAppearanceProb = playerFormationDF %>%
+    group_by(player) %>%
+    summarise(appearanceProb = sum(formationWgt * formationAppearanceProb))
+  
+  return(playerAppearanceProb)
+}
+
+GetExpectedNumGameByTeamBlock = function(myTeam, myBlock, blockWindowSize, allTeamSeasonMainposEstimateDF) {
+ 
+  pastAppearanceProb = GetAveragePastAppearanceProb(myTeam, myBlock, blockWindowSize, allTeamSeasonMainposEstimateDF)
   # so what I would like to do is then have a list of combos that average out to that
   # that went swimmingly for that example, nice
+  
+  
   
   # so for each match, we need to calculate the prob of each available player playing for each plausible formation
   # loop for now of course
