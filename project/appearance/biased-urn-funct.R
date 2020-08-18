@@ -69,14 +69,14 @@ AABiasedUrnProb = function(allPermMatrix, activePlayerNumber, weight) {
 }
 
 CalculateAllMatchSectionLogLik = function(theta0, allPermutationDF) {
-  theta = c(1, exp(theta0))
+  theta = exp(theta0)
   allPermutationDF = allPermutationDF %>%
     rowwise() %>%
     mutate(byMatchSectionProb = AABiasedUrnProb(allPermutationByPlayerNumber, activePlayerList, theta),
            byMatchSectionLogLik = minDiff * log(byMatchSectionProb))
   dataLogLik = sum(allPermutationDF$byMatchSectionLogLik)
   
-  penaltyLik = 0.1 * sum( (theta - 1)^2)
+  penaltyLik = 10 * sum(theta0^2)
   totalLogLik = dataLogLik - penaltyLik
   if (FALSE) {
     print(theta)

@@ -13,8 +13,8 @@ seasonInfoDF$seasonNumber = match(seasonInfoDF$season, with(seasonInfoDF, sort(s
 resultDF = lazy_left_join(resultDF, seasonInfoDF, 'season', 'seasonNumber')
 
 numBlockWithinSeason = 4
-resultDF$inBlock = with(resultDF, (seasonNumber - 1) * numBlockWithinSeason +
-                          cut(teamgamenumber, br = seq(0.5, 38.5, le = 5), labels = FALSE))
+resultDF$inBlock = as.integer(with(resultDF, (seasonNumber - 1) * numBlockWithinSeason +
+                          cut(teamgamenumber, br = seq(0.5, 38.5, le = 5), labels = FALSE)))
 
 gbgdf = lazy_left_join(gbgdf,
                         resultDF,
@@ -48,8 +48,82 @@ gbgdf2 = gbgdf2 %>%
 # so let's not do the downweight just yet, let's try to predict minutes for a team for a block of the season
 
 unTeamMainposBlock = gbgdf2 %>%
-  distinct(team, mainpos2, inBlock)
+  distinct(team, mainpos2, inBlock) %>%
+  group_by(team, mainpos2) %>%
+  arrange(inBlock) %>%
+  mutate(blockDelta = inBlock - lag(inBlock, 1),
+         isValid = !is.na(blockDelta) & blockDelta == 1) %>%
+  filter(mainpos2 %in% c('def', 'mid', 'att') & isValid) %>%
+  select(team, mainpos2, inBlock)
 
+
+registerDoParallel()
+date()
+allTeamSeasonMainposEstimateDF = foreach (tspi=1:nrow(unTeamMainposBlock),
+                                          .combine = rbind,
+                                          .packages=c("dplyr")) %dopar% {
+                                            with(unTeamMainposBlock[tspi,],
+                                                 GetPlayerAppearanceMleByBlock(team, mainpos2, inBlock, 4))
+                                          }
+date()
+# prior seems to be misbehaving, wanting to make sanchez ridiculously good
+# save that temporarily, then tweak the code below to calculate likliehood of all of it
+write_csv(x = allTeamSeasonMainposEstimateDF, path = 'c:/temp/temp-player-appearance-mle.csv')
+GetPlayerAppearanceMleByBlock = function(myTeam, myMainpos, myBlock, blockWindowSize) {
+  
+  pastGbgDF = gbgdf2 %>%
+    filter(team == myTeam & inBlock < myBlock & inBlock >= myBlock - blockWindowSize)
+  pastGbgDF = semi_join(pastGbgDF,
+                        pastGbgDF %>%
+                          group_by(player) %>%
+                          summarise(sumMinute = sum(minute)) %>%
+                          filter(sumMinute > 10),
+                        'player')
+  
+  splitTeamDF = pastGbgDF %>%
+    filter(mainpos2 == myMainpos) %>%
+    group_by(season, team, teamgamenumber) %>%
+    do(SplitGame(.$player, .$startTime2, .$endTime2))
+  
+  unMatchSection = splitTeamDF %>%
+    group_by(teamgamenumber, matchSection, minDiff) %>%
+    summarise(numWhoPlayed = sum(played)) %>%
+    ungroup() %>%
+    mutate(logLik = NA)
+  
+  # but this leaves us with some match sections where no players play
+  # which we don't want, so get rid
+  unMatchSection = unMatchSection %>%
+    filter(numWhoPlayed > 0)
+  splitTeamDF = splitTeamDF %>%
+    semi_join(unMatchSection, c('teamgamenumber', 'matchSection'))
+  
+  # who has made the median number of appearances, they should have value zero
+  myTotalMinutePlayed = splitTeamDF %>%
+    group_by(player) %>%
+    summarise(totalMinutePlayed = sum(endTime - startTime)) %>%
+    arrange(totalMinutePlayed)
+  
+  referencePlayer = myTotalMinutePlayed$player[floor(0.5 * nrow(myTotalMinutePlayed)+1)]
+  myUnPlayer = c(referencePlayer, setdiff(myTotalMinutePlayed$player, referencePlayer))
+  splitTeamDF$playerNumber = match(splitTeamDF$player, myUnPlayer)
+  
+  allPermutationDF = splitTeamDF %>%
+    group_by(teamgamenumber, matchSection) %>%
+    summarise(allPermutationByPlayerNumber = CalculateAllPermutation(played, playerNumber),
+              activePlayerList = list(playerNumber),
+              minDiff = minDiff[1])
+  
+  theta0 = rep(0, length(myUnPlayer))
+  
+  maxInfo = nlm(CalculateAllMatchSectionLogLik, p = theta0, allPermutationDF = allPermutationDF, stepmax = 5)
+
+  myAppearanceMle = data.frame(team = myTeam, inBlock = myBlock, mainpos2 = myMainpos, player = myUnPlayer,
+                               appearanceMle = maxInfo$estimate,
+                               appearanceOdds = exp(maxInfo$estimate) / sum(exp(maxInfo$estimate)))
+  
+  return(myAppearanceMle)
+}
 
 GetPlayerAppearanceMle = function(pastGbgDF, myMainpos) {
   
@@ -260,3 +334,5 @@ GetExpectedNumGameByTeamBlock = function(myTeam, myBlock, blockWindowSize) {
 
 # ok, now we need to get it looping, need to add these functions into biased-urn-funct
 # need to rearrange the final function a bit, need to separate out the estimation of players and calculating the expected number of games played
+
+# so we want to use parallelisation to get all the team/player estimates firstly
