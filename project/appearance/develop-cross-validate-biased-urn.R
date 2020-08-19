@@ -241,6 +241,9 @@ MakeMatchFormationDF = function(myTeam, myBlock, formationDF) {
     mutate(isPossible = (numDef >= def &
                            numMid >= mid &
                            numAtt >= att))
+  
+  # it could be that all of the formations are impossible unfortunately, so if that happens, add in the most probable historic ones
+  
   # the impossible ones need to have formationWgt set to 0 and the remaining ones summed up accordingly
   scaleUp = matchFormationDF %>%
     group_by(season, teamgamenumber) %>%
