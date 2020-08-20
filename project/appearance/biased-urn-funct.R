@@ -68,15 +68,15 @@ AABiasedUrnProb = function(allPermMatrix, activePlayerNumber, weight) {
   return(prob)
 }
 
-CalculateAllMatchSectionLogLik = function(theta0, allPermutationDF) {
+CalculateAllMatchSectionLogLik = function(theta0, allPermutationDF, priorStrength) {
   theta = exp(theta0)
   allPermutationDF = allPermutationDF %>%
     rowwise() %>%
     mutate(byMatchSectionProb = AABiasedUrnProb(allPermutationByPlayerNumber, activePlayerList, theta),
            byMatchSectionLogLik = minDiff * log(byMatchSectionProb))
-  dataLogLik = sum(allPermutationDF$byMatchSectionLogLik)
+  dataLogLik = with(allPermutationDF, sum(timeDownWeight * byMatchSectionLogLik))
   
-  penaltyLik = 10 * sum(theta0^2)
+  penaltyLik = priorStrength * sum(theta0^2)
   totalLogLik = dataLogLik - penaltyLik
   if (FALSE) {
     print(theta)
@@ -88,26 +88,26 @@ CalculateAllMatchSectionLogLik = function(theta0, allPermutationDF) {
 MakeHistoricFormationDF = function(gbgdf2) {
   
   splitTeamDF = gbgdf2 %>%
-    group_by(season, team, teamgamenumber) %>%
+    group_by(alltimetgn, team) %>%
     do(SplitGame(.$player, .$startTime2, .$endTime2)) %>%
     lazy_left_join(gbgdf2,
-                   c('season', 'team', 'teamgamenumber', 'player'),
+                   c('alltimetgn', 'team', 'player'),
                    'mainpos2') %>%
     ungroup()
   
   splitTeamDF = splitTeamDF %>%
     lazy_left_join(resultDF,
-                   c('season', 'team', 'teamgamenumber'),
+                   c('alltimetgn', 'team'),
                    'maxEndTime')
   
   sumInPosByMatch = splitTeamDF %>%
-    group_by(season, team, teamgamenumber, mainpos2) %>%
+    group_by(alltimetgn, team, mainpos2) %>%
     summarise(sumInPos = sum(played * minDiff/maxEndTime))
   
   # is that quite what we want? i'd say not, i think we want the actual formation along with a proportion
   
   vertFormationByMatchSection = splitTeamDF %>%
-    group_by(season, team, teamgamenumber, mainpos2, matchSection) %>%
+    group_by(alltimetgn, team, mainpos2, matchSection) %>%
     summarise(sumInPos = sum(played),
               matchProportion = minDiff[1] / maxEndTime[1])
   
@@ -123,31 +123,42 @@ MakeHistoricFormationDF = function(gbgdf2) {
   return(historicFormationDF)
 }
 
-GetPastGbgDF = function(myTeam, myBlock, blockWindowSize) {
+GetPastResultGbgDF = function(myTeam, myBlock, blockWindowSize, timeDownWeightCoef) {
   
-  pastGbgDF = gbgdf2 %>%
+  pastTeamResultDF = resultDF %>%
     filter(team == myTeam & inBlock < myBlock & inBlock >= myBlock - blockWindowSize)
-  pastGbgDF = semi_join(pastGbgDF,
-                        pastGbgDF %>%
-                          group_by(player) %>%
-                          summarise(sumMinute = sum(minute)) %>%
-                          filter(sumMinute > 10),
-                        'player')
   
-  return(pastGbgDF)
+  maxAllTimeTgn = max(pastTeamResultDF$alltimetgn)
+  pastTeamResultDF = pastTeamResultDF %>%
+    mutate(timeDownWeight = exp(-timeDownWeightCoef * (maxAllTimeTgn - alltimetgn)))
+  
+  pastTeamGbgDF = gbgdf2 %>%
+    semi_join(pastTeamResultDF, c('team', 'alltimetgn'))
+  
+  pastTeamGbgDF = semi_join(pastTeamGbgDF,
+                            pastTeamGbgDF %>%
+                              group_by(player) %>%
+                              summarise(sumMinute = sum(minute)) %>%
+                              filter(sumMinute > 10),
+                            'player')
+  
+  return(lst(pastTeamResultDF, pastTeamGbgDF))
 }
 
-GetPlayerAppearanceMleByBlock = function(myTeam, myMainpos, myBlock, blockWindowSize) {
+
+GetPlayerAppearanceMleByBlock = function(myTeam, myMainpos, myBlock, blockWindowSize, priorStrength, timeDownWeightCoef) {
   
-  pastGbgDF = GetPastGbgDF(myTeam, myBlock, blockWindowSize)
+  dum = GetPastResultGbgDF(myTeam, myBlock, blockWindowSize, timeDownWeightCoef)
+  pastTeamResultDF = dum$pastTeamResultDF
+  pastTeamGbgDF = dum$pastTeamGbgDF
   
-  splitTeamDF = pastGbgDF %>%
+  splitTeamDF = pastTeamGbgDF %>%
     filter(mainpos2 == myMainpos) %>%
-    group_by(season, team, teamgamenumber) %>%
+    group_by(team, alltimetgn) %>%
     do(SplitGame(.$player, .$startTime2, .$endTime2))
   
   unMatchSection = splitTeamDF %>%
-    group_by(teamgamenumber, matchSection, minDiff) %>%
+    group_by(alltimetgn, matchSection, minDiff) %>%
     summarise(numWhoPlayed = sum(played)) %>%
     ungroup() %>%
     mutate(logLik = NA)
@@ -157,7 +168,7 @@ GetPlayerAppearanceMleByBlock = function(myTeam, myMainpos, myBlock, blockWindow
   unMatchSection = unMatchSection %>%
     filter(numWhoPlayed > 0)
   splitTeamDF = splitTeamDF %>%
-    semi_join(unMatchSection, c('teamgamenumber', 'matchSection'))
+    semi_join(unMatchSection, c('alltimetgn', 'matchSection'))
   
   # who has made the median number of appearances, they should have value zero
   myTotalMinutePlayed = splitTeamDF %>%
@@ -170,14 +181,18 @@ GetPlayerAppearanceMleByBlock = function(myTeam, myMainpos, myBlock, blockWindow
   splitTeamDF$playerNumber = match(splitTeamDF$player, myUnPlayer)
   
   allPermutationDF = splitTeamDF %>%
-    group_by(teamgamenumber, matchSection) %>%
+    group_by(alltimetgn, matchSection) %>%
     summarise(allPermutationByPlayerNumber = CalculateAllPermutation(played, playerNumber),
               activePlayerList = list(playerNumber),
-              minDiff = minDiff[1])
+              minDiff = minDiff[1]) %>%
+    lazy_left_join(pastTeamResultDF, 'alltimetgn', 'timeDownWeight')
   
   theta0 = rep(0, length(myUnPlayer))
   
-  maxInfo = nlm(CalculateAllMatchSectionLogLik, p = theta0, allPermutationDF = allPermutationDF, stepmax = 5)
+  maxInfo = nlm(CalculateAllMatchSectionLogLik, p = theta0,
+                allPermutationDF = allPermutationDF,
+                priorStrength = priorStrength,
+                stepmax = 5)
   
   myAppearanceMle = data.frame(team = myTeam, inBlock = myBlock, mainpos2 = myMainpos, player = myUnPlayer,
                                appearanceMle = maxInfo$estimate,
@@ -186,11 +201,11 @@ GetPlayerAppearanceMleByBlock = function(myTeam, myMainpos, myBlock, blockWindow
   return(myAppearanceMle)
 }
 
-GetPastFormationForTeamBlock = function(pastGbgDF) {
-  numGameInBlock = nrow(pastGbgDF %>% distinct(season, teamgamenumber))
-  pastFormationDF = pastGbgDF %>%
+GetPastFormationForTeamBlock = function(pastTeamResultDF, pastTeamGbgDF) {
+  numGameInBlock = nrow(pastTeamResultDF)
+  pastFormationDF = pastTeamGbgDF %>%
     lazy_left_join(resultDF,
-                   c('season', 'team', 'teamgamenumber'),
+                   c('alltimetgn', 'team'),
                    'maxEndTime') %>%
     group_by(mainpos2) %>%
     summarise(numPlayerInPos = sum( (endTime2 - startTime2) / maxEndTime) / numGameInBlock) %>%
@@ -240,25 +255,25 @@ MakeMatchFormationDF = function(myTeam, myBlock, formationDF, historicFormationD
   # now we want a list of matches-formnation combos, but only the ones that are actually possible
   blockNumPlayerAvailableByPos = gbgdf2 %>%
     filter(team == myTeam & inBlock == myBlock) %>%
-    group_by(season, teamgamenumber) %>%
+    group_by(alltimetgn) %>%
     summarise(numAvailableDef = sum(mainpos2 == 'def' & available),
               numAvailableMid = sum(mainpos2 == 'mid' & available),
               numAvailableAtt = sum(mainpos2 == 'att' & available))
   
   matchFormationDF = merge(resultDF %>%
                              filter(team == myTeam & inBlock == myBlock) %>%
-                             select(season, teamgamenumber),
+                             select(alltimetgn),
                            formationDF)
   
   matchFormationDF = matchFormationDF %>%
     left_join(blockNumPlayerAvailableByPos,
-              c('season', 'teamgamenumber')) %>%
+              'alltimetgn') %>%
     mutate(isPossible = (numAvailableDef >= def &
                            numAvailableMid >= mid &
                            numAvailableAtt >= att))
   # the impossible ones need to have formationWgt set to 0 and the remaining ones summed up accordingly
   sumPossible = matchFormationDF %>%
-    group_by(season, teamgamenumber) %>%
+    group_by(alltimetgn) %>%
     summarise(sumPossible = sum(formationWgt[isPossible]))
   # if the sumPossible is too small, then fill up with most likely possible historic ones
   
@@ -266,7 +281,7 @@ MakeMatchFormationDF = function(myTeam, myBlock, formationDF, historicFormationD
   # this is the fiddly bit, chuck out the bad bits of matchFormationDF, bring in the historic bits in the right place
   matchFormationDF = left_join(matchFormationDF,
                                sumPossible,
-                               c('season', 'teamgamenumber')) %>%
+                               'alltimetgn') %>%
     mutate(toRetainMatch = sumPossible > sumPossibleCutOff) %>%
     mutate_cond(toRetainMatch, formationWgt = formationWgt / sumPossible) %>%
     filter(toRetainMatch & isPossible) %>%
@@ -282,7 +297,7 @@ MakeMatchFormationDF = function(myTeam, myBlock, formationDF, historicFormationD
                              numAvailableMid >= mid &
                              numAvailableAtt >= att)) %>%
       filter(isPossible) %>%
-      group_by(season, teamgamenumber) %>%
+      group_by(alltimetgn) %>%
       arrange(desc(sumMatchProportion)) %>%
       slice(1)
     # NB there should always be at least one formation possible, namely the one that was used for the match that is giving problems
@@ -292,7 +307,7 @@ MakeMatchFormationDF = function(myTeam, myBlock, formationDF, historicFormationD
                                              mutate(formationIndex = 1,
                                                     formationWgt = 1),
                                            matchFormationDF,
-                                           c('season', 'teamgamenumber')))
+                                           'alltimetgn'))
   }
   
   return(matchFormationDF)  
@@ -301,9 +316,11 @@ MakeMatchFormationDF = function(myTeam, myBlock, formationDF, historicFormationD
 GetFormationProbabilityByTeamBlock = function(myTeam, myBlock, blockWindowSize, historicFormationDF) {
   
   # filter out players who officially were here but never really played
-  pastGbgDF = GetPastGbgDF(myTeam, myBlock, blockWindowSize)
+  dum = GetPastResultGbgDF(myTeam, myBlock, blockWindowSize, timeDownWeightCoef = 0)
+  pastTeamResultDF = dum$pastTeamResultDF
+  pastTeamGbgDF= dum$pastTeamGbgDF
   
-  pastFormationDF = GetPastFormationForTeamBlock(pastGbgDF)
+  pastFormationDF = GetPastFormationForTeamBlock(pastTeamResultDF, pastTeamGbgDF)
   formationDF = GetFormationWeight(pastFormationDF)
   #numFormation = nrow(formationDF)
   matchFormationDF = MakeMatchFormationDF(myTeam, myBlock, formationDF, historicFormationDF)
@@ -331,36 +348,15 @@ GetExpectedNumGameByTeamBlock = function(myTeam, myBlock, blockWindowSize,
       replace_na(list(appearanceOdds = 0.0001))
     
     subMatchFormationDF = matchFormationDF %>%
-      select(season, teamgamenumber, formationIndex, myMainpos, formationWgt) %>%
+      select(alltimetgn, formationIndex, myMainpos, formationWgt) %>%
       rename(numPlayerToSelect = myMainpos)
     
     repSubGbgDF = full_join(subGbgDF,
                             subMatchFormationDF,
-                            c('season', 'teamgamenumber'))
-    
-    if (FALSE) {
-      repSubGbgDF = subGbgDF %>%
-        lazy_left_join(myPlayerMle, 'player', 'appearanceOdds') %>%
-        replace_na(list(appearanceOdds = 0.0001)) %>%
-        slice(rep(1:n(), each = numFormation)) %>%
-        mutate(formationIndex = rep(1:numFormation, n()/numFormation)) %>%
-        left_join(formationDF %>%
-                    gather(mainpos2, numPlayerInPos, -c(formationIndex, formationWgt)),
-                  c('formationIndex', 'mainpos2')) %>%
-        left_join(subGbgDF %>%
-                    group_by(season, teamgamenumber) %>%
-                    summarise(sumAvailable = n()),
-                  c('season', 'teamgamenumber')) %>%
-        mutate(isPossible = sumAvailable >= numPlayerInPos)
-      # but are there any impossible formations? eg 5 defender slots but only 4 defenders available?
-      # if so, need to set its formationWgt to zero and compensate with the remaining ones
-      scaleUpQuant = repSubGbgDF %>%
-        group_by(season, teamgamenumber) %>%
-        summarise(toScaleup = 1/sum(formationWgt[isPossible]))
-    }
-    
+                            'alltimetgn')
+
     repSubGbgDF = repSubGbgDF %>%
-      group_by(teamgamenumber, formationIndex) %>%
+      group_by(alltimetgn, formationIndex) %>%
       mutate(probPlay = BiasedUrn::meanMWNCHypergeo(rep(1, n()), numPlayerToSelect[1], appearanceOdds)) %>%
       ungroup()
     

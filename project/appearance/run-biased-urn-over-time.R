@@ -16,11 +16,13 @@ resultDF = lazy_left_join(resultDF, seasonInfoDF, 'season', 'seasonNumber')
 numBlockWithinSeason = 4
 resultDF$inBlock = as.integer(with(resultDF, (seasonNumber - 1) * numBlockWithinSeason +
                                      cut(teamgamenumber, br = seq(0.5, 38.5, le = 5), labels = FALSE)))
+resultDF = resultDF %>%
+  mutate(alltimetgn = (seasonNumber - 1) * 38 + teamgamenumber)
 
 gbgdf = lazy_left_join(gbgdf,
                        resultDF,
                        c('season', 'team', 'teamgamenumber'),
-                       'inBlock')
+                       c('inBlock', 'alltimetgn'))
 
 gbgdf2 = gbgdf %>%
   filter(!grepl('(injury|suspension)', startTime)) %>%
@@ -38,8 +40,12 @@ gbgdf2$mainpos2 = with(gbgdf2, case_when(
   TRUE ~ 'other'
 ))
 
+#gbgdf2 = gbgdf2 %>%
+#  select(season, seasonNumber, teamgamenumber, alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2, #inBlock)
 gbgdf2 = gbgdf2 %>%
-  select(season, seasonNumber, teamgamenumber, team, player, startTime2, endTime2, minute, played, available, mainpos2, inBlock)
+  select(alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2,
+         inBlock)
+  
 
 historicFormationDF = MakeHistoricFormationDF(gbgdf2)
 
@@ -57,7 +63,8 @@ allTeamSeasonMainposEstimateDF = foreach (tspi=1:nrow(unTeamMainposBlock),
                                           .combine = rbind,
                                           .packages=c("dplyr")) %dopar% {
                                             with(unTeamMainposBlock[tspi,],
-                                                 GetPlayerAppearanceMleByBlock(team, mainpos2, inBlock, 4))
+                                                 GetPlayerAppearanceMleByBlock(team, mainpos2, inBlock, 4,
+                                                                               priorStrength, timeDownWeightCoef))
                                           }
 
 unTeamBlock = unTeamMainposBlock %>%
