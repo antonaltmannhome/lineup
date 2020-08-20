@@ -43,8 +43,6 @@ gbgdf2 = gbgdf2 %>%
 
 historicFormationDF = MakeHistoricFormationDF(gbgdf2)
 
-
-
 unTeamMainposBlock = gbgdf2 %>%
   distinct(team, mainpos2, inBlock) %>%
   group_by(team, mainpos2) %>%
