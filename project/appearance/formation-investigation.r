@@ -185,10 +185,11 @@ MakeMatchFormationDF = function(myTeam, myBlock, formationDF) {
   # this is the fiddly bit, chuck out the bad bits of matchFormationDF, bring in the historic bits in the right place
   matchFormationDF = indicate_overlapping_combination(matchFormationDF,
                                                       sumPossible %>%
-                                                        filter(sumPossible < 0.2),
+                                                        filter(sumPossible > 0.2),
                                                       c('season', 'teamgamenumber'),
-                                                      'toReplace')
-  ### urgh, now flush that out and bring in the replacement
+                                                      'toRetain')
+  # of what we're retaining, need to multiply 
+  
   ## make the replacement bit nicely first though
   
   matchFormationDF = matchFormationDF %>%
