@@ -4,8 +4,8 @@
 
 source('c:/git/lineup/new-model-startup.r')
 source('project/appearance/biased-urn-funct.R')
-library(doParallel)
-registerDoParallel()
+#library(doParallel)
+#registerDoParallel()
 
 fakeMaxTime = 1000L
 
@@ -58,29 +58,44 @@ unTeamMainposBlock = gbgdf2 %>%
   filter(mainpos2 %in% c('def', 'mid', 'att') & isValid) %>%
   select(team, mainpos2, inBlock) %>%
   ungroup()
-
-allTeamSeasonMainposEstimateDF = foreach (tspi=1:nrow(unTeamMainposBlock),
-                                          .combine = rbind,
-                                          .packages=c("dplyr")) %dopar% {
-                                            with(unTeamMainposBlock[tspi,],
-                                                 GetPlayerAppearanceMleByBlock(team, mainpos2, inBlock, 4,
-                                                                               priorStrength, timeDownWeightCoef))
-                                          }
-
 unTeamBlock = unTeamMainposBlock %>%
   distinct(team, inBlock)
 
-allTeamBlockFormationDF = foreach (tspi=1:nrow(unTeamBlock),
-                                   .combine = rbind,
-                                   .packages=c("dplyr")) %dopar% {
-                                     with(unTeamBlock[tspi,],
-                                          GetFormationProbabilityByTeamBlock(team, inBlock, 4, historicFormationDF))
-                                   }
+RunEntireLoop = function(timeDownWeightCoef, priorStrength) {
+  
+  myList = vector('list', nrow(unTeamMainposBlock))
+  for(tbpi in 1:nrow(unTeamMainposBlock)) {
+    myList[[tbpi]] = with(unTeamMainposBlock[tbpi,],
+                          GetPlayerAppearanceMleByBlock(team, mainpos2, inBlock, 4,
+                                                        priorStrength, timeDownWeightCoef))
+    if ( (tbpi %% 10) == 0) {
+      message('Have calculated ', tbpi, ' out of ', nrow(unTeamMainposBlock), ' team/block/position blocks so far')
+    }
+  }
+  allTeamSeasonMainposEstimateDF = bind_rows(myList)
+  
+  myList = list('vector', nrow(unTeamBlock))
+  for (tbi in 1:nrow(unTeamBlock)) {
+    myList[[tbi]] = with(unTeamBlock[tbi,],
+                         GetFormationProbabilityByTeamBlock(team, inBlock, 4, historicFormationDF))
+  }
+  allTeamBlockFormationDF = bind_rows(myList)
+  
+  myList = list('vector', nrow(unTeamBlock))
+  for (tbi in 1:nrow(unTeamBlock)) {
+    myList[[tbi]] =  with(unTeamBlock[tbi,],
+                          GetExpectedNumGameByTeamBlock(team, inBlock, 4,
+                                                        allTeamSeasonMainposEstimateDF, allTeamBlockFormationDF))
+  }
+  allTeamBlockExpectedNumGame = bind_rows(myList)
+  
+  return(lst(allTeamSeasonMainposEstimateDF,
+             allTeamBlockFormationDF,
+             allTeamBlockExpectedNumGame))
+  
+}
 
-allTeamBlockExpectedNumGame = foreach (tspi=1:nrow(unTeamBlock),
-                                       .combine = rbind,
-                                       .packages=c("dplyr", "tidyr")) %dopar% {
-                                         with(unTeamBlock[tspi,],
-                                              GetExpectedNumGameByTeamBlock(team, inBlock, 4,
-                                                      allTeamSeasonMainposEstimateDF, allTeamBlockFormationDF))
-                                       }
+date()
+outputT0.1P0.1 = RunEntireLoop(0.1, 0.1)
+date()
+saveRDS(object = outputT0.1P0.1, file = 'c:/temp/outputT0.1P0.1.rds')
