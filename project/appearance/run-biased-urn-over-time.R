@@ -4,23 +4,38 @@
 
 source('c:/git/lineup/new-model-startup.r')
 source('project/appearance/biased-urn-funct.R')
-library(doParallel)
-registerDoParallel()
+#library(doParallel)
+#registerDoParallel()
 
 fakeMaxTime = 1000L
 
 # need to sort out seasonNumber. why do we need 1516 in seasonInfoDF?
 seasonInfoDF$seasonNumber = match(seasonInfoDF$season, with(seasonInfoDF, sort(season[havegbg])))
 resultDF = lazy_left_join(resultDF, seasonInfoDF, 'season', 'seasonNumber')
+resultDF = resultDF %>%
+  mutate(alltimetgn = (seasonNumber - 1) * 38 + teamgamenumber)
 
-numBlockWithinSeason = 4
-resultDF$inBlock = as.integer(with(resultDF, (seasonNumber - 1) * numBlockWithinSeason +
-                                     cut(teamgamenumber, br = seq(0.5, 38.5, le = 5), labels = FALSE)))
+uniqueSeasonTeamGameNumber = resultDF %>%
+  distinct(seasonNumber, teamgamenumber) %>%
+  arrange(seasonNumber, teamgamenumber)
+uniqueSeasonTeamGameNumber$inBlock = NA
+for (si in 1:length(unique(uniqueSeasonTeamGameNumber$seasonNumber))) {
+  # first four games are in previous season's block, or no block if it's the first season
+  currentSeasonIndex = with(uniqueSeasonTeamGameNumber, which(seasonNumber == si))
+  initialBlock = cut(uniqueSeasonTeamGameNumber$teamgamenumber[currentSeasonIndex],
+                        br = c(-0.5, seq(4.5, 34.5, 6), 38.5),
+                        labels = FALSE) - 1
+  adjustedBlock = initialBlock + (si - 1) * 6
+  uniqueSeasonTeamGameNumber$inBlock[currentSeasonIndex] = adjustedBlock
+}
+resultDF = resultDF %>%
+  left_join(uniqueSeasonTeamGameNumber,
+            c('seasonNumber', 'teamgamenumber'))
 
 gbgdf = lazy_left_join(gbgdf,
                        resultDF,
                        c('season', 'team', 'teamgamenumber'),
-                       'inBlock')
+                       c('inBlock', 'alltimetgn'))
 
 gbgdf2 = gbgdf %>%
   filter(!grepl('(injury|suspension)', startTime)) %>%
@@ -38,8 +53,12 @@ gbgdf2$mainpos2 = with(gbgdf2, case_when(
   TRUE ~ 'other'
 ))
 
+#gbgdf2 = gbgdf2 %>%
+#  select(season, seasonNumber, teamgamenumber, alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2, #inBlock)
 gbgdf2 = gbgdf2 %>%
-  select(season, seasonNumber, teamgamenumber, team, player, startTime2, endTime2, minute, played, available, mainpos2, inBlock)
+  select(alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2,
+         inBlock)
+  
 
 historicFormationDF = MakeHistoricFormationDF(gbgdf2)
 
@@ -52,28 +71,107 @@ unTeamMainposBlock = gbgdf2 %>%
   filter(mainpos2 %in% c('def', 'mid', 'att') & isValid) %>%
   select(team, mainpos2, inBlock) %>%
   ungroup()
-
-allTeamSeasonMainposEstimateDF = foreach (tspi=1:nrow(unTeamMainposBlock),
-                                          .combine = rbind,
-                                          .packages=c("dplyr")) %dopar% {
-                                            with(unTeamMainposBlock[tspi,],
-                                                 GetPlayerAppearanceMleByBlock(team, mainpos2, inBlock, 4))
-                                          }
-
 unTeamBlock = unTeamMainposBlock %>%
   distinct(team, inBlock)
 
-allTeamBlockFormationDF = foreach (tspi=1:nrow(unTeamBlock),
-                                   .combine = rbind,
-                                   .packages=c("dplyr")) %dopar% {
-                                     with(unTeamBlock[tspi,],
-                                          GetFormationProbabilityByTeamBlock(team, inBlock, 4, historicFormationDF))
-                                   }
+RunEntireLoop = function(timeDownWeightCoef, priorStrength) {
+  
+  myList = vector('list', nrow(unTeamMainposBlock))
+  for(tbpi in 1:nrow(unTeamMainposBlock)) {
+    myList[[tbpi]] = with(unTeamMainposBlock[tbpi,],
+                          GetPlayerAppearanceMleByBlock(team, mainpos2, inBlock, 4,
+                                                        priorStrength, timeDownWeightCoef))
+    if ( (tbpi %% 10) == 0) {
+      message('Have calculated ', tbpi, ' out of ', nrow(unTeamMainposBlock), ' team/block/position blocks so far')
+    }
+  }
+  allTeamSeasonMainposEstimateDF = bind_rows(myList)
+  
+  myList = list('vector', nrow(unTeamBlock))
+  for (tbi in 1:nrow(unTeamBlock)) {
+    myList[[tbi]] = with(unTeamBlock[tbi,],
+                         GetFormationProbabilityByTeamBlock(team, inBlock, 4, historicFormationDF))
+  }
+  allTeamBlockFormationDF = bind_rows(myList)
+  
+  myList = list('vector', nrow(unTeamBlock))
+  for (tbi in 1:nrow(unTeamBlock)) {
+    myList[[tbi]] =  with(unTeamBlock[tbi,],
+                          GetExpectedNumGameByTeamBlock(team, inBlock, 4,
+                                                        allTeamSeasonMainposEstimateDF, allTeamBlockFormationDF))
+  }
+  allTeamBlockExpectedNumGame = bind_rows(myList)
+  
+  return(lst(allTeamSeasonMainposEstimateDF,
+             allTeamBlockFormationDF,
+             allTeamBlockExpectedNumGame))
+  
+}
 
-allTeamBlockExpectedNumGame = foreach (tspi=1:nrow(unTeamBlock),
-                                       .combine = rbind,
-                                       .packages=c("dplyr", "tidyr")) %dopar% {
-                                         with(unTeamBlock[tspi,],
-                                              GetExpectedNumGameByTeamBlock(team, inBlock, 4,
-                                                      allTeamSeasonMainposEstimateDF, allTeamBlockFormationDF))
-                                       }
+if (FALSE) {
+date()
+outputT0.1P0.1 = RunEntireLoop(0.1, 0.1)
+date()
+saveRDS(object = outputT0.1P0.1, file = 'c:/temp/outputT0.1P0.1.rds')
+
+tdwVec = c(0.033, 0.1, 0.33)
+strVec = c(0.033, 0.1, 0.33)
+tdwStrDF = expand.grid(tdw = tdwVec, str = strVec)
+for (j in 1:nrow(tdwStrDF)) {
+  fileOut = paste0('c:/temp/outputT', tdwStrDF$tdw[j], 'P', tdwStrDF$str[j], '.rds')
+  if (!file.exists(fileOut)) {
+    myOutput = RunEntireLoop(tdwStrDF$tdw[j], tdwStrDF$str[j])
+    saveRDS(object = myOutput, file = fileOut)
+  }
+}
+
+tdwVec = c(0.1)
+strVec = c(1, 3.33, 10)
+tdwStrDF = expand.grid(tdw = tdwVec, str = strVec)
+for (j in 1:nrow(tdwStrDF)) {
+  fileOut = paste0('c:/temp/outputT', tdwStrDF$tdw[j], 'P', tdwStrDF$str[j], '.rds')
+  if (!file.exists(fileOut)) {
+    myOutput = RunEntireLoop(tdwStrDF$tdw[j], tdwStrDF$str[j])
+    saveRDS(object = myOutput, file = fileOut)
+  }
+}
+
+}
+
+# now compare to what actually happened, which should be easy i think
+allTeamBlockObservedNumGame = gbgdf2 %>%
+  lazy_left_join(resultDF, c('alltimetgn', 'team'), 'maxEndTime') %>%
+  group_by(team, inBlock, player) %>%
+  summarise(observedNumGame = sum( (endTime2 - startTime2) / maxEndTime))
+
+MeasureOutput = function(tdw, str) {
+  myOutput = readRDS(paste0('c:/temp/outputT', tdw, 'P', str, '.rds'))
+  # now see how well we have predicted what happened
+  allTeamBlockExpectedNumGame = myOutput$allTeamBlockExpectedNumGame
+  
+  blockObservedExpected = left_join(allTeamBlockExpectedNumGame,
+                                    allTeamBlockObservedNumGame,
+                                    c('team', 'inBlock', 'player'))
+  
+  calibplot(blockObservedExpected$expectedNumGame,
+            blockObservedExpected$observedNumGame,
+            xlab = 'expected number',
+            ylab = 'observed number',
+            xlim = c(0, 10), ylim = c(0, 10))
+  # prior looks too weak: when we're predicting 10 we need to rein it in, likewise when we predict 0
+  # it's not bad though
+  # but i think it's rubbish to start the blocks at the start of each season, that's where all the worst predictions are
+  # not so bad now that I've done that, here are the new sqdiffs, they look good to me
+  print(blockObservedExpected %>%
+          group_by(inBlock) %>%
+          summarise(mean( (observedNumGame - expectedNumGame)^2)))
+  
+  return(with(blockObservedExpected, mean( (observedNumGame - expectedNumGame)^2)))
+}
+
+# tdw of 0.1 seems to be about right, hint that maybe we should increase the prior strength
+
+# let's give that a bash
+# 10 seems right.
+# So, we've written tdw = 0.1, str = 10 to 'active_player' folder
+# next is the fun bit, seeing how we need to adjust with fixture pileup / injury recovery / scoring / keeping clean sheet
