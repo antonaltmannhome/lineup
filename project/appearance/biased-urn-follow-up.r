@@ -131,6 +131,15 @@ gbgdf2 = lazy_left_join(gbgdf2,
 # yes, that's really rubbish what it does at the extreme left.
 # but the 0s would obviously be solved by updating more than once a block...
 # but that's not the problem we're interested in right now, and doesn't affect us. it's fatigue that we want to look at
+# no, these still look pretty rubbish, e.g bruno fernandes takes ages to be recognised as a starter
+# so in his case the prior looks way too strong
+# but when a player is a regular, the prior looks too weak because it overpredicts
+# do we need a different prior for unknown players compared to known ones? not sure that makes any sense
+# but there are two effects we're trying to counteract with the prior
+# (1) new players aren't infinitely likely to play 90 minutes if they play 90 minutes in their first game
+# (2) no matter how often you've played the entire game, there's always the chance you will be benched
+# maybe a prior isn't the right way to address (2)
+# maybe we need an equivalent of an intercept, that no matter how good you are there's always a chance you will be benched
 
 # we've got the champs league stuff to load in too somewhere
 euroFixtureDF = read_csv(paste0(DATAPATH, 'euro-fixtures-historic.csv'), col_types = list(
@@ -138,5 +147,8 @@ euroFixtureDF = read_csv(paste0(DATAPATH, 'euro-fixtures-historic.csv'), col_typ
   date = col_integer(),
   team = col_character()
 ))
-                       
+               
 # cool, now just need to blend it in with the actual data and we're on our way
+
+# note that this only really affects the players who are regular starters, so we need to filter down to them
+
