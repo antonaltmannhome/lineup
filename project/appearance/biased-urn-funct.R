@@ -229,9 +229,9 @@ FormationLikFunct = function(theta, pastFormationDF, validFormationMatrix) {
 GetFormationWeight = function(pastFormationDF) {
   
   expandedPastFormationDF = with(pastFormationDF,
-                                 expand.grid(def = c(floorNP[mainpos2 == 'def'], ceilingNP[mainpos2 == 'def']),
-                                             mid = c(floorNP[mainpos2 == 'mid'], ceilingNP[mainpos2 == 'mid']),
-                                             att = c(floorNP[mainpos2 == 'att'], ceilingNP[mainpos2 == 'att'])))
+                                 expand.grid(def = c(floorNP[mainpos2 == 'def'], floorNP[mainpos2 == 'def'] + 1),
+                                             mid = c(floorNP[mainpos2 == 'mid'], floorNP[mainpos2 == 'mid'] + 1),
+                                             att = c(floorNP[mainpos2 == 'att'], floorNP[mainpos2 == 'att'] + 1)))
   validFormationMatrix = expandedPastFormationDF[which(rowSums(expandedPastFormationDF) == 10),]
   
   # but then we need to weighted combo that sums to the average
