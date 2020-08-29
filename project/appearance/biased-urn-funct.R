@@ -60,7 +60,7 @@ AABiasedUrnProb = function(allPermMatrix, activePlayerNumber, weight) {
   bottomLineMatrix = matrix(sum(weight[activePlayerNumber]), ncol = 1, nrow = nrow(allPermMatrix))
   if (ncol(allPermMatrix) > 1) {
     for (j in 2:ncol(allPermMatrix)) {
-      bottomLineMatrix = cbind(bottomLineMatrix, bottomLineMatrix[,j-1] - weight[allPermMatrix[,j]])
+      bottomLineMatrix = cbind(bottomLineMatrix, bottomLineMatrix[,j-1] - weight[allPermMatrix[,j - 1]])
     }
   }
   topLineMatrix = matrix(weight[allPermMatrix], nrow = nrow(allPermMatrix), ncol = ncol(allPermMatrix))
