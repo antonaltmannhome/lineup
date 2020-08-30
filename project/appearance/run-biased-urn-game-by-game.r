@@ -15,27 +15,10 @@ resultDF = lazy_left_join(resultDF, seasonInfoDF, 'season', 'seasonNumber')
 resultDF = resultDF %>%
   mutate(alltimetgn = (seasonNumber - 1) * 38 + teamgamenumber)
 
-uniqueSeasonTeamGameNumber = resultDF %>%
-  distinct(seasonNumber, teamgamenumber) %>%
-  arrange(seasonNumber, teamgamenumber)
-uniqueSeasonTeamGameNumber$inBlock = NA
-for (si in 1:length(unique(uniqueSeasonTeamGameNumber$seasonNumber))) {
-  # first four games are in previous season's block, or no block if it's the first season
-  currentSeasonIndex = with(uniqueSeasonTeamGameNumber, which(seasonNumber == si))
-  initialBlock = cut(uniqueSeasonTeamGameNumber$teamgamenumber[currentSeasonIndex],
-                        br = c(-0.5, seq(4.5, 34.5, 6), 38.5),
-                        labels = FALSE) - 1
-  adjustedBlock = initialBlock + (si - 1) * 6
-  uniqueSeasonTeamGameNumber$inBlock[currentSeasonIndex] = adjustedBlock
-}
-resultDF = resultDF %>%
-  left_join(uniqueSeasonTeamGameNumber,
-            c('seasonNumber', 'teamgamenumber'))
-
 gbgdf = lazy_left_join(gbgdf,
                        resultDF,
                        c('season', 'team', 'teamgamenumber'),
-                       c('inBlock', 'alltimetgn'))
+                       'alltimetgn')
 
 gbgdf2 = gbgdf %>%
   filter(!grepl('(injury|suspension)', startTime)) %>%
@@ -56,57 +39,65 @@ gbgdf2$mainpos2 = with(gbgdf2, case_when(
 #gbgdf2 = gbgdf2 %>%
 #  select(season, seasonNumber, teamgamenumber, alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2, #inBlock)
 gbgdf2 = gbgdf2 %>%
-  select(alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2,
-         inBlock)
+  select(alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2)
   
 
 historicFormationDF = MakeHistoricFormationDF(gbgdf2)
 
-unTeamMainposBlock = gbgdf2 %>%
-  distinct(team, mainpos2, inBlock) %>%
+unTeamMainposTgn = gbgdf2 %>%
+  distinct(team, mainpos2, alltimetgn) %>%
   group_by(team, mainpos2) %>%
-  arrange(inBlock) %>%
-  mutate(blockDelta = inBlock - lag(inBlock, 1),
-         isValid = !is.na(blockDelta) & blockDelta == 1) %>%
+  arrange(alltimetgn) %>%
+  mutate(alltimetgnDelta = alltimetgn - lag(alltimetgn, 1),
+         isValid = !is.na(alltimetgnDelta) & alltimetgnDelta == 1) %>%
   filter(mainpos2 %in% c('def', 'mid', 'att') & isValid) %>%
-  select(team, mainpos2, inBlock) %>%
+  select(team, mainpos2, alltimetgn) %>%
   ungroup()
-unTeamBlock = unTeamMainposBlock %>%
-  distinct(team, inBlock)
+unTeamTgn = unTeamMainposTgn %>%
+  distinct(team, alltimetgn)
 
 
-allTeamBlockObservedNumGame = gbgdf2 %>%
+allTeamTgnObservedNumGame = gbgdf2 %>%
   lazy_left_join(resultDF, c('alltimetgn', 'team'), 'maxEndTime') %>%
-  group_by(team, inBlock, player) %>%
+  group_by(team, alltimetgn, player) %>%
   summarise(observedNumGame = sum( (endTime2 - startTime2) / maxEndTime))
 
-RunEntireLoop = function(timeDownWeightCoef, priorStrength) {
+# ok it will take 45 hours to run everybody ever
+# so i say we run 1 team at a time and build up the picture gradually
+RunEntireLoop = function(myTeam, timeDownWeightCoef, priorStrength) {
   
-  myList = vector('list', nrow(unTeamMainposBlock))
-  for(tbpi in 1:nrow(unTeamMainposBlock)) {
-    myList[[tbpi]] = with(unTeamMainposBlock[tbpi,],
-                          GetPlayerAppearanceMleByBlock(team, mainpos2, inBlock, 4,
-                                                        priorStrength, timeDownWeightCoef))
+  myTeamMainposTgn = unTeamMainposTgn %>%
+    filter(team == myTeam)
+  myTeamTgn = unTeamTgn %>%
+    filter(team == myTeam)
+  
+  myList = vector('list', nrow(myTeamMainposTgn))
+  for(tbpi in 1:nrow(myTeamMainposTgn)) {
+    myList[[tbpi]] = with(myTeamMainposTgn[tbpi,],
+                          GetPlayerAppearanceMle(team, mainpos2, alltimetgn, 38,
+                                                  priorStrength, timeDownWeightCoef))
     if ( (tbpi %% 10) == 0) {
-      message('Have calculated ', tbpi, ' out of ', nrow(unTeamMainposBlock), ' team/block/position blocks so far')
+      message('Have calculated ', tbpi, ' out of ', nrow(myTeamMainposTgn), ' team/block/position blocks so far')
     }
   }
-  allTeamSeasonMainposEstimateDF = bind_rows(myList)
+  myTeamEstimateDF = bind_rows(myList)
   
-  myList = list('vector', nrow(unTeamBlock))
-  for (tbi in 1:nrow(unTeamBlock)) {
-    myList[[tbi]] = with(unTeamBlock[tbi,],
-                         GetFormationProbabilityByTeamBlock(team, inBlock, 4, historicFormationDF))
+  myList = list('vector', nrow(myTeamTgn))
+  for (tbi in 1:nrow(myTeamTgn)) {
+    myList[[tbi]] = with(myTeamTgn[tbi,],
+                         GetFormationProbabilityByTeam(team, alltimetgn, 38, historicFormationDF))
   }
-  allTeamBlockFormationDF = bind_rows(myList)
+  myTeamTgnFormationDF = bind_rows(myList)
   
-  myList = list('vector', nrow(unTeamBlock))
-  for (tbi in 1:nrow(unTeamBlock)) {
-    myList[[tbi]] =  with(unTeamBlock[tbi,],
-                          GetExpectedNumGameByTeamBlock(team, inBlock, 4,
-                                                        allTeamSeasonMainposEstimateDF, allTeamBlockFormationDF))
+  myList = list('vector', nrow(myTeamTgn))
+  # actually, instead of predicting just hte next game, maybe THIS should still predict the next block of games
+  # to get rid of the resting issue
+  for (tbi in 1:nrow(myTeamTgn)) {
+    myList[[tbi]] =  with(myTeamTgn[tbi,],
+                          GetExpectedPropPlayByTeam(team, alltimetgn, 38,
+                                                        myTeamEstimateDF, myTeamTgnFormationDF))
   }
-  allTeamBlockExpectedNumGame = bind_rows(myList)
+  myTeamExpectedPropPlay = bind_rows(myList)
   
   myOutput = lst(allTeamSeasonMainposEstimateDF,
                  allTeamBlockFormationDF,
