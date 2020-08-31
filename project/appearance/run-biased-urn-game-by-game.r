@@ -15,10 +15,27 @@ resultDF = lazy_left_join(resultDF, seasonInfoDF, 'season', 'seasonNumber')
 resultDF = resultDF %>%
   mutate(alltimetgn = (seasonNumber - 1) * 38 + teamgamenumber)
 
+uniqueSeasonTeamGameNumber = resultDF %>%
+  distinct(seasonNumber, teamgamenumber) %>%
+  arrange(seasonNumber, teamgamenumber)
+uniqueSeasonTeamGameNumber$inBlock = NA
+for (si in 1:length(unique(uniqueSeasonTeamGameNumber$seasonNumber))) {
+  # first four games are in previous season's block, or no block if it's the first season
+  currentSeasonIndex = with(uniqueSeasonTeamGameNumber, which(seasonNumber == si))
+  initialBlock = cut(uniqueSeasonTeamGameNumber$teamgamenumber[currentSeasonIndex],
+                     br = c(-0.5, seq(4.5, 34.5, 6), 38.5),
+                     labels = FALSE) - 1
+  adjustedBlock = initialBlock + (si - 1) * 6
+  uniqueSeasonTeamGameNumber$inBlock[currentSeasonIndex] = adjustedBlock
+}
+resultDF = resultDF %>%
+  left_join(uniqueSeasonTeamGameNumber,
+            c('seasonNumber', 'teamgamenumber'))
+
 gbgdf = lazy_left_join(gbgdf,
                        resultDF,
                        c('season', 'team', 'teamgamenumber'),
-                       'alltimetgn')
+                       c('alltimetgn', 'inBlock'))
 
 gbgdf2 = gbgdf %>%
   filter(!grepl('(injury|suspension)', startTime)) %>%
@@ -39,7 +56,7 @@ gbgdf2$mainpos2 = with(gbgdf2, case_when(
 #gbgdf2 = gbgdf2 %>%
 #  select(season, seasonNumber, teamgamenumber, alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2, #inBlock)
 gbgdf2 = gbgdf2 %>%
-  select(alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2)
+  select(alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2, inBlock)
   
 
 historicFormationDF = MakeHistoricFormationDF(gbgdf2)
@@ -56,6 +73,23 @@ unTeamMainposTgn = gbgdf2 %>%
 unTeamTgn = unTeamMainposTgn %>%
   distinct(team, alltimetgn)
 
+unTeamMainposBlock = gbgdf2 %>%
+  distinct(team, mainpos2, inBlock) %>%
+  group_by(team, mainpos2) %>%
+  arrange(inBlock) %>%
+  mutate(blockDelta = inBlock - lag(inBlock, 1),
+         isValid = !is.na(blockDelta) & blockDelta == 1) %>%
+  filter(mainpos2 %in% c('def', 'mid', 'att') & isValid) %>%
+  select(team, mainpos2, inBlock) %>%
+  ungroup()
+unTeamBlock = unTeamMainposBlock %>%
+  distinct(team, inBlock)
+
+
+allTeamBlockObservedNumGame = gbgdf2 %>%
+  lazy_left_join(resultDF, c('alltimetgn', 'team'), 'maxEndTime') %>%
+  group_by(team, inBlock, player) %>%
+  summarise(observedNumGame = sum( (endTime2 - startTime2) / maxEndTime))
 
 allTeamTgnObservedNumGame = gbgdf2 %>%
   lazy_left_join(resultDF, c('alltimetgn', 'team'), 'maxEndTime') %>%
@@ -94,16 +128,16 @@ RunEntireLoop = function(myTeam, timeDownWeightCoef, priorStrength) {
   # to get rid of the resting issue
   for (tbi in 1:nrow(myTeamTgn)) {
     myList[[tbi]] =  with(myTeamTgn[tbi,],
-                          GetExpectedPropPlayByTeam(team, alltimetgn, 38,
+                          GetExpectedNumGameByTeamBlock(team, alltimetgn, 8,
                                                         myTeamEstimateDF, myTeamTgnFormationDF))
   }
-  myTeamExpectedPropPlay = bind_rows(myList)
+  myTeamExpectedNumGameDF = bind_rows(myList)
   
-  myOutput = lst(allTeamSeasonMainposEstimateDF,
-                 allTeamBlockFormationDF,
-                 allTeamBlockExpectedNumGame)
+  myOutput = lst(myTeamEstimateDF,
+                 myTeamTgnFormationDF,
+                 myTeamExpectedPropPlay)
   
-  fileOut = paste0(DATAPATH, 'active_player/biased_urn_output/output_timedownweight_', timeDownWeightCoef, '_priorstrength_', priorStrength, '.rds')
+  fileOut = paste0(DATAPATH, 'active_player/biased_urn_output/output_', myTeam, '_timedownweight_', timeDownWeightCoef, '_priorstrength_', priorStrength, '.rds')
   saveRDS(object = myOutput, file = fileOut)
   
   return(myOutput)

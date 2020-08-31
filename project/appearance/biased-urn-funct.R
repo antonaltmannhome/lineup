@@ -330,7 +330,7 @@ GetFormationProbabilityByTeam = function(myTeam, myTgn, windowSize, historicForm
   return(matchFormationDF)
 }
 
-GetExpectedPropPlayByTeam = function(myTeam, myTgn, windowSize, 
+GetExpectedNumGameByTeamBlock = function(myTeam, myTgn, blockSize, 
                                          myTeamEstimateDF, myTeamTgnFormationDF) {
   # so for each match, we need to calculate the prob of each available player playing for each plausible formation
   matchFormationDF = myTeamTgnFormationDF %>%
@@ -343,9 +343,9 @@ GetExpectedPropPlayByTeam = function(myTeam, myTgn, windowSize,
       filter(alltimetgn == myTgn & mainpos2 == myMainpos)
     # but we need to insert any players who didn't feature before, with mle = 0
     subGbgDF = gbgdf2 %>%
-      filter(team == myTeam & alltimetgn == myTgn & available & mainpos2 == myMainpos) 
+      filter(team == myTeam & between(alltimetgn, myTgn, myTgn + blockSize) & available & mainpos2 == myMainpos) 
     newPlayer = anti_join(subGbgDF %>%
-                            distinct(team, alltimetgn, mainpos2, player),
+                            distinct(team, mainpos2, player),
                           myPlayerMle,
                           c('team', 'player'))
     if (nrow(newPlayer) > 0) {
@@ -360,12 +360,11 @@ GetExpectedPropPlayByTeam = function(myTeam, myTgn, windowSize,
       lazy_left_join(myPlayerMle, 'player', 'appearanceOdds')
     
     subMatchFormationDF = matchFormationDF %>%
-      select(alltimetgn, formationIndex, myMainpos, formationWgt) %>%
+      select(formationIndex, myMainpos, formationWgt) %>%
       rename(numPlayerToSelect = myMainpos)
     
-    repSubGbgDF = full_join(subGbgDF,
-                            subMatchFormationDF,
-                            'alltimetgn')
+    repSubGbgDF = merge(subGbgDF,
+                        subMatchFormationDF)
 
     repSubGbgDF = repSubGbgDF %>%
       group_by(alltimetgn, formationIndex) %>%
@@ -374,12 +373,16 @@ GetExpectedPropPlayByTeam = function(myTeam, myTgn, windowSize,
     
     myList[[i]] = repSubGbgDF %>%
       group_by(player) %>%
-      summarise(expectedPropPlay = sum(expectedPropPlayGivenFormation * formationWgt)) %>%
-      mutate(team = myTeam, mainpos2 = myMainpos, alltimetgn = myTgn)
+      summarise(expectedNumGame = sum(expectedPropPlayGivenFormation * formationWgt)) %>%
+      mutate(team = myTeam, mainpos2 = myMainpos, alltimetgn = myTgn) %>%
+      left_join(subGbgDF %>%
+                  count(player) %>%
+                  rename(availableNumGame = n),
+                'player')
   }
   
   # ok so that all works, i believe we need to loop by team/block
-  expectedPropPlayDF = bind_rows(myList)
+  expectedNumGameDF = bind_rows(myList)
   
-  return(expectedPropPlayDF)
+  return(expectedNumGameDF)
 }
