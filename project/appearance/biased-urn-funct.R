@@ -330,8 +330,7 @@ GetFormationProbabilityByTeam = function(myTeam, myTgn, windowSize, historicForm
   return(matchFormationDF)
 }
 
-GetExpectedNumGameByTeamBlock = function(myTeam, myTgn, blockSize, 
-                                         myTeamEstimateDF, myTeamTgnFormationDF) {
+GetExpectedPropGameByTeam = function(myTeam, myTgn, myTeamEstimateDF, myTeamTgnFormationDF) {
   # so for each match, we need to calculate the prob of each available player playing for each plausible formation
   matchFormationDF = myTeamTgnFormationDF %>%
     filter(alltimetgn == myTgn)
@@ -343,7 +342,7 @@ GetExpectedNumGameByTeamBlock = function(myTeam, myTgn, blockSize,
       filter(alltimetgn == myTgn & mainpos2 == myMainpos)
     # but we need to insert any players who didn't feature before, with mle = 0
     subGbgDF = gbgdf2 %>%
-      filter(team == myTeam & between(alltimetgn, myTgn, myTgn + blockSize) & available & mainpos2 == myMainpos) 
+      filter(team == myTeam & alltimetgn == myTgn & available & mainpos2 == myMainpos) 
     newPlayer = anti_join(subGbgDF %>%
                             distinct(team, mainpos2, player),
                           myPlayerMle,
@@ -367,18 +366,14 @@ GetExpectedNumGameByTeamBlock = function(myTeam, myTgn, blockSize,
                         subMatchFormationDF)
 
     repSubGbgDF = repSubGbgDF %>%
-      group_by(alltimetgn, formationIndex) %>%
-      mutate(expectedPropPlayGivenFormation = BiasedUrn::meanMWNCHypergeo(rep(1, n()), numPlayerToSelect[1], appearanceOdds)) %>%
+      group_by(formationIndex) %>%
+      mutate(expectedPropGameGivenFormation = BiasedUrn::meanMWNCHypergeo(rep(1, n()), numPlayerToSelect[1], appearanceOdds)) %>%
       ungroup()
     
     myList[[i]] = repSubGbgDF %>%
       group_by(player) %>%
-      summarise(expectedNumGame = sum(expectedPropPlayGivenFormation * formationWgt)) %>%
-      mutate(team = myTeam, mainpos2 = myMainpos, alltimetgn = myTgn) %>%
-      left_join(subGbgDF %>%
-                  count(player) %>%
-                  rename(availableNumGame = n),
-                'player')
+      summarise(expectedPropGame = sum(expectedPropGameGivenFormation * formationWgt)) %>%
+      mutate(team = myTeam, mainpos2 = myMainpos, alltimetgn = myTgn)
   }
   
   # ok so that all works, i believe we need to loop by team/block
