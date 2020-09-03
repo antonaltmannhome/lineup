@@ -74,6 +74,12 @@ unTeamMainposBlock = gbgdf2 %>%
 unTeamBlock = unTeamMainposBlock %>%
   distinct(team, inBlock)
 
+
+allTeamBlockObservedNumGame = gbgdf2 %>%
+  lazy_left_join(resultDF, c('alltimetgn', 'team'), 'maxEndTime') %>%
+  group_by(team, inBlock, player) %>%
+  summarise(observedNumGame = sum( (endTime2 - startTime2) / maxEndTime))
+
 RunEntireLoop = function(timeDownWeightCoef, priorStrength) {
   
   myList = vector('list', nrow(unTeamMainposBlock))
@@ -102,10 +108,14 @@ RunEntireLoop = function(timeDownWeightCoef, priorStrength) {
   }
   allTeamBlockExpectedNumGame = bind_rows(myList)
   
-  return(lst(allTeamSeasonMainposEstimateDF,
-             allTeamBlockFormationDF,
-             allTeamBlockExpectedNumGame))
+  myOutput = lst(allTeamSeasonMainposEstimateDF,
+                 allTeamBlockFormationDF,
+                 allTeamBlockExpectedNumGame)
   
+  fileOut = paste0(DATAPATH, 'active_player/biased_urn_output/output_timedownweight_', timeDownWeightCoef, '_priorstrength_', priorStrength, '.rds')
+  saveRDS(object = myOutput, file = fileOut)
+  
+  return(myOutput)
 }
 
 if (FALSE) {
@@ -138,14 +148,9 @@ for (j in 1:nrow(tdwStrDF)) {
 
 }
 
-# now compare to what actually happened, which should be easy i think
-allTeamBlockObservedNumGame = gbgdf2 %>%
-  lazy_left_join(resultDF, c('alltimetgn', 'team'), 'maxEndTime') %>%
-  group_by(team, inBlock, player) %>%
-  summarise(observedNumGame = sum( (endTime2 - startTime2) / maxEndTime))
-
-MeasureOutput = function(tdw, str) {
-  myOutput = readRDS(paste0('c:/temp/outputT', tdw, 'P', str, '.rds'))
+MeasureOutput = function(timeDownWeightCoef, priorStrength) {
+  fileIn = paste0(DATAPATH, 'active_player/biased_urn_output/output_timedownweight_', timeDownWeightCoef, '_priorstrength_', priorStrength, '.rds')
+  myOutput = readRDS(fileIn)
   # now see how well we have predicted what happened
   allTeamBlockExpectedNumGame = myOutput$allTeamBlockExpectedNumGame
   
@@ -175,3 +180,42 @@ MeasureOutput = function(tdw, str) {
 # 10 seems right.
 # So, we've written tdw = 0.1, str = 10 to 'active_player' folder
 # next is the fun bit, seeing how we need to adjust with fixture pileup / injury recovery / scoring / keeping clean sheet
+
+# ok, so i've corrected the unkonw players have 0 expected minutes thing, the calibration plot is obviously better bu tmy sqdiff is worse, what the heck. let's look into that
+
+timeDownWeightCoef = 0.1
+priorStrength = 10
+fileIn = paste0(DATAPATH, 'active_player/biased_urn_output/output_timedownweight_', timeDownWeightCoef, '_priorstrength_', priorStrength, '.rds')
+myOutput = readRDS(fileIn)
+# now see how well we have predicted what happened
+newAllTeamBlockExpectedNumGame = myOutput$allTeamBlockExpectedNumGame
+
+fileIn = paste0(DATAPATH, 'active_player/biased_urn_output/old crap might as well wipe/old_output_timedownweight_', timeDownWeightCoef, '_priorstrength_', priorStrength, '.rds')
+myOutput = readRDS(fileIn)
+# now see how well we have predicted what happened
+oldAllTeamBlockExpectedNumGame = myOutput$allTeamBlockExpectedNumGame
+
+blockObservedExpected = allTeamBlockObservedNumGame %>%
+  left_join(newAllTeamBlockExpectedNumGame %>%
+            rename(newExpectedNumGame = expectedNumGame),
+            c('team', 'inBlock', 'player')) %>%
+  left_join(oldAllTeamBlockExpectedNumGame %>%
+              rename(oldExpectedNumGame = expectedNumGame),
+            c('team', 'inBlock', 'player'))
+
+par(mfrow = c(2, 1), mai = c(1, 1, .1, .1))
+with(blockObservedExpected[sax,], calibplot(oldExpectedNumGame, observedNumGame))
+with(blockObservedExpected[sax,], calibplot(newExpectedNumGame, observedNumGame))
+
+# there is a lot of data in the lower end with the new version, maybe we could reoptimise the prior to help that
+# although somehow we would rather our measure focussed on the players who appear more regularly, they are the ones we actually care about
+# but somehow we need to define those points independently first
+# but is that really true? it's surely bad to overlook a player who might well play
+
+# and then run our snazzy thing that prevents over-predicting the dead certs
+# which we seem to have corrected actually with this latest change to be fair
+# don't like this new thing that much though. would rather run it more frequently and see if it corrects itself quickly
+# at the moment, a new player can force the estimates of the other players down too much i think
+# although the calibration plot appears to disagree
+# still think it's odd that we run in blocks and allow this to become such a problem though
+# let's do another version that runs game by game
