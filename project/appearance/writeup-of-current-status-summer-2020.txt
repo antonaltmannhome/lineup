@@ -1,0 +1,13 @@
+### current status: worth recording because i will clearly forget otherwise
+
+## we've run it on a game by game basis only for chelsea so far
+## the idea being we try to develop the fatigue/schedule business code on a manageable amount of data
+## have not done anything substantial on fatige/schedule so far though
+## there is a file called 'intercept-with-biased-urn-idea.R' which i think was a waste of time
+## what we need is to have the actual likelihood function, which is fortunately quite compact, to have factors in it such as 'player is tired', with the effect that if a player is dropped through fatigue, the prob of them playing that match should have been lower, while the prob of them playing the next match goes up due to the rest
+## we haven't done that yet but that's not a problem til the xmas set of games i think
+
+## my suggestion: try to work out how to do the fatigue/schedule thing just on the chelsea data. make a likelihood function that forgives players for not playing while fatigued and busy
+
+## but the immediate priority is to get what we currently have running in real time
+## for that we need to know the tim edownweight and prior strenght. we don't know that yet, but downweight = 0.1 and prior strength = 10 seems to plausible for now
