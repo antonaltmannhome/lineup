@@ -65,6 +65,15 @@ write_csv(path = paste0(DATAPATH, 'active_player/player-mle-', nextSeason, '-1.c
 # ah, but formation needs to be a little different, it needs to have a notion of who's expected to be available in the next game
 # which is a little tricky at the start of the season, think we need to have the data from the ff website
 
+# or
+playerAppearanceMleDF = read_csv(paste0(DATAPATH, 'active_player/player-mle-', nextSeason, '-1.csv'), col_types = list(
+  team = col_character(),
+  alltimetgn = col_integer(),
+  mainpos2 = col_character(),
+  player = col_character(),
+  appearanceMle = col_double(),
+  appearanceOdds = col_double()))
+
 ffPriceDF = read_csv(paste0(DATAPATH, 'ff-price.csv'), col_types = list(
   player = col_character(),
   team = col_character(),
@@ -73,6 +82,8 @@ ffPriceDF = read_csv(paste0(DATAPATH, 'ff-price.csv'), col_types = list(
 ))
 
 # right, we have to get that talking to the formation code somehow
+# this is a right pain! the position classifications on ff are completely different to what they are in whoscored data. This is surely not worth doing just for the first gameweek
+
 # would be nice to indicate which players are long term injured too
 
 myList = list('vector', nrow(survivingTeamDF))

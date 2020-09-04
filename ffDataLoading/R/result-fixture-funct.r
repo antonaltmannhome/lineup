@@ -30,7 +30,7 @@ GetResultDF = function() {
 	return(resultDF = resultDF)
 }
 
-GetFixtDF = function(resultDF) {
+GetFixtDF = function(resultDF = NULL) {
 
 	### then get the fixtures
 	flatfixtdf=read.csv(paste(DATAPATH,'fixture_result/fixture',currentseason,'.csv',sep=''))
@@ -60,18 +60,28 @@ GetFixtDF = function(resultDF) {
 	fixtDF = fixtDF %>%
 				arrange(date)
 
-	# need team game number, because can have two games in a gameweek which is bloody irritating
-	totalTeamGameSoFar = resultDF %>%
-	  filter(season == currentseason) %>%
-	  count(team)
-	fixtDF = fixtDF %>%
-	  left_join(totalTeamGameSoFar,
-	            'team') %>%
-	  group_by(team) %>%
-	  arrange(date) %>%
-	  mutate(teamgamenumber = n + 1:n()) %>%
-	  select(-n) %>%
-	  ungroup()
+	if (is.null(resultDF)) {
+	  fixtDF = fixtDF %>%
+	    group_by(team) %>%
+	    arrange(date) %>%
+	    mutate(teamgamenumber = 1:n()) %>%
+	    ungroup()
+	}
+	
+	if (!is.null(resultDF)) {
+  	# need team game number, because can have two games in a gameweek which is bloody irritating
+  	totalTeamGameSoFar = resultDF %>%
+  	  filter(season == currentseason) %>%
+  	  count(team)
+  	fixtDF = fixtDF %>%
+  	  left_join(totalTeamGameSoFar,
+  	            'team') %>%
+  	  group_by(team) %>%
+  	  arrange(date) %>%
+  	  mutate(teamgamenumber = n + 1:n()) %>%
+  	  select(-n) %>%
+  	  ungroup()
+	}
 
 	return(fixtDF)
 }
