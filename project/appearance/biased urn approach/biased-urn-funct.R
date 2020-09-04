@@ -157,46 +157,58 @@ GetPlayerAppearanceMle = function(myTeam, myMainpos, myTgn, windowSize, priorStr
     group_by(team, alltimetgn) %>%
     do(SplitGame(.$player, .$startTime2, .$endTime2))
   
-  unMatchSection = splitTeamDF %>%
-    group_by(alltimetgn, matchSection, minDiff) %>%
-    summarise(numWhoPlayed = sum(played)) %>%
-    ungroup() %>%
-    mutate(logLik = NA)
+  if (nrow(splitTeamDF) == 0) {
+    myAppearanceMle = data.frame(team = character(),
+                                 alltimetgn = integer(),
+                                 mainpos2 = character(),
+                                 player = character(),
+                                 appearanceMle = numeric(),
+                                 appearanceOdds = numeric())
+  }
   
-  # but this leaves us with some match sections where no players play
-  # which we don't want, so get rid
-  unMatchSection = unMatchSection %>%
-    filter(numWhoPlayed > 0)
-  splitTeamDF = splitTeamDF %>%
-    semi_join(unMatchSection, c('alltimetgn', 'matchSection'))
-  
-  # who has made the median number of appearances, they should have value zero
-  myTotalMinutePlayed = splitTeamDF %>%
-    group_by(player) %>%
-    summarise(totalMinutePlayed = sum(endTime - startTime)) %>%
-    arrange(totalMinutePlayed)
-  
-  referencePlayer = myTotalMinutePlayed$player[floor(0.5 * nrow(myTotalMinutePlayed)+1)]
-  myUnPlayer = c(referencePlayer, setdiff(myTotalMinutePlayed$player, referencePlayer))
-  splitTeamDF$playerNumber = match(splitTeamDF$player, myUnPlayer)
-  
-  allPermutationDF = splitTeamDF %>%
-    group_by(alltimetgn, matchSection) %>%
-    summarise(allPermutationByPlayerNumber = CalculateAllPermutation(played, playerNumber),
-              activePlayerList = list(playerNumber),
-              minDiff = minDiff[1]) %>%
-    lazy_left_join(pastTeamResultDF, 'alltimetgn', 'timeDownWeight')
-  
-  theta0 = rep(0, length(myUnPlayer))
-  
-  maxInfo = nlm(CalculateAllMatchSectionLogLik, p = theta0,
-                allPermutationDF = allPermutationDF,
-                priorStrength = priorStrength,
-                stepmax = 5)
-  
-  myAppearanceMle = data.frame(team = myTeam, alltimetgn = myTgn, mainpos2 = myMainpos, player = myUnPlayer,
-                               appearanceMle = maxInfo$estimate,
-                               appearanceOdds = exp(maxInfo$estimate) / sum(exp(maxInfo$estimate)))
+  if (nrow(splitTeamDF) > 0) {
+    
+    unMatchSection = splitTeamDF %>%
+      group_by(alltimetgn, matchSection, minDiff) %>%
+      summarise(numWhoPlayed = sum(played)) %>%
+      ungroup() %>%
+      mutate(logLik = NA)
+    
+    # but this leaves us with some match sections where no players play
+    # which we don't want, so get rid
+    unMatchSection = unMatchSection %>%
+      filter(numWhoPlayed > 0)
+    splitTeamDF = splitTeamDF %>%
+      semi_join(unMatchSection, c('alltimetgn', 'matchSection'))
+    
+    # who has made the median number of appearances, they should have value zero
+    myTotalMinutePlayed = splitTeamDF %>%
+      group_by(player) %>%
+      summarise(totalMinutePlayed = sum(endTime - startTime)) %>%
+      arrange(totalMinutePlayed)
+    
+    referencePlayer = myTotalMinutePlayed$player[floor(0.5 * nrow(myTotalMinutePlayed)+1)]
+    myUnPlayer = c(referencePlayer, setdiff(myTotalMinutePlayed$player, referencePlayer))
+    splitTeamDF$playerNumber = match(splitTeamDF$player, myUnPlayer)
+    
+    allPermutationDF = splitTeamDF %>%
+      group_by(alltimetgn, matchSection) %>%
+      summarise(allPermutationByPlayerNumber = CalculateAllPermutation(played, playerNumber),
+                activePlayerList = list(playerNumber),
+                minDiff = minDiff[1]) %>%
+      lazy_left_join(pastTeamResultDF, 'alltimetgn', 'timeDownWeight')
+    
+    theta0 = rep(0, length(myUnPlayer))
+    
+    maxInfo = nlm(CalculateAllMatchSectionLogLik, p = theta0,
+                  allPermutationDF = allPermutationDF,
+                  priorStrength = priorStrength,
+                  stepmax = 5)
+    
+    myAppearanceMle = data.frame(team = myTeam, alltimetgn = myTgn, mainpos2 = myMainpos, player = myUnPlayer,
+                                 appearanceMle = maxInfo$estimate,
+                                 appearanceOdds = exp(maxInfo$estimate) / sum(exp(maxInfo$estimate)))
+  }
   
   return(myAppearanceMle)
 }

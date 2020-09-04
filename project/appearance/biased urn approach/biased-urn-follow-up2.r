@@ -25,7 +25,7 @@ myTeamTgn = unTeamTgn %>%
   filter(team == myTeam)
 
 myList = list('vector', nrow(myTeamTgn))
-for (tbi in 1:nrow(myTeamTgn)) {
+for (tbi in 5:nrow(myTeamTgn)) {
   myList[[tbi]] = with(myTeamTgn[tbi,],
                        GetFormationProbabilityByTeam(team, alltimetgn, 38, historicFormationDF))
 }
@@ -48,6 +48,22 @@ subGbgDF = gbgdf2 %>%
 
 calibplot(subGbgDF$expectedPropGame, subGbgDF$minute/94)
 # looks pretty solid to me
+
+# but we need a horizontal diagnosis tool
+
+ViewHorizDiag = function(mySeason, lhTgn, rhTgn) {
+  horizDiag = gbgdf %>%
+    filter(team == myTeam) %>%
+    lazy_left_join(myTeamExpectedPropGameDF, c('team', 'player', 'alltimetgn')) %>%
+    mutate(predObs = paste(round(expectedPropGame, 2), minute, as.integer(available), sep = '/')) %>%
+    filter(season == mySeason & between(teamgamenumber, lhTgn, rhTgn) & !is.na(mainpos2)) %>%
+    select(player, mainpos2, teamgamenumber, predObs) %>%
+    spread(key = teamgamenumber, value = predObs) %>%
+    arrange(match(mainpos2, c('def', 'mid', 'att')))
+  return(horizDiag)
+}
+
+# gah reece james switches from def to mid, which boosts defs probs of playing, decreases midfielders. can we force players to have same position throughout the season maybe? Not a big deal to rerun an entire team's ests for a season if you have to
 
 # now, what about a fatigue measure?
 

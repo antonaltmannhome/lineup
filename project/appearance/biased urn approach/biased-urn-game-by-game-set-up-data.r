@@ -17,7 +17,7 @@ gbgdf = lazy_left_join(gbgdf,
                        c('season', 'team', 'teamgamenumber'),
                        c('alltimetgn'))
 
-gbgdf2 = gbgdf %>%
+gbgdf = gbgdf %>%
   filter(!grepl('(injury|suspension)', startTime)) %>%
   mutate(startTime2 = ifelse(!startTime %in% c('U', 'UU'), startTime, as.character(fakeMaxTime)),
          endTime2 = ifelse(!startTime %in% c('U', 'UU'), endTime, as.character(fakeMaxTime))) %>%
@@ -26,16 +26,41 @@ gbgdf2 = gbgdf %>%
 # except we've got the problem that players sometimes officially start the match at eg 97 minutes.
 # let's ceiling the endTime to be the greater of 94 and the biggest startTime of the match
 
-gbgdf2$mainpos2 = with(gbgdf2, case_when(
+gbgdf$mainpos2 = with(gbgdf, case_when(
   mainpos %in% c('D', 'DMC') ~ 'def',
   mainpos == 'M' ~ 'mid',
   mainpos %in% c('AM', 'FW') ~ 'att',
   TRUE ~ 'other'
 ))
 
+# if a player's mainpos2 changes during the season, set it to always be the more likely one
+playerSeasonPosCount = gbgdf %>%
+  group_by(team, season, mainpos2, player) %>%
+  summarise(numGameInPos = n()) %>%
+  ungroup()
+playerSeasonPosCount = playerSeasonPosCount %>%
+  left_join(playerSeasonPosCount %>%
+            group_by(team, season, player) %>%
+              summarise(numPosByPlayer = n()),
+            c('team', 'season', 'player'))
+
+toReplace = playerSeasonPosCount %>%
+  filter(numPosByPlayer > 1) %>%
+  group_by(team, season, player) %>%
+  mutate(newPos = mainpos2[which.max(numGameInPos)])
+
+gbgdf = gbgdf %>%
+  join_on_overlap(toReplace %>%
+                    select(team, season, mainpos2, player, newPos),
+                  c('team', 'season', 'player', 'mainpos2'))
+gbgdf = gbgdf %>%
+  mutate_cond(!is.na(newPos),
+              mainpos2 = newPos) %>%
+  select(-newPos)
+
 #gbgdf2 = gbgdf2 %>%
 #  select(season, seasonNumber, teamgamenumber, alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2, #inBlock)
-gbgdf2 = gbgdf2 %>%
+gbgdf2 = gbgdf %>%
   select(alltimetgn, team, player, startTime2, endTime2, minute, played, available, mainpos2)
 
 

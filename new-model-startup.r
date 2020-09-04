@@ -14,19 +14,13 @@ setwd(USERPATH)
 source('admin_funct.r')
 
 options(warn=2, dplyr.print_max = 1e9)
-if (FALSE) {
-ffDataLoadingPath = paste0(USERPATH, 'ffDataLoading')
-# usethis::create_package(ffDataLoadingPath)
-#devtools::load_all(ffDataLoadingPath)
-devtools::install(ffDataLoadingPath)
-}
 source(paste0(USERPATH, 'team-funct.r'))
 source(paste0(USERPATH, 'player-funct.r'))
 
 seasonInfoDF = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
 ##### aaarghhh, want to define seasonNumber at this point but it starts with 1516, whereas appearanceDF starts with 1617, and uses 1 for 1617.
 ### the solution: appearanceDF should use seasonInfoDF as its guide for season numbers. 
-currentseason = 1920
+currentseason = 2021
 
 resultDF = ffDataLoading:::GetResultDF()
 fixtDF = ffDataLoading:::GetFixtDF(resultDF)

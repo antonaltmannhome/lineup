@@ -1,7 +1,7 @@
 ## this file should do everything wrt the biased urn stuff
 
 ### let's try to figure out what the most common formations are in general
-source('project/appearance/biased-urn-game-by-game-set-up-data.r')
+source('project/appearance/biased urn approach/biased-urn-game-by-game-set-up-data.r')
 # ok it will take 45 hours to run everybody ever
 # so i say we run 1 team at a time and build up the picture gradually
 GetAllPastMle = function(myTeam, timeDownWeightCoef, priorStrength) {

@@ -3,8 +3,16 @@ GetResultDF = function() {
 	resultlist = NULL
 	for (si in 1:nrow(seasonInfoDF)) {
 		if (seasonInfoDF$havegbg[si]) {
-			resultlist[[si]] = read.csv(paste(DATAPATH,'fixture_result/result',seasonInfoDF$season[si],'.csv',sep=''),as.is=TRUE)
-			resultlist[[si]]$season = seasonInfoDF$season[si]
+			resultlist[[si]] = read_csv(paste(DATAPATH,'fixture_result/result',seasonInfoDF$season[si],'.csv',sep=''), col_types = list(
+			  date = col_integer(),
+			  ht = col_character(),
+			  at = col_character(),
+			  hsc = col_integer(),
+			  asc = col_integer()
+			))
+			if (nrow(resultlist[[si]]) > 0) {
+  			resultlist[[si]]$season = seasonInfoDF$season[si]
+			}
 		}
 	}
 	flatresultdf = bind_rows(resultlist)
@@ -104,7 +112,7 @@ CheckSpreadexUpToDate = function(fixtDF) {
 
 AlignOddsWithResultsAndFixtures = function(resultDF, fixtDF) {
 
-	allseason = unique(resultDF$season)
+	allseason = seasonInfoDF$season
 	spreadexfilein = paste0(DATAPATH, 'spreadex_', allseason, '.csv')
 	spreadexlist = NULL
 	for (si in 1:length(allseason)) {
