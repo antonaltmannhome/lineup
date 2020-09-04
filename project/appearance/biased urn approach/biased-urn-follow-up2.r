@@ -34,7 +34,7 @@ myTeamTgnFormationDF = bind_rows(myList)
 myList = list('vector', nrow(myTeamTgn))
 # actually, instead of predicting just hte next game, maybe THIS should still predict the next block of games
 # to get rid of the resting issue
-for (tbi in 5:nrow(myTeamTgn)) {
+for (tbi in 1:nrow(myTeamTgn)) {
   myList[[tbi]] =  with(myTeamTgn[tbi,],
                         GetExpectedPropGameByTeam(team, alltimetgn,
                                                   myTeamEstimateDF, myTeamTgnFormationDF))
