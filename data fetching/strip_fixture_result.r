@@ -2,15 +2,17 @@
 source(paste(USERPATH,'data fetching/fixture_result_funct.r',sep=''))
 
 browserToUse='Firefox'
-haveJustFinishedSeason = FALSE
 
 resultPage='https://www.premierleague.com/results'
 fixturePage='https://www.premierleague.com/fixtures'
 
+if (aboutToStartSeason) {
+  pageList = 'fixture'
+}
 if (haveJustFinishedSeason) {
 	pageList = 'result'
 }
-if (!haveJustFinishedSeason) {
+if (!haveJustFinishedSeason & !aboutToStartSeason) {
 	pageList=c('result','fixture')
 }
 for (page in pageList) {
@@ -67,25 +69,27 @@ if (!haveJustFinishedSeason) {
 }
 ### next, get hold of results
 
-rawdata=scan(paste(DATAPATH,'fixture_result/result',currentseason,'.txt',sep=''),sep='\n','',quiet=T)
-rawdata=tolower(rawdata)
-
-### try to pick out all the date lines
-dategrep=grep('^[a-z]+ [0-9]{1,2} [a-z]+ [0-9]{4}',rawdata)
-### good, let's convert those to dates firstly
-alldate=convertdate(rawdata[dategrep])
-
-scoregrep=grep('[a-z]+ [0-9]\\-[0-9] .+',rawdata)
-resht=gsub('^ *','',gsub(' *$','',gsub('(^.+)([0-9]\\-[0-9])(.+$)','\\1',rawdata[scoregrep])))
-resat=gsub('(^.+ [0-9]+\\-[0-9]+ )(.+)(  .+$)','\\2',rawdata[scoregrep])
-reshsc=as.numeric(gsub('(^.+)([0-9])(\\-)([0-9])(.+$)','\\2',rawdata[scoregrep]))
-resasc=as.numeric(gsub('(^.+)([0-9])(\\-)([0-9])(.+$)','\\4',rawdata[scoregrep]))
-### then get the dates
-resdate=alldate[findInterval(scoregrep,dategrep)]
-
-### but make sure team names are as we want them to be
-resht=gsub(' ','',cleanteam(resht,'premierleague'))
-resat=gsub(' ','',cleanteam(resat,'premierleague'))
-
-resdf=data.frame(date=resdate, ht=resht, at=resat, hsc=reshsc, asc=resasc)
-write.csv(file=paste(DATAPATH,'fixture_result/result',currentseason,'.csv',sep=''),resdf,row.names=F)
+if (!aboutToStartSeason) {
+  rawdata=scan(paste(DATAPATH,'fixture_result/result',currentseason,'.txt',sep=''),sep='\n','',quiet=T)
+  rawdata=tolower(rawdata)
+  
+  ### try to pick out all the date lines
+  dategrep=grep('^[a-z]+ [0-9]{1,2} [a-z]+ [0-9]{4}',rawdata)
+  ### good, let's convert those to dates firstly
+  alldate=convertdate(rawdata[dategrep])
+  
+  scoregrep=grep('[a-z]+ [0-9]\\-[0-9] .+',rawdata)
+  resht=gsub('^ *','',gsub(' *$','',gsub('(^.+)([0-9]\\-[0-9])(.+$)','\\1',rawdata[scoregrep])))
+  resat=gsub('(^.+ [0-9]+\\-[0-9]+ )(.+)(  .+$)','\\2',rawdata[scoregrep])
+  reshsc=as.numeric(gsub('(^.+)([0-9])(\\-)([0-9])(.+$)','\\2',rawdata[scoregrep]))
+  resasc=as.numeric(gsub('(^.+)([0-9])(\\-)([0-9])(.+$)','\\4',rawdata[scoregrep]))
+  ### then get the dates
+  resdate=alldate[findInterval(scoregrep,dategrep)]
+  
+  ### but make sure team names are as we want them to be
+  resht=gsub(' ','',cleanteam(resht,'premierleague'))
+  resat=gsub(' ','',cleanteam(resat,'premierleague'))
+  
+  resdf=data.frame(date=resdate, ht=resht, at=resat, hsc=reshsc, asc=resasc)
+  write.csv(file=paste(DATAPATH,'fixture_result/result',currentseason,'.csv',sep=''),resdf,row.names=F)
+}

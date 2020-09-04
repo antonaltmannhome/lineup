@@ -2,7 +2,9 @@
 source('c:/git/lineup/ff_startup.r')
 
 seasonInfoDF = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
-currentseason = 1920
+currentseason = 2021
+haveJustFinishedSeason = FALSE
+aboutToStartSeason = FALSE
 
 ### firstly, get the latest player stats
 source(paste(USERPATH, 'data fetching/strip_whoscored.r',sep=''))

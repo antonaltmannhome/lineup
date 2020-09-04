@@ -2,64 +2,38 @@
 
 ## firstly scan in what's already been done (at start of season, this won't exist so you have to make it)
 
-resultDF = ffDataLoading:::GetResultDF()
-fixtDF = ffDataLoading:::GetFixtDF(resultDF)
 spreadexfile = paste0(DATAPATH, 'spreadex_',currentseason,'.csv')
-
-if (FALSE) {
-horizResultDF = resultDF %>%
-				filter(season==1819 & gameweek<=2 & isHome) %>%
-				select(date, team, oppteam) %>%
-				dplyr::rename(ht = team, at = oppteam)
-
-horizFixtDF = fixtDF %>%
-				filter(isHome) %>%
-				select(date, team, oppteam) %>%
-				dplyr::rename(ht = team, at = oppteam)
-
-horizFixtDF = bind_rows(horizResultDF, horizFixtDF) %>%
-				mutate(supspread = NA, totspread = NA)
-
-write.csv(file = spreadexfile, horizFixtDF, row.names = FALSE)
-
-write.csv(file = 'd:/whoscored_data/spreadex_1617.csv',
-			resultDF %>%
-				filter(season==1617 & isHome) %>%
-				select(date, team, oppteam, oddsescored, oddseconceded) %>%
-				dplyr::rename(ht = team, at = oppteam) %>%
-				mutate(supspread = oddsescored - oddseconceded,
-						totspread = oddsescored + oddseconceded) %>%
-				select(-c(oddsescored, oddseconceded)),
-			row.names = FALSE)
-
-write.csv(file = 'd:/whoscored_data/spreadex_1718.csv',
-			resultDF %>%
-				filter(season==1718 & isHome) %>%
-				select(date, team, oppteam, oddsescored, oddseconceded) %>%
-				dplyr::rename(ht = team, at = oppteam) %>%
-				mutate(supspread = oddsescored - oddseconceded,
-						totspread = oddsescored + oddseconceded) %>%
-				select(-c(oddsescored, oddseconceded)),
-			row.names = FALSE)
+if (aboutToStartSeason) {
+  fixtDF = ffDataLoading:::GetFixtDF()
+  spreadexDF = fixtDF %>%
+    filter(isHome) %>%
+    select(date, ht = team, at = oppteam) %>%
+    mutate(supspread = NA,
+           totspread = NA)
+  write_csv(x = spreadexDF, path = spreadexfile)
 }
-
-existingodds = read.csv(spreadexfile, as.is = TRUE)
-# fixtures might have changed since it was made, so join in new stuff
-
-horizResultDF = resultDF %>%
-				filter(season== currentseason & isHome) %>%
-				select(date, team, oppteam) %>%
-				dplyr::rename(ht = team, at = oppteam)
-
-horizFixtDF = fixtDF %>%
-				filter(isHome) %>%
-				select(date, team, oppteam) %>%
-				dplyr::rename(ht = team, at = oppteam)
-
-horizDF = bind_rows(horizResultDF, horizFixtDF)
-
-horizDF = left_join(horizDF, existingodds, c('date', 'ht', 'at'))
-
-write.csv(file = spreadexfile, horizDF, row.names = FALSE)
-
-message('Have updated the fixture list in ', spreadexfile,', you can add spread data now')
+if (!aboutToStartSeason) {
+  resultDF = ffDataLoading:::GetResultDF()
+  fixtDF = ffDataLoading:::GetFixtDF(resultDF)
+  
+  existingodds = read.csv(spreadexfile, as.is = TRUE)
+  # fixtures might have changed since it was made, so join in new stuff
+  
+  horizResultDF = resultDF %>%
+    filter(season== currentseason & isHome) %>%
+    select(date, team, oppteam) %>%
+    dplyr::rename(ht = team, at = oppteam)
+  
+  horizFixtDF = fixtDF %>%
+    filter(isHome) %>%
+    select(date, team, oppteam) %>%
+    dplyr::rename(ht = team, at = oppteam)
+  
+  horizDF = bind_rows(horizResultDF, horizFixtDF)
+  
+  horizDF = left_join(horizDF, existingodds, c('date', 'ht', 'at'))
+  
+  write.csv(file = spreadexfile, horizDF, row.names = FALSE)
+  
+  message('Have updated the fixture list in ', spreadexfile,', you can add spread data now')
+}
