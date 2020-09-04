@@ -70,8 +70,9 @@ unTeamMainposTgn = gbgdf2 %>%
   distinct(team, mainpos2, alltimetgn) %>%
   group_by(team, mainpos2) %>%
   arrange(alltimetgn) %>%
-  mutate(alltimetgnDelta = alltimetgn - lag(alltimetgn, 1),
-         isValid = !is.na(alltimetgnDelta) & alltimetgnDelta == 1) %>%
+  mutate(actualtgn = 1:n(),
+          alltimetgnDelta = alltimetgn - lag(alltimetgn, 1),
+         isValid = actualtgn > 3 & !is.na(alltimetgnDelta) & alltimetgnDelta == 1) %>%
   filter(mainpos2 %in% c('def', 'mid', 'att') & isValid) %>%
   select(team, mainpos2, alltimetgn) %>%
   ungroup()
