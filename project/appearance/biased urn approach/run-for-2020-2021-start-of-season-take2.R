@@ -3,73 +3,43 @@
 source('new-model-startup.r')
 source('project/appearance/biased urn approach/biased-urn-game-by-game-set-up-data.r')
 
-oh for fucks sake why does digne still have two positions
+# oh for fucks sake why does digne still have two positions
+# because he changed in between seasons, which is still allowed by the code
+# i suppose it means that when joining to the current squad, we should join not only by player but by mainpos2 too
+# aargh, whoscored positions change quite frequently unfortunately
+# how about, take whatever their most recent position is, override past data with that, then optimise?
 
 currentSeasonTeam = fixtDF %>%
-  distinct(team)
+  distinct(team) %>%
+  arrange(team)
 
-priorStrength = 10
-timeDownWeight = 0.1
-myList = vector('list', 3 * nrow(currentSeasonTeam))
-for (j in 1:nrow(currentSeasonTeam)) {
-  maxAllTimeTgn = with(resultDF, max(alltimetgn[team == currentSeasonTeam$team[j]]))
-  myList[[(j - 1) * 3 + 1]] =
-    GetPlayerAppearanceMle(currentSeasonTeam$team[j], 'def', maxAllTimeTgn + 1, 38,
-                                                     priorStrength, timeDownWeight)
-  myList[[(j - 1) * 3 + 2]] =
-    GetPlayerAppearanceMle(currentSeasonTeam$team[j], 'mid', maxAllTimeTgn + 1, 38,
-                           priorStrength, timeDownWeight)
-  myList[[(j - 1) * 3 + 3]] =
-    GetPlayerAppearanceMle(currentSeasonTeam$team[j], 'att', maxAllTimeTgn + 1, 38,
-                           priorStrength, timeDownWeight)
-}
-
-GetAllPastMle = function(myTeam, timeDownWeightCoef, priorStrength) {
-  
-  myTeamMainposTgn = unTeamMainposTgn %>%
-    filter(team == myTeam)
-  myTeamTgn = unTeamTgn %>%
-    filter(team == myTeam)
-  
-  myList = vector('list', nrow(myTeamMainposTgn))
-  for(tbpi in 1:nrow(myTeamMainposTgn)) {
-    myList[[tbpi]] = with(myTeamMainposTgn[tbpi,],
-                          GetPlayerAppearanceMle(team, mainpos2, alltimetgn, 38,
-                                                 priorStrength, timeDownWeightCoef))
-    if ( (tbpi %% 10) == 0) {
-      message('Have calculated ', tbpi, ' out of ', nrow(myTeamMainposTgn), ' team/block/position blocks so far')
-    }
-  }
-  myTeamEstimateDF = bind_rows(myList)
-  
-  fileOut = paste0(DATAPATH, 'active_player/biased_urn_output/playermle_', myTeam, '_timedownweight_', timeDownWeightCoef, '_priorstrength_', priorStrength, '.csv')
-  write_csv(x= myTeamEstimateDF, path = fileOut)
-}
-
-# ah but what do we do about the new teams
-# don't know. let's sort the existing teams first
-
-previousSeasonPoint = resultDF %>%
-  filter(seasonNumber == max(seasonNumber)) %>%
+mostRecentPositionByPlayer = gbgdf %>%
+  semi_join(currentSeasonTeam, 'team') %>%
   group_by(team) %>%
-  summarise(point = 3 * sum(scored > conceded) + sum(scored == conceded) + 0.001 * sum(scored - conceded),
-            finalAllTimeTgn = max(alltimetgn)) %>%
-  arrange(desc(point)) %>%
+  filter(alltimetgn == max(alltimetgn)) %>%
+  select(player, mainpos2) %>%
   ungroup()
 
-survivingTeamDF = previousSeasonPoint %>%
-  slice(1:(n() - 3))
+# now propogate that throughout the past data
+gbgdf2 = gbgdf2 %>%
+  join_on_overlap(mostRecentPositionByPlayer,
+                  c('team', 'player'))
 
-timeDownWeightCoef = 0.1
 priorStrength = 10
+timeDownWeightCoef = 0.1
 
-myList = vector('list', 3 * nrow(survivingTeamDF))
-for (ti in 1:nrow(survivingTeamDF)) {
+myList = vector('list', 3 * nrow(currentSeasonTeam))
+for (ti in 1:nrow(currentSeasonTeam)) {
+  maxAllTimeTgn = with(resultDF, max(alltimetgn[team == currentSeasonTeam$team[j]]))
   for (posi in 1:3) {
     myMainPos = c('def', 'mid', 'att')[posi]
-    myList[[3 * (ti - 1) + posi]] = GetPlayerAppearanceMle(survivingTeamDF$team[ti], myMainPos, survivingTeamDF$finalAllTimeTgn[ti] + 1, 38, priorStrength, timeDownWeightCoef)
+    myList[[3 * (ti - 1) + posi]] =
+      GetPlayerAppearanceMle(currentSeasonTeam$team[ti],
+                             myMainPos,
+                             maxAllTimeTgn + 1,
+                             38, priorStrength, timeDownWeightCoef)
   }
-  message('Have processed latest estimates for ', survivingTeamDF$team[ti])
+  message('Have processed latest estimates for ', currentSeasonTeam$team[ti])
 }
 
 playerAppearanceMleDF = bind_rows(myList)

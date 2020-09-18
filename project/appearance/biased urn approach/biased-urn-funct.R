@@ -118,7 +118,8 @@ MakeHistoricFormationDF = function(gbgdf2) {
   # ok, awesome, now what we want is the frequency of each formation
   historicFormationDF = formationByMatchSection %>%
     group_by(att, def, mid, other) %>%
-    summarise(sumMatchProportion = sum(matchProportion))
+    summarise(sumMatchProportion = sum(matchProportion)) %>%
+    ungroup()
   
   return(historicFormationDF)
 }

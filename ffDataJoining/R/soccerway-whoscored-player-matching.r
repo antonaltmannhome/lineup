@@ -19,7 +19,7 @@ UpdateSoccerwayWhoscoredPlayerMap = function(appearanceDF) {
             filter(season == currentseason) %>%
             distinct(team)
   for (ti in 1:nrow(unTeam)) {
-    ffDataJoining:::.MatchSoccerwayPlayerToWhoscoredByTeam(unTeam$team[ti], currentseason)
+    .MatchSoccerwayPlayerToWhoscoredByTeam(unTeam$team[ti], currentseason)
   }
 }
 
@@ -188,7 +188,7 @@ UpdateSoccerwayWhoscoredPlayerMap = function(appearanceDF) {
     storedInfo = read.csv(storedFile, as.is = TRUE)
   }
 
-  dum = ffDataJoining:::.GetPlayerSummaryFromGame(appearanceDF, gbgdf, myTeam, mySeason)
+  dum = .GetPlayerSummaryFromGame(appearanceDF, gbgdf, myTeam, mySeason)
   mySoccerwayPlayer = dum$mySoccerwayPlayer
   myWhoScoredPlayer = dum$myWhoScoredPlayer
 
@@ -198,22 +198,22 @@ UpdateSoccerwayWhoscoredPlayerMap = function(appearanceDF) {
     missingPlayerIndex = which(is.na(mySoccerwayPlayer$whoscoredPlayer))
     if (length(missingPlayerIndex) > 0) {
       message('myTeam = \'', myTeam, '\'; mySeason =', mySeason)
-      mySoccerwayPlayer = ffDataJoining:::.UpdateForMissingPlayer(missingPlayerIndex, mySoccerwayPlayer, myWhoScoredPlayer)
+      mySoccerwayPlayer = .UpdateForMissingPlayer(missingPlayerIndex, mySoccerwayPlayer, myWhoScoredPlayer)
       # we can now update the stored file with this new info
       write.csv(file = storedFile, mySoccerwayPlayer,	row.names = FALSE)
     }
   }
 
   if (!alreadyDone) {
-    dum = ffDataJoining:::.DoObviousMatch(mySoccerwayPlayer, myWhoScoredPlayer)
+    dum = .DoObviousMatch(mySoccerwayPlayer, myWhoScoredPlayer)
     mySoccerwayPlayer = dum$mySoccerwayPlayer
     myWhoScoredPlayer = dum$myWhoScoredPlayer
 
-    dum = ffDataJoining:::.MatchByNumberOfGame(mySoccerwayPlayer, myWhoScoredPlayer)
+    dum = .MatchByNumberOfGame(mySoccerwayPlayer, myWhoScoredPlayer)
     mySoccerwayPlayer = dum$mySoccerwayPlayer
     myWhoScoredPlayer = dum$myWhoScoredPlayer
 
-    mySoccerwayPlayer = ffDataJoining:::.ManuallyMatch(mySoccerwayPlayer, myWhoScoredPlayer)
+    mySoccerwayPlayer = .ManuallyMatch(mySoccerwayPlayer, myWhoScoredPlayer)
 
     # lots of intermediate columns potentially, reduce them down
     mySoccerwayPlayer = mySoccerwayPlayer  %>%
@@ -238,7 +238,7 @@ CheckDoubleNamePlayer = function(playerMatchDF) {
     cat('aaarghh, we do not want players having two names within playerMatchDF or gfgdf\n')
     cat('to fix this, add the corrections to d:/whoscored/fixplayernames.csv\n')
     cat('Next, you need to delete the pages of the relevant teams from d:/whoscored/soccerway_saved\n')
-    cat('After that, you need to re-run the  ffDataJoining:::UpdateSoccerwayWhoscoredPlayerMap(appearanceDF) function\n')
+    cat('After that, you need to re-run the UpdateSoccerwayWhoscoredPlayerMap(appearanceDF) function\n')
     stop()
   }
 }

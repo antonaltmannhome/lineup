@@ -18,11 +18,16 @@ source(paste0(USERPATH, 'team-funct.r'))
 source(paste0(USERPATH, 'player-funct.r'))
 
 seasonInfoDF = read.csv(paste(DATAPATH,'seasoninfo.csv',sep=''))
+seasonInfoDF$seasonNumber = match(seasonInfoDF$season, with(seasonInfoDF, sort(season)))
 ##### aaarghhh, want to define seasonNumber at this point but it starts with 1516, whereas appearanceDF starts with 1617, and uses 1 for 1617.
-### the solution: appearanceDF should use seasonInfoDF as its guide for season numbers. 
+### the solution: appearanceDF should use seasonInfoDF as its guide for season numbers.
+### update, seasonInfoDF now starts with 1617, hope that doesn't cause problems
+### if it does, fix when needed, don't have seasonInfoDF annoying in every other situation
 currentseason = 2021
+currentseasonnumber = with(seasonInfoDF, seasonNumber[which(season == currentseason)])
 
 resultDF = ffDataLoading:::GetResultDF()
+resultDF = lazy_left_join(resultDF, seasonInfoDF, 'season', 'seasonNumber')
 fixtDF = ffDataLoading:::GetFixtDF(resultDF)
 
 resultDF = ffDataLoading:::AlignGameweekAndSeasonWithResultDF(resultDF)

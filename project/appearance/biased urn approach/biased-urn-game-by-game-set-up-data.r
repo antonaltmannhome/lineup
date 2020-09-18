@@ -7,8 +7,6 @@ source('project/appearance/biased urn approach/biased-urn-funct.R')
 fakeMaxTime = 1000L
 
 # need to sort out seasonNumber. why do we need 1516 in seasonInfoDF?
-seasonInfoDF$seasonNumber = match(seasonInfoDF$season, with(seasonInfoDF, sort(season[havegbg])))
-resultDF = lazy_left_join(resultDF, seasonInfoDF, 'season', 'seasonNumber')
 resultDF = resultDF %>%
   mutate(alltimetgn = (seasonNumber - 1) * 38 + teamgamenumber)
 

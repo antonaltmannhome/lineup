@@ -27,6 +27,7 @@ appearanceDF = ffDataJoining:::LoadSoccerwayData()
 
 ## so we firstly update all the files on disk giving the details of the player maps:
 ffDataJoining:::UpdateSoccerwayWhoscoredPlayerMap(appearanceDF)
+# NB that has the problem that players who haven't yet played effectively don't exist in gbgdf. might only be a problem at start of season for newly promoted teams, feels a bit dodgy though
 
 ### and having done that, we now load in all of the player map data:
 ### NOTE 07/12/2019: problem with astonvilla / ezri konsa ngoyo 
