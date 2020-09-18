@@ -2,14 +2,25 @@ source('c:/git/lineup/new-model-startup.r')
 
 # might be worth updating the prices? not completely convneient to do that right now though, so do manually
 
-playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
+# playerDF = ffModel:::CalculateUpToDatePlayerSmooth(gbgdf)
 # NB this is a bit slow but you can get the game by game calculations this way:
 # gbgdf = ffModel::CalculateHistoricExpectedMinute(gbgdf)
 
 # this is a bit dangerous: it'll overwrite manual changes, which would be very annoying - need to think about how we do that
 # ffModel:::UpdateManualActiveSpreadsheet(gbgdf, playerDF, seasonInfoDF, resultDF)
 
-playerDF = ffModel::ReadManualEMinFile(playerDF, resultDF)
+# playerDF = ffModel::ReadManualEMinFile(playerDF, resultDF)
+
+biasedUrnOutputDF = read_csv(paste0(DATAPATH, 'active_player/biased_urn_output/playing-prob.csv'), col_types = list(
+  player = col_character(),
+  expectedPropGame = col_double(),
+  team = col_character(),
+  mainpos2 = col_character()
+))
+playerDF = playerDF %>%
+  lazy_left_join(biasedUrnOutputDF,
+                 c('team', 'player'),
+                 'expectedPropGame')
 
 fixtDF = GetFixtureGoal(resultDF, fixtDF)
 

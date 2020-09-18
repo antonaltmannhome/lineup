@@ -394,3 +394,43 @@ GetExpectedPropGameByTeam = function(myTeam, myTgn, myTeamEstimateDF, myTeamTgnF
   
   return(expectedNumGameDF)
 }
+
+GetNextGamePropByTeam = function(myTeam, myLatestTeamEstimateDF, myLatestTeamTgnFormationDF, myPlayerDF) {
+  # so for each match, we need to calculate the prob of each available player playing for each plausible formation
+  # loop for now of course
+  myList = vector('list', 3)
+  for (i in 1:3) {
+    myMainpos = c('def', 'mid', 'att')[i]
+    myPlayerMle = myLatestTeamEstimateDF %>%
+      filter(mainpos2 == myMainpos)
+    
+    mySubPlayerDF = inner_join(myPlayerDF,
+                            myPlayerMle %>%
+                              select(player, appearanceMle),
+                            'player') %>%
+      replace_na(list(appearanceMle = 0)) %>%
+      mutate(appearanceOdds = exp(appearanceMle) / sum(exp(appearanceMle)))
+ 
+    subMatchFormationDF = myLatestTeamTgnFormationDF %>%
+      select(formationIndex, myMainpos, formationWgt) %>%
+      rename(numPlayerToSelect = myMainpos)
+    
+    repPlayerDF = merge(mySubPlayerDF,
+                        subMatchFormationDF)
+    
+    repPlayerDF = repPlayerDF %>%
+      group_by(formationIndex) %>%
+      mutate(expectedPropGameGivenFormation = BiasedUrn::meanMWNCHypergeo(rep(1, n()), numPlayerToSelect[1], appearanceOdds)) %>%
+      ungroup()
+    
+    myList[[i]] = repPlayerDF %>%
+      group_by(player) %>%
+      summarise(expectedPropGame = sum(expectedPropGameGivenFormation * formationWgt)) %>%
+      mutate(team = myTeam, mainpos2 = myMainpos)
+  }
+  
+  # ok so that all works, i believe we need to loop by team/block
+  expectedNumGameDF = bind_rows(myList)
+  
+  return(expectedNumGameDF)
+}

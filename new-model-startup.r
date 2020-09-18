@@ -49,6 +49,9 @@ gbgdf = gbgdf %>%
 summaryDF = ffDataLoading::GetSummaryDF(gbgdf)
 playerDF = ffDataLoading:::ReadCurrentSeasonPlayerDF() %>%
               rename(player = whoscoredPlayer)
+# no no that cocks up when a team hasn't played at the start of the season. it also misses out players who haven't yet played. iut should really use the ffplayer database as its reference
+# but that'#s way too big a job
+
 
 doubledUpPlayer = playerDF %>% count(team, playerid) %>% filter(n>1)
 if (nrow(doubledUpPlayer) > 0) {

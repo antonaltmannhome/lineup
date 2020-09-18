@@ -11,7 +11,12 @@ source('project/appearance/biased urn approach/biased-urn-game-by-game-set-up-da
 
 currentSeasonTeam = fixtDF %>%
   distinct(team) %>%
-  arrange(team)
+  arrange(team) %>%
+  left_join(resultDF %>%
+              filter(seasonNumber >= currentseasonnumber - 1) %>%
+              group_by(team) %>%
+              summarise(numRecentSeasonGame = n()),
+            'team')
 
 mostRecentPositionByPlayer = gbgdf %>%
   semi_join(currentSeasonTeam, 'team') %>%
@@ -29,8 +34,8 @@ priorStrength = 10
 timeDownWeightCoef = 0.1
 
 myList = vector('list', 3 * nrow(currentSeasonTeam))
-for (ti in 1:nrow(currentSeasonTeam)) {
-  maxAllTimeTgn = with(resultDF, max(alltimetgn[team == currentSeasonTeam$team[j]]))
+for (ti in which(currentSeasonTeam$numRecentSeasonGame >= 2)) {
+  maxAllTimeTgn = with(resultDF, max(alltimetgn[team == currentSeasonTeam$team[ti]]))
   for (posi in 1:3) {
     myMainPos = c('def', 'mid', 'att')[posi]
     myList[[3 * (ti - 1) + posi]] =
@@ -46,7 +51,7 @@ playerAppearanceMleDF = bind_rows(myList)
 
 # ok. so we store those and then need to convert to actual expected minutes, then we're where we were last season
 
-write_csv(path = paste0(DATAPATH, 'active_player/player-mle-', nextSeason, '-1.csv'),
+write_csv(path = paste0(DATAPATH, 'active_player/player-mle-', currentseason, '-1.csv'),
           x = playerAppearanceMleDF)
 
 # ok, next step, turn these into expected minutes, come on
@@ -74,19 +79,53 @@ ffPriceDF = read_csv(paste0(DATAPATH, 'ff-price.csv'), col_types = list(
 
 # would be nice to indicate which players are long term injured too
 
-myList = list('vector', nrow(survivingTeamDF))
-for (ti in 1:nrow(survivingTeamDF)) {
-  myList[[ti]] = with(survivingTeamDF[ti,],
-                       GetFormationProbabilityByTeam(team, finalAllTimeTgn + 1, 38, historicFormationDF))
+myList = list('vector', nrow(currentSeasonTeam))
+for (ti in which(currentSeasonTeam$numRecentSeasonGame >= 2)) {
+  maxAllTimeTgn = with(resultDF, max(alltimetgn[team == currentSeasonTeam$team[ti]]))
+  myList[[ti]] = GetFormationProbabilityByTeam(currentSeasonTeam$team[ti],
+                                               maxAllTimeTgn, 38,
+                                               historicFormationDF)
 }
+# for the recently promoted teams, just go with the historic ones to start with
+for (ti in which(currentSeasonTeam$numRecentSeasonGame == 1)) {
+  numAvailablePlayer = gbgdf %>%
+    filter(team == currentSeasonTeam$team[ti]) %>%
+    count(mainpos2)
+  numAvailablePlayerByPosition = with(numAvailablePlayer,
+                                      tibble(numAvailableDef = n[mainpos2 == 'def'],
+                                             numAvailableMid = n[mainpos2 == 'mid'],
+                                             numAvailableAtt = n[mainpos2 == 'att']))
+  myList[[ti]] = bind_cols(historicFormationDF,
+                           numAvailablePlayerByPosition) %>%
+                  mutate(team = currentSeasonTeam$team[ti]) %>%
+    filter(att <= numAvailableAtt &
+             mid <= numAvailableMid &
+             def <= numAvailableDef) %>%
+    arrange(desc(sumMatchProportion)) %>%
+    slice(1:3) %>%
+    mutate(formationWgt = sumMatchProportion / sum(sumMatchProportion)) %>%
+    select(-c(sumMatchProportion, other))
+}                 
+    
 myTeamTgnFormationDF = bind_rows(myList)
+# ok this is a real arse, you can't really get formation probabilities that include the most recent game
+# will sort that next week i guess. in the mean time, pretend what we have includes the most recent game
 
-myList = list('vector', nrow(myTeamTgn))
+myList = list('vector', nrow(currentSeasonTeam))
 # actually, instead of predicting just hte next game, maybe THIS should still predict the next block of games
 # to get rid of the resting issue
-for (tbi in 1:nrow(myTeamTgn)) {
-  myList[[tbi]] =  with(myTeamTgn[tbi,],
-                        GetExpectedPropGameByTeam(team, alltimetgn,
-                                                  myTeamEstimateDF, myTeamTgnFormationDF))
+for (tbi in 1:nrow(currentSeasonTeam)) {
+  myList[[tbi]] =  GetNextGamePropByTeam(myTeam = currentSeasonTeam$team[tbi],
+                                          myLatestTeamEstimateDF = playerAppearanceMleDF %>%
+                                                    filter(team == currentSeasonTeam$team[tbi]),
+                                                  myLatestTeamTgnFormationDF = myTeamTgnFormationDF %>%
+                                                    filter(team == currentSeasonTeam$team[tbi]),
+                                         myPlayerDF = playerDF %>%
+                                            filter(team == currentSeasonTeam$team[tbi]))
 }
 myTeamExpectedPropGameDF = bind_rows(myList)
+
+# ok, let's just write that to disk, and say anyone with >0.7 is a starter, then choose from those players
+
+write_csv(path = paste0(DATAPATH, 'active_player/biased_urn_output/playing-prob.csv'),
+          x = myTeamExpectedPropGameDF)
