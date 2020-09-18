@@ -1,6 +1,6 @@
 .MakeInitialGbgDF = function(myseason, seasonInfoDF) {
   alldate = getalldate()
-  alldateseason = seasonInfoDF$season[cut(alldate, c(seasonInfoDF$start, tail(seasonInfoDF$end, 1)), label = FALSE) + 1]
+  alldateseason = seasonInfoDF$season[cut(alldate, c(seasonInfoDF$start, tail(seasonInfoDF$end, 1)), label = FALSE)]
 
   myalldate = alldate[alldateseason == myseason]
 

@@ -35,36 +35,45 @@ if (!haveJustFinishedSeason) {
 
 	### try to pick out all the date lines
 	dategrep=grep('^[a-z]+ [0-9]{1,2} [a-z]+ [0-9]{4}',rawdata)
-	### good, let's convert those to dates firstly
-	fixtdate=convertdate(rawdata[dategrep])
-
 	### but there might be postponed fixtures to deal with
 	tbcgrep=grep('date to be confirmed',rawdata)
-	tbcdate=rep(max(fixtdate),length(tbcgrep))
-
-	alldate=c(tbcdate,fixtdate)
-	allgrep=c(tbcgrep,dategrep)
-	odum=order(allgrep)
-	alldate=alldate[odum]
-	allgrep=allgrep[odum]
+	### good, let's convert those to dates firstly
+	dum=as.integer(convertdate(rawdata[dategrep]))
+  # but the safest thing to do is put hte maximum date in for the postponed fixtures
+	uniquefixtdate = c(max(dum), dum)
 
 	### ok, now the tricker bit, try to get the fixtures
 	### need a list of all team names
 	### easiest way to pick up fixtures is via the 'quick view' line
 	qvgrep=grep('quick view',rawdata)
-	fixtht=gsub('^ +','',rawdata[qvgrep-4])
-	# this doesn't seem like a particularly stable solution, never mind
-	fixtat=gsub('  +.+$', '', gsub('^ +', '', rawdata[qvgrep - 2]))
+	fixtdate = c(uniquefixtdate, 30000101)[cut(qvgrep, c(tbcgrep, dategrep, 10E10), labels = FALSE)]
+	
+	# right, next we have to clear away all the rubbish surrounding the fixtures
+	reduceddata = rawdata[tbcgrep:max(qvgrep)]
+	reduceddata = gsub('^ +', '', reduceddata)
+	tbcIndex = which(reduceddata == 'tbc')
+	if (length(tbcIndex) > 0) {
+	  reduceddata = reduceddata[-tbcIndex]
+	}
+	timeIndex = grep('[0-9]+:[0-9]+', reduceddata)
+	if (length(timeIndex) > 0) {
+	  reduceddata = reduceddata[-timeIndex]
+	}
+	dateIndex = grep('^[a-z]+ [0-9]+ [a-z]+ [0-9]+$', reduceddata)
+	if (length(dateIndex) > 0) {
+	  reduceddata = reduceddata[-dateIndex]
+	}
+	qvgrep = grep('quick view', reduceddata)
+	
+	fixtht=reduceddata[qvgrep-2]
+	fixtat = reduceddata[qvgrep-1]
 
+	fixtDF = tibble(date = fixtdate, ht = fixtht, at = fixtat)
+	
 	### but make sure team names are as we want them to be
-	fixtht=gsub(' ','',cleanteam(fixtht,'premierleague'))
-	fixtat=gsub(' ','',cleanteam(fixtat,'premierleague'))
+	fixtDF$ht=gsub(' ','',cleanteam(fixtDF$ht,'premierleague'))
+	fixtDF$at=gsub(' ','',cleanteam(fixtDF$at,'premierleague'))
 
-	### now match dates to teams
-	fixtdate=alldate[findInterval(qvgrep,allgrep)]
-
-	### now bind em together and write em out
-	fixtDF=data.frame(date=fixtdate, ht=fixtht, at=fixtat)
 	write.csv(file=paste(DATAPATH,'fixture_result/fixture',currentseason,'.csv',sep=''),fixtDF,row.names=F)
 }
 ### next, get hold of results
@@ -80,7 +89,7 @@ if (!aboutToStartSeason) {
   
   scoregrep=grep('[a-z]+ [0-9]\\-[0-9] .+',rawdata)
   resht=gsub('^ *','',gsub(' *$','',gsub('(^.+)([0-9]\\-[0-9])(.+$)','\\1',rawdata[scoregrep])))
-  resat=gsub('(^.+ [0-9]+\\-[0-9]+ )(.+)(  .+$)','\\2',rawdata[scoregrep])
+  resat=gsub('(^.+ [0-9]+\\-[0-9]+ )(.+$)','\\2',rawdata[scoregrep])
   reshsc=as.numeric(gsub('(^.+)([0-9])(\\-)([0-9])(.+$)','\\2',rawdata[scoregrep]))
   resasc=as.numeric(gsub('(^.+)([0-9])(\\-)([0-9])(.+$)','\\4',rawdata[scoregrep]))
   ### then get the dates

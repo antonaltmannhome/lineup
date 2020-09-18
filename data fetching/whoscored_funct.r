@@ -228,151 +228,79 @@ checkpage=function(myteam, myfiletype, mycolhead) {
 	}
 }
 
-checkteam=function(myteam,DIRTOUSE,ishistoric=F,beforeseason) {
-	if (!beforeseason) {
-		filename=paste(DIRTOUSE,'/',myteam,'_',allfiletype,'.txt',sep='')
-	}
-	if (beforeseason) {
-		filename=paste(DIRTOUSE,'/',myteam,'_summary.txt',sep='')
-	}
-	wsteam=teamdf$wsteam[teamdf$team==myteam]
-	iserror=rep(NA,length(allfiletype))
-	for (j in 1:length(filename)) {
-		b=scan(filename[j],'',sep='\n',quiet=T,encoding='UTF-8')
-		### have we got the correct team firstly?
-		if (!ishistoric) {
-			pageteam=tolower(gsub(' Top Players','',b[grep('Top Players',b)]))
-		}
-		if (ishistoric) {
-			pageteam=tolower(gsub(' Squad Archive','',b[grep('Squad Archive',b)]))
-		}
-		if (pageteam!=wsteam) {
-			cat('Have picked up data for',pageteam,'when we want data for',wsteam,', recording error\n')
-			iserror[1:length(allfiletype)]=1
-		}
-		if (pageteam==wsteam) {
-			if (!ishistoric) sax=grep('^[0-9]{2}, [A-Z\\(\\)]+',b)
-			if (ishistoric) sax=grep('^[A-Z][A-Za-z ]+, [0-9]{2}, [A-Z\\(\\)]+',b)
-			### first check we've got the correct file - it can go wrong at times:
-			iserror[j]=checkpage(myteam,allfiletype[j],gsub(' ','',b[sax[1]-3]))
-			tabdat1=t(sapply(b[sax],function(x) gsub(' ','',strsplit(x,split='\t')[[1]])))
-			rownames(tabdat1)=b[sax-1]
-			### let's get the first listed position and use that
-			dum=as.character(gsub('(^.+, )([^\\(]+)(.*$)','\\2',tabdat1[,1]))
-			### what do we want to keep? depends on the file
-			if (allfiletype[j]=='summary') {
-				tabdat=cbind(rep(myteam,dim(tabdat1)[1]),rownames(tabdat1),dum)
-				colnames(tabdat)=c('team','player','mainpos')
-			}
-			if (allfiletype[j]=='summary') {
-				keep=c(5,6,7)
-				colname=c('minute','goal','assist')
-			}
-			if (allfiletype[j]=='shotzone') {
-				keep=7:9
-				colname=c('shotoob','shot6yd','shotib')
-			}
-			if (allfiletype[j]=='shotsit') {
-				keep=7:10
-				colname=c('openplay','counter','setpiece','penaltytaken')
-			}
-			if (allfiletype[j]=='shotacc') {
-				keep=7:10
-				colname=c('offt','bar','ont','block')
-			}
-			if (allfiletype[j]=='keypass') {
-				keep=c(7,8)
-				colname=c('longkp','shortkp')
-			}
-			tabdat2=tabdat1[,keep]
-			colnames(tabdat2)=colname
-			tabdat2[tabdat2=='-']=0
-			if (!all(apply(tabdat2,2,function(x) all(round(as.numeric(x))==as.numeric(x))))) {
-				cat('For',myteam,', seem to have average, not totals for',allfiletype[j],'\n')
-				iserror[j]=1
-			}
-			tabdat=cbind(tabdat,tabdat2)
-		}
-	}
-	return(iserror)
-}
-
-processpage=function(myteam,DIRTOUSE,ishistoric=F,beforeseason) {
-	cat('About to strip',myteam,'data...\n')
-	if (beforeseason) {
-		filename=paste(DIRTOUSE,'/',myteam,'_summary.txt',sep='')
-	}
-	if (!beforeseason) {
-		filename=paste(DIRTOUSE,'/',myteam,'_',allfiletype,'.txt',sep='')
-	}
-	mywsteam=teamdf[which(teamdf$team==myteam),'wsteam']
-	for (j in 1:length(filename)) {
-		b=scan(filename[j],'',sep='\n',quiet=T,encoding='UTF-8')
-		### have we got the correct team firstly?
-		if (!ishistoric) pageteam=tolower(gsub(' Top Players','',b[grep('Top Players',b)]))
-		if (ishistoric) pageteam=tolower(gsub(' Squad Archive','',b[grep('Squad Archive',b)]))
-		if (pageteam!=mywsteam) {
-			cat('Have picked up data for',pageteam,'when we want data for',mywsteam,', recording error\n')
-		}
-		if (pageteam==mywsteam) {
-			if (ishistoric) {
-				### for some reason is puts the team name by the players stats, get rid
-				sax=grep('^[A-z ]+, [0-9]{2}, [A-Z\\(\\)]+',b)
-				b[sax]=gsub('^[A-z ]+, ','',b[sax])
-			}
-			sax=grep('^[0-9]{2}, [A-Z\\(\\)]+',b)
-			tabdat1=t(sapply(b[sax],function(x) gsub(' ','',strsplit(x,split='\t')[[1]])))
-			rownames(tabdat1)=b[sax-1]
-			### let's get the first listed position and use that
-			dum=as.character(gsub('(^.+, *)([^\\(]+)(.*$)','\\2',tabdat1[,1]))
-			### what do we want to keep? depends on the file
-			if (allfiletype[j]=='summary') {
-				tabdat=cbind(rep(myteam,dim(tabdat1)[1]),rownames(tabdat1),dum)
-				colnames(tabdat)=c('team','player','mainpos')
-			}
-			if (allfiletype[j]=='summary') {
-				keep=c(5,6,7)
-				colname=c('minute','goal','assist')
-			}
-			if (allfiletype[j]=='shotzone') {
-				keep=7:9
-				colname=c('shotoob','shot6yd','shotib')
-			}
-			if (allfiletype[j]=='shotsit') {
-				keep=7:10
-				colname=c('openplay','counter','setpiece','penaltytaken')
-			}
-			if (allfiletype[j]=='shotacc') {
-				keep=7:10
-				colname=c('offt','bar','ont','block')
-			}
-			if (allfiletype[j]=='goalsit') {
-				keep=10
-				colname=c('penaltyscored')
-			}
-			if (allfiletype[j]=='keypass') {
-				keep=c(7,8)
-				colname=c('longkp','shortkp')
-			}
-			tabdat2=tabdat1[,keep,drop=F]
-			colnames(tabdat2)=colname
-			tabdat2[tabdat2=='-']=0
-			if (!all(apply(tabdat2,2,function(x) all(round(as.numeric(x))==as.numeric(x))))) {
-				stop('Seem to have average, not totals for',allfiletype[j],'\n')
-			}
-			tabdat=cbind(tabdat,tabdat2)
-		}
-	}
-	tabdat=as.data.frame(tabdat)
-	### make player names sensible
-	tabdat$player=iconv(tolower(tabdat$player),from='UTF-8',to='ascii//translit')
-	tabdat$player=gsub('\'','',tabdat$player)
-	tabdat$player=gsub('-',' ',tabdat$player)
-	### make numeric columns numeric
-	numcol=setdiff(names(tabdat),c('team','player','mainpos'))
-	tabdat[,numcol]=apply(tabdat[,numcol],2,function(x) as.numeric(x))
-	rownames(tabdat)=NULL
-	return(as.data.frame(tabdat))
+ProcessPage = function(myteam, DIRTOUSE) {
+  filename=paste(DIRTOUSE,'/',myteam,'_',allfiletype,'.txt',sep='')
+  wsteam=teamdf$wsteam[teamdf$team==myteam]
+  iserror=rep(NA,length(allfiletype))
+  for (j in 1:length(filename)) {
+    b=scan(filename[j],'',sep='\n',quiet=T,encoding='UTF-8')
+    pageteam=tolower(gsub(' Top Players','',b[grep('Top Players',b)]))
+    if (pageteam!=wsteam) {
+      stop('Have picked up data for',pageteam,'when we want data for',wsteam,', please re-fetch this\n')
+    }
+    if (pageteam==wsteam) {
+      sax=grep('^[0-9]{2}, [A-Z\\(\\)]+',b)
+      ### first check we've got the correct file - it can go wrong at times:
+      iserror[j]=checkpage(myteam,allfiletype[j],gsub(' ','',b[sax[1]-3]))
+      # now initialise the player DF
+      
+      statMatrix = t(sapply(b[sax+1], function(x) strsplit(x, split = ' *\t')[[1]]))
+      statMatrix[which(statMatrix == '-')] = '0'
+      rownames(statMatrix) = NULL
+      statDF = as.data.frame(statMatrix)
+      names(statDF) = strsplit(b[sax[1]-3], split = ' *\t')[[1]][-1]
+      
+      if (allfiletype[j] == 'summary') {
+        myTeamPlayerDF = tibble(team = myteam, player = b[sax-1])
+        dummainpos = b[sax]
+        dummainpos = gsub('(^[0-9]+, )(.+$)', '\\2', dummainpos)
+        dummainpos = gsub('([^\\(]+)(\\(.+$))*', '\\1', dummainpos)
+        myTeamPlayerDF$mainpos = dummainpos
+        
+        myTeamPlayerDF[,c('minute', 'goal', 'assist')] = statDF[,c('Mins', 'Goals', 'Assists')]
+      }
+      if (allfiletype[j]=='shotzone') {
+        myTeamPlayerDF[,c('shotoob', 'shot6yd', 'shotib')] = statDF[,c('OutOfBox', 'SixYardBox', 'PenaltyArea')]
+      }
+      if (allfiletype[j]=='shotsit') {
+        myTeamPlayerDF[,c('openplay','counter','setpiece','penaltytaken')] =
+          statDF[,c('OpenPlay', 'Counter', 'SetPiece', 'PenaltyTaken')]
+      }
+      if (allfiletype[j]=='shotacc') {
+        myTeamPlayerDF[,c('offt','bar','ont','block')] =
+          statDF[,c('OffTarget', 'OnPost', 'OnTarget', 'Blocked')]
+      }
+      if (allfiletype[j] == 'goalsit') {
+        myTeamPlayerDF[,'penaltyscored'] = statDF[,'PenaltyScored']
+      }
+      if (allfiletype[j]=='keypass') {
+        myTeamPlayerDF[,c('longkp','shortkp')] =
+          statDF[,c('Long', 'Short')]
+      }
+    }
+  }
+  
+  ### make player names sensible
+  myTeamPlayerDF$player=iconv(tolower(myTeamPlayerDF$player),from='UTF-8',to='ascii//translit')
+  myTeamPlayerDF$player=gsub('\'','',myTeamPlayerDF$player)
+  myTeamPlayerDF$player=gsub('-',' ',myTeamPlayerDF$player)
+  ## check we didn't get the per90 mins rther than total:
+  
+  statColumn = setdiff(names(myTeamPlayerDF), c('team', 'player', 'mainpos'))
+  valueIsInteger = apply(myTeamPlayerDF[statColumn], 2, function(x) all(round(as.numeric(x))==as.numeric(x)))
+  allValueAreInteger = all(valueIsInteger)
+  if (!allValueAreInteger) {
+    cat('For',myteam,', seem to have average, not totals for',allfiletype[j],'\n')
+    iserror[j]=1
+  }
+  
+  ### make numeric columns numeric
+  for (ci in statColumn) {
+    myTeamPlayerDF = myTeamPlayerDF %>%
+      mutate(!!ci := as.integer(get(ci)))
+  }
+ 
+  return(lst(myTeamPlayerDF, iserror))
 }
 
 addmissingteamtosummarydf=function(gotteam, allteam, datetouse) {
@@ -382,19 +310,4 @@ addmissingteamtosummarydf=function(gotteam, allteam, datetouse) {
 	previoussummarydf=read.csv(filein)
 	missingsummarydf=previoussummarydf %>% filter(team %in% teamtoadd)
 	return(missingsummarydf)
-}
-
-combineteamfile=function(DIRTOUSE, datetouse, beforeseason=FALSE,ishistoric=FALSE) {
-	currentfile=list.files(DIRTOUSE)
-	currentsummaryfile=currentfile[grep('^[a-z]+_summary.txt',currentfile)]
-	currentteam=gsub('\\_summary.txt','',currentsummaryfile)
-	combinedteamsummarylist=NULL
-	for (ti in 1:length(currentteam)) {
-		currentteamsummary = processpage(currentteam[ti],DIRTOUSE,ishistoric=ishistoric,beforeseason=beforeseason)
-		combinedteamsummarylist[[ti]] = currentteamsummary
-	}
-	combinedteamsummary=do.call(rbind,combinedteamsummarylist)
-	fileout=paste0(DATAPATH, 'summarised_whoscored_data/combined_data_', datetouse, '.csv')
-	write.csv(file=fileout, combinedteamsummary, row.names=FALSE)
-	cat('Have created',fileout,'...\n')
 }

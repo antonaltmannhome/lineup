@@ -10,7 +10,7 @@ TEMPPATH='c:/temp/'
 setwd(USERPATH)
 source('admin_funct.r')
 
-currentseason = 1920
+currentseason = 2021
 
 options(warn=2, dplyr.print_max = 1e9)
 

@@ -235,7 +235,11 @@ CheckDoubleNamePlayer = function(playerMatchDF) {
   doubleNameInfo = semi_join(playerMatchDF, doubleNamePlayer, 'playerid')
   if (nrow(doubleNameInfo) > 0) {
     print(doubleNameInfo)
-    stop('aaarghh, we do not want players having two names within playerMatchDF or gfgdf')
+    cat('aaarghh, we do not want players having two names within playerMatchDF or gfgdf\n')
+    cat('to fix this, add the corrections to d:/whoscored/fixplayernames.csv\n')
+    cat('Next, you need to delete the pages of the relevant teams from d:/whoscored/soccerway_saved\n')
+    cat('After that, you need to re-run the  ffDataJoining:::UpdateSoccerwayWhoscoredPlayerMap(appearanceDF) function\n')
+    stop()
   }
 }
 

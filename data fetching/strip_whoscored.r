@@ -35,8 +35,11 @@ Sys.sleep(1)
 
 ### then run the checks and balances
 iserrorarr=array(NA,dim=c(length(myteamtoget),length(allfiletype)))
+teamStatList = vector('list', length(myteamtoget))
 for (ti in 1:length(myteamtoget)) {
-	iserrorarr[ti,]=checkteam(myteamtoget[ti],DIRTOUSE,ishistoric=F,beforeseason)
+  dum = ProcessPage(myteamtoget[ti], DIRTOUSE)
+  teamStatList[[ti]] = dum$myTeamPlayerDF
+	iserrorarr[ti,]=dum$iserror
 }
 
 problemteam = myteamtoget[apply(iserrorarr,1,function(x) any(x==1))]
@@ -52,8 +55,11 @@ if (length(problemteam) == 0) {
 	message('If you are happy for me to proceed, type \'y\' and I will produce the summary file and zip the raw html')
 	dum = askcond(F, T)
 	if (dum == 'y') {
-		combineteamfile(DIRTOUSE, datetouse)
-
+	  combinedteamsummary=do.call(rbind, teamStatList)
+	  fileout=paste0(DATAPATH, 'summarised_whoscored_data/combined_data_', datetouse, '.csv')
+	  write.csv(file=fileout, combinedteamsummary, row.names=FALSE)
+	  cat('Have created',fileout,'...\n')
+	  
 		# final task, zip the whoscored files into current year directory, then delete
 		setwd(TEMPPATH)
 		currentYear = substr(datetouse, 1, 4)
