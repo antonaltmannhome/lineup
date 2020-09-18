@@ -14,8 +14,8 @@ ahkfile=paste(TEMPPATH,'temp.ahk',sep='')
 
 teamwaittime=6 # how long it takes (in seconds) to load initial page for team
 subcatwaittime=3000 # how long it waits (in milliseconds) for data to refresh on page when we click subcategories
-defaultnumgam = 8
-defaultnumtournament = 4
+defaultnumgam = 5
+defaultnumtournament = 2
 
 ### now let user decide which teams they want
 
@@ -26,8 +26,9 @@ myteamtoget=select.list(allteam,multiple=T,title='select teams to update')
 
 for (ti in 1:length(myteamtoget)) {
 	Sys.sleep(sample(1:4,1))
+  isFirstTeam = (ti == 1) # atom cocks up the very first save, this should help
 	gotocurrentpage(myteamtoget[ti], thiscomputer = thiscomputer)
-	stripcurrentpage(myteamtoget[ti], DIRTOUSE, ahkfile, ishistoric=F,beforeseason)
+	stripcurrentpage(myteamtoget[ti], DIRTOUSE, ahkfile, ishistoric=F,beforeseason,isFirstTeam = isFirstTeam)
 }
 
 Sys.sleep(1)

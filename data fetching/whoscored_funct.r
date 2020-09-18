@@ -50,7 +50,7 @@ adjustlinkdf=function(linkdf, numgam, numtournament, noupcomingmatchesfound, thi
 		stop('Exiting now\n')
 	}
 	if (thiscomputer == 'NOVATECHLAPTOP') {
-		gamadjlist = c(-180, -150, -120, -90, -46, -23, 0)
+		gamadjlist = c(-145, -120, -95, -70, -45, -25, 0)
 		#gamadjlist = c(-30,0, 30, 60, 90, 120, 150)
 	}
 	if (thiscomputer == 'ANTONDESKTOP') {
@@ -106,7 +106,7 @@ removefourdownpressesfordesktop = function(comm) {
 	return(comm)
 }
 
-stripcurrentpage=function(myteam, DIRTOUSE, ahkfile, ishistoric=F, beforeseason = F) {
+stripcurrentpage=function(myteam, DIRTOUSE, ahkfile, ishistoric=F, beforeseason = F, isFirstTeam) {
 
 	filename=paste(DIRTOUSE,'/',myteam,'_',allfiletype,'.txt',sep='')
 	for (j in 1:length(filename)) if (file.exists(filename[j])) file.remove(filename[j])
@@ -127,7 +127,8 @@ stripcurrentpage=function(myteam, DIRTOUSE, ahkfile, ishistoric=F, beforeseason 
 	### you should be on summary page for team in question - now save to notepad++
 	initfile(ahkfile)
 	insertselectwindow(browserToUse)
-	selectalltonotepad(filename[allfiletype=='summary'], deselectpoint=mydeselectpoint)
+	saveDelay = ifelse(isFirstTeam, 3, 1)
+  selectalltonotepad(filename[allfiletype=='summary'], deselectpoint=mydeselectpoint, savedelay = saveDelay)
 
 	insertabort()
 	runscript()
@@ -146,16 +147,17 @@ stripcurrentpage=function(myteam, DIRTOUSE, ahkfile, ishistoric=F, beforeseason 
 			combline=paste(b[(fixtline+1):(squadline-1)],collapse='')
 			combline=gsub('\\\t',' ',combline)
 			### number of dates in that is a good guide to how many fixtures there are
-			dateinfo=gregexpr('[0-9]{2}-[0-9]{2}-[0-9]{4}',combline)
+			dateinfo=gregexpr('[0-9]{2}-[0-9]{2}-[0-9]{2}',combline)
 
 			numgam=length(dateinfo[[1]])
 
 			# then need to adjust for the number of tournaments the team is in
-			tournamentstartline = grep('Tournament \tApps\tGoals\tShots pg',b)
+			tournamentstartline = grep('^Tournament$', b)
 			tournamentendline = grep('Total / Average',b)
 			#print('Need to remove this line when site is fixed!')
 			#tournamentendline = grep('stats_table_clmn_total_avg',b)
-			numtournament = tournamentendline - tournamentstartline - 1
+			numtournament = (tournamentendline - tournamentstartline - 2) / 2
+
 
 			noupcomingmatchesfound = any(grepl('No upcoming matches found',b))
 
@@ -186,7 +188,7 @@ stripcurrentpage=function(myteam, DIRTOUSE, ahkfile, ishistoric=F, beforeseason 
 			randompausecode = paste('sleep', 1000*sample(1:4, 1))
 			write(file=ahkfile, randompausecode, append=T)
 
-			selectalltonotepad(filename[si], deselectpoint=mydeselectpoint)
+			selectalltonotepad(filename[si], deselectpoint=mydeselectpoint, savedelay = 1)
 		}
 
 		insertabort()
@@ -197,22 +199,22 @@ stripcurrentpage=function(myteam, DIRTOUSE, ahkfile, ishistoric=F, beforeseason 
 
 checkpage=function(myteam, myfiletype, mycolhead) {
 	if (myfiletype=='summary') {
-		truecolhead="R\t\tPlayer\tCM\tKG\tApps\tMins\tGoals\tAssists\tYel\tRed\tSpG\tPS%\tAerialsWon\tMotM\tRating"
+		truecolhead="\t\tCM\tKG\tApps\tMins\tGoals\tAssists\tYel\tRed\tSpG\tPS%\tAerialsWon\tMotM\tRating"
 	}
 	if (myfiletype=='shotzone') {
-		truecolhead="R\t\tPlayer\tCM\tKG\tApps\tMins\tTotal\tOutOfBox\tSixYardBox\tPenaltyArea\tRating"
+		truecolhead="\t\tCM\tKG\tApps\tMins\tTotal\tOutOfBox\tSixYardBox\tPenaltyArea\tRating"
 	}
 	if (myfiletype=='shotsit') {
-		truecolhead="R\t\tPlayer\tCM\tKG\tApps\tMins\tTotal\tOpenPlay\tCounter\tSetPiece\tPenaltyTaken\tRating"
+		truecolhead="\t\tCM\tKG\tApps\tMins\tTotal\tOpenPlay\tCounter\tSetPiece\tPenaltyTaken\tRating"
 	}
 	if (myfiletype=='shotacc') {
-	truecolhead="R\t\tPlayer\tCM\tKG\tApps\tMins\tTotal\tOffTarget\tOnPost\tOnTarget\tBlocked\tRating"
+	truecolhead="\t\tCM\tKG\tApps\tMins\tTotal\tOffTarget\tOnPost\tOnTarget\tBlocked\tRating"
 	}
 	if (myfiletype=='goalsit') {
-		truecolhead="R\t\tPlayer\tCM\tKG\tApps\tMins\tTotal\tOpenPlay\tCounter\tSetPiece\tPenaltyScored\tOwn\tNormal\tRating"
+		truecolhead="\t\tCM\tKG\tApps\tMins\tTotal\tOpenPlay\tCounter\tSetPiece\tPenaltyScored\tOwn\tNormal\tRating"
 	}
 	if (myfiletype=='keypass') {
-		truecolhead="R\t\tPlayer\tCM\tKG\tApps\tMins\tTotal\tLong\tShort\tRating"
+		truecolhead="\t\tCM\tKG\tApps\tMins\tTotal\tLong\tShort\tRating"
 	}
 	#print('Need to remove this line when site is fixed!')
 	#truecolhead = gsub('KG', 'stats_table_clmn_weight', truecolhead)
