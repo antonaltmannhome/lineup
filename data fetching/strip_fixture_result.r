@@ -33,6 +33,12 @@ if (!haveJustFinishedSeason) {
 	rawdata=scan(paste(DATAPATH,'fixture_result/fixture',currentseason,'.txt',sep=''),sep='\n','',quiet=T)
 	rawdata=tolower(rawdata)
 
+	# now gsub out all of the stadium names
+	stadiumName = scan(paste0(DATAPATH, 'stadium-name-', currentseason, '.txt'), quiet = TRUE, what = '', sep = '\n')
+	for (j in 1:length(stadiumName)) {
+	  rawdata = gsub(stadiumName[j], '', rawdata)
+	}
+	
 	### try to pick out all the date lines
 	dategrep=grep('^[a-z]+ [0-9]{1,2} [a-z]+ [0-9]{4}',rawdata)
 	### but there might be postponed fixtures to deal with
@@ -65,8 +71,8 @@ if (!haveJustFinishedSeason) {
 	}
 	qvgrep = grep('quick view', reduceddata)
 	
-	fixtht=reduceddata[qvgrep-2]
-	fixtat = reduceddata[qvgrep-1]
+	fixtht = reduceddata[qvgrep-3]
+	fixtat = gsub(' +,$', '', reduceddata[qvgrep-2])
 
 	fixtDF = tibble(date = fixtdate, ht = fixtht, at = fixtat)
 	
@@ -81,6 +87,12 @@ if (!haveJustFinishedSeason) {
 if (!aboutToStartSeason) {
   rawdata=scan(paste(DATAPATH,'fixture_result/result',currentseason,'.txt',sep=''),sep='\n','',quiet=T)
   rawdata=tolower(rawdata)
+
+  # now gsub out all of the stadium names
+  stadiumName = scan(paste0(DATAPATH, 'stadium-name-', currentseason, '.txt'), quiet = TRUE, what = '', sep = '\n')
+  for (j in 1:length(stadiumName)) {
+    rawdata = gsub(stadiumName[j], '', rawdata)
+  }
   
   ### try to pick out all the date lines
   dategrep=grep('^[a-z]+ [0-9]{1,2} [a-z]+ [0-9]{4}',rawdata)
@@ -89,7 +101,7 @@ if (!aboutToStartSeason) {
   
   scoregrep=grep('[a-z]+ [0-9]\\-[0-9] .+',rawdata)
   resht=gsub('^ *','',gsub(' *$','',gsub('(^.+)([0-9]\\-[0-9])(.+$)','\\1',rawdata[scoregrep])))
-  resat=gsub('(^.+ [0-9]+\\-[0-9]+ )(.+$)','\\2',rawdata[scoregrep])
+  resat=gsub('(^.+ [0-9]+\\-[0-9]+ )(.+[a-z])( +\\,$)','\\2',rawdata[scoregrep])
   reshsc=as.numeric(gsub('(^.+)([0-9])(\\-)([0-9])(.+$)','\\2',rawdata[scoregrep]))
   resasc=as.numeric(gsub('(^.+)([0-9])(\\-)([0-9])(.+$)','\\4',rawdata[scoregrep]))
   ### then get the dates
